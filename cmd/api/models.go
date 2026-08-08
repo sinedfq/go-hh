@@ -5,12 +5,12 @@ type Health struct {
 }
 
 type Vacancy struct {
-	ID         int    `json: "id"`
-	Title      string `json: "title"`
-	Company    string `json: "company"`
-	Location   string `json: "city"`
-	Experience string `json: "experience"`
-	Remote     bool   `json: "remote"`
+	ID         int    `json:"id"`
+	Title      string `json:"title"`
+	Company    string `json:"company"`
+	Location   string `json:"city"`
+	Experience string `json:"experience"`
+	Remote     bool   `json:"remote"`
 }
 
 type Resume struct {
@@ -20,4 +20,9 @@ type Resume struct {
 	ExperienceYears int      `json:"experience_years"`
 	ExpectedSalary  int      `json:"expected_salary"`
 	About           string   `json:"about"`
+}
+
+type Match struct {
+	Vacancy Vacancy `json:"vacancy"`
+	Score   float64 `json:"score"`
 }

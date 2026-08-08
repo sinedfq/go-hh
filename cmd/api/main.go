@@ -34,6 +34,9 @@ func main() {
 	http.HandleFunc("GET /api/resumes", server.resumeHandler)
 	http.HandleFunc("POST /api/resumes", server.createResumeHandler)
 
+	// Матчи
+	http.HandleFunc("GET /api/resumes/{id}/matches", server.matchesHandler)
+
 	log.Println("Server starting on :8080")
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("server failed: %v", err)
