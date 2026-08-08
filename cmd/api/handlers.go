@@ -134,3 +134,42 @@ func (s *Server) createResumeHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(resume)
 }
+
+func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	// Получаем ID резюме из пути
+	idParam := r.PathValue("id")
+	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid id"})
+		return
+	}
+
+	// Получаем резюме
+	resume, err := s.storage.GetResumeByID(ctx, id)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "resume not found"})
+		return
+	}
+
+	// Получаем все вакансии
+	vacancies, err := s.storage.GetAllVacancies(ctx)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "internal error"})
+		return
+	}
+
+	// Считаем матчинг
+	matches := MatchVacancies(resume, vacancies)
+
+	// Отдаём
+	json.NewEncoder(w).Encode(map[string]any{
+		"resume_id": resume.ID,
+		"matches":   matches,
+	})
+}
