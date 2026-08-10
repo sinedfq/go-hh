@@ -1,34 +1,61 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import { useAuth } from './contexts/AuthContext'
 import SwipeableCard from './components/SwipeableCard'
 import VacancyList from './components/VacancyList'
 import VacancyDetail from './components/VacancyDetail'
 import FavoritesList from './components/FavoritesList'
+import LoginPage from './pages/LoginPage'
+import ProfilePage from './pages/ProfilePage'
 import './App.css'
 
 function App() {
+  const { user, loading: authLoading, logout } = useAuth()
+
   const [vacancies, setVacancies] = useState([])
   const [favorites, setFavorites] = useState([])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [selectedVacancy, setSelectedVacancy] = useState(null)
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState('browse')
+  const [showLoginModal, setShowLoginModal] = useState(false)
 
   useEffect(() => {
-    loadVacancies()
-    loadFavorites()
-  }, [])
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          logout()
+        }
+        return Promise.reject(error)
+      }
+    )
+    return () => axios.interceptors.response.eject(interceptor)
+  }, [logout])
+
+  useEffect(() => {
+    if (!authLoading) {
+      loadVacancies()
+      if (user) {
+        loadFavorites()
+      }
+    }
+  }, [user, authLoading])
+
+  useEffect(() => {
+    if (user) {
+      setShowLoginModal(false)
+    }
+  }, [user])
 
   const loadVacancies = async () => {
     try {
       setLoading(true)
       const res = await axios.get('/api/vacancies')
-
       let data = res.data
       if (!Array.isArray(data)) {
         data = data.value || []
       }
-
       setVacancies(data)
       setCurrentIndex(data.length - 1)
       if (data.length > 0 && !selectedVacancy) {
@@ -55,6 +82,10 @@ function App() {
   }
 
   const addToFavorites = async (vacancyId) => {
+    if (!user) {
+      setShowLoginModal(true)
+      return
+    }
     try {
       await axios.post('/api/favorites', { vacancy_id: vacancyId })
       loadFavorites()
@@ -64,6 +95,7 @@ function App() {
   }
 
   const removeFromFavorites = async (vacancyId) => {
+    if (!user) return
     try {
       await axios.delete(`/api/favorites/${vacancyId}`)
       loadFavorites()
@@ -76,7 +108,6 @@ function App() {
     if (direction === 'right') {
       addToFavorites(vacancyId)
     }
-
     setCurrentIndex(prev => {
       const nextIndex = prev - 1
       if (nextIndex >= 0 && vacancies[nextIndex]) {
@@ -97,7 +128,15 @@ function App() {
     return favorites.some(fav => fav.id === vacancyId)
   }
 
-  if (loading) {
+  const handleModeChange = (newMode) => {
+    if ((newMode === 'swipe' || newMode === 'favorites') && !user) {
+      setShowLoginModal(true)
+      return
+    }
+    setMode(newMode)
+  }
+
+  if (authLoading) {
     return (
       <div className="app">
         <div className="loading">
@@ -110,11 +149,14 @@ function App() {
 
   return (
     <div className="app">
-      {/* Левый сайдбар с навигацией */}
+      {/* Модальное окно логина — рендерится ПОВЕРХ приложения */}
+      {showLoginModal && (
+        <LoginPage onClose={() => setShowLoginModal(false)} />
+      )}
+
       <aside className="sidebar">
         <div className="sidebar-logo">
-          <h1>Go</h1>
-          <h1>Work!</h1>
+          <h1>GoHH!</h1>
         </div>
 
         <nav className="sidebar-nav">
@@ -131,7 +173,7 @@ function App() {
 
           <div
             className={`nav-item ${mode === 'swipe' ? 'active' : ''}`}
-            onClick={() => setMode('swipe')}
+            onClick={() => handleModeChange('swipe')}
           >
             <div className="nav-bar"></div>
             <div className="nav-label">
@@ -142,25 +184,74 @@ function App() {
 
           <div
             className={`nav-item ${mode === 'favorites' ? 'active' : ''}`}
-            onClick={() => setMode('favorites')}
+            onClick={() => handleModeChange('favorites')}
           >
             <div className="nav-bar"></div>
             <div className="nav-label">
               <span className="nav-title">Избранное</span>
-              <span className="nav-subtitle">{favorites.length} вакансий</span>
+              <span className="nav-subtitle">{user ? favorites.length : 0} вакансий</span>
             </div>
           </div>
+
+
         </nav>
+
+        {user && (
+          <div className="sidebar-footer">
+            <div
+              className={`user-profile-btn ${mode === 'profile' ? 'active' : ''}`}
+              onClick={() => setMode('profile')}
+              title={user.email}
+            >
+              <div className="user-avatar">
+                {user.email[0].toUpperCase()}
+              </div>
+              <div className="user-profile-label">
+                <span className="user-profile-title">Профиль</span>
+                <span className="user-profile-email">{user.email}</span>
+              </div>
+            </div>
+            <button className="logout-btn" onClick={logout}>
+              Выйти
+            </button>
+          </div>
+        )}
+
+        {!user && (
+          <div className="sidebar-footer">
+            <button
+              className="login-btn"
+              onClick={() => setShowLoginModal(true)}
+              title="Войти"
+            >
+              <svg
+                className="login-icon"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                <polyline points="10 17 15 12 10 7" />
+                <line x1="15" y1="12" x2="3" y2="12" />
+              </svg>
+              <span className="login-text">Войти</span>
+            </button>
+          </div>
+        )}
       </aside>
 
-      {/* Основная область */}
       <div className="main-area">
-        {/* Верхняя шапка — только название */}
         <header className="top-header">
           <h2 className="page-title">
             {mode === 'browse' && 'Все вакансии'}
             {mode === 'swipe' && 'Свайпай вакансии'}
             {mode === 'favorites' && 'Избранные вакансии'}
+            {mode === 'profile' && 'Мой профиль'}
           </h2>
         </header>
 
@@ -184,7 +275,7 @@ function App() {
             </>
           )}
 
-          {mode === 'swipe' && (
+          {mode === 'swipe' && user && (
             <div className="swipe-container">
               <div className="card-container">
                 {vacancies.length === 0 ? (
@@ -214,13 +305,17 @@ function App() {
             </div>
           )}
 
-          {mode === 'favorites' && (
+          {mode === 'favorites' && user && (
             <div className="favorites-container">
               <FavoritesList
                 favorites={favorites}
                 onRemove={removeFromFavorites}
               />
             </div>
+          )}
+
+          {mode === 'profile' && user && (
+            <ProfilePage />
           )}
         </div>
       </div>
