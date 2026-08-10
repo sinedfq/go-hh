@@ -9,13 +9,20 @@ import (
 )
 
 type Storage interface {
+	// Вакансии
 	GetAllVacancies(ctx context.Context) ([]Vacancy, error)
 	GetVacancyByID(ctx context.Context, id int) (Vacancy, error)
 	CreateVacancy(ctx context.Context, v Vacancy) (int, error)
 
+	// Резюме
 	GetAllResumes(ctx context.Context) ([]Resume, error)
 	GetResumeByID(ctx context.Context, id int) (Resume, error)
 	CreateResume(ctx context.Context, r Resume) (int, error)
+
+	// Избранное
+	AddFavorite(ctx context.Context, userID, vacancyID int) error
+	RemoveFavorite(ctx context.Context, userID, vacancyID int) error
+	GetFavorites(ctx context.Context, userID int) ([]Vacancy, error)
 }
 
 type PostgresStorage struct {
@@ -39,9 +46,11 @@ func (s *PostgresStorage) Close() {
 	s.pool.Close()
 }
 
+// ============ ВАКАНСИИ ============
+
 func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error) {
 	query := `
-		SELECT id, title, company, location, experience, remote
+		SELECT id, title, company, location, experience, remote, skills, description
 		FROM vacancies
 		ORDER BY created_at DESC
 	`
@@ -62,6 +71,8 @@ func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error
 			&v.Location,
 			&v.Experience,
 			&v.Remote,
+			&v.Skills,
+			&v.Description,
 		)
 		if err != nil {
 			return nil, err
@@ -69,16 +80,12 @@ func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error
 		vacancies = append(vacancies, v)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return vacancies, nil
+	return vacancies, rows.Err()
 }
 
 func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, error) {
 	query := `
-		SELECT id, title, company, location, experience, remote
+		SELECT id, title, company, location, experience, remote, skills, description
 		FROM vacancies
 		WHERE id = $1
 	`
@@ -91,6 +98,8 @@ func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, 
 		&v.Location,
 		&v.Experience,
 		&v.Remote,
+		&v.Skills,
+		&v.Description,
 	)
 
 	if err != nil {
@@ -105,8 +114,8 @@ func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, 
 
 func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, error) {
 	query := `
-		INSERT INTO vacancies (title, company, location, experience, remote)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO vacancies (title, company, location, experience, remote, skills, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
@@ -119,6 +128,8 @@ func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, er
 		v.Location,
 		v.Experience,
 		v.Remote,
+		v.Skills,
+		v.Description,
 	).Scan(&id)
 
 	if err != nil {
@@ -127,6 +138,8 @@ func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, er
 
 	return id, nil
 }
+
+// ============ РЕЗЮМЕ ============
 
 func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 	query := `
@@ -211,4 +224,62 @@ func (s *PostgresStorage) CreateResume(ctx context.Context, r Resume) (int, erro
 	}
 
 	return id, nil
+}
+
+// ============ ИЗБРАННОЕ ============
+
+func (s *PostgresStorage) AddFavorite(ctx context.Context, userID, vacancyID int) error {
+	query := `
+		INSERT INTO favorites (user_id, vacancy_id)
+		VALUES ($1, $2)
+		ON CONFLICT (user_id, vacancy_id) DO NOTHING
+	`
+	_, err := s.pool.Exec(ctx, query, userID, vacancyID)
+	return err
+}
+
+func (s *PostgresStorage) RemoveFavorite(ctx context.Context, userID, vacancyID int) error {
+	query := `
+		DELETE FROM favorites
+		WHERE user_id = $1 AND vacancy_id = $2
+	`
+	_, err := s.pool.Exec(ctx, query, userID, vacancyID)
+	return err
+}
+
+func (s *PostgresStorage) GetFavorites(ctx context.Context, userID int) ([]Vacancy, error) {
+	query := `
+		SELECT v.id, v.title, v.company, v.location, v.experience, v.remote, v.skills, v.description
+		FROM favorites f
+		JOIN vacancies v ON f.vacancy_id = v.id
+		WHERE f.user_id = $1
+		ORDER BY f.created_at DESC
+	`
+
+	rows, err := s.pool.Query(ctx, query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []Vacancy
+	for rows.Next() {
+		var v Vacancy
+		err := rows.Scan(
+			&v.ID,
+			&v.Title,
+			&v.Company,
+			&v.Location,
+			&v.Experience,
+			&v.Remote,
+			&v.Skills,
+			&v.Description,
+		)
+		if err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, v)
+	}
+
+	return vacancies, rows.Err()
 }

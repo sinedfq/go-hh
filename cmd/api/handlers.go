@@ -7,11 +7,15 @@ import (
 )
 
 type Server struct {
-	storage Storage
+	storage  Storage
+	mlClient *MLClient
 }
 
-func NewServer(storage Storage) *Server {
-	return &Server{storage: storage}
+func NewServer(storage Storage, mlClient *MLClient) *Server {
+	return &Server{
+		storage:  storage,
+		mlClient: mlClient,
+	}
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +152,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем резюме
+	// Получаем резюме из БД
 	resume, err := s.storage.GetResumeByID(ctx, id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -164,12 +168,107 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Считаем матчинг
-	matches := MatchVacancies(resume, vacancies)
+	// Вызываем ML-сервис
+	mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, vacancies)
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   "ML service unavailable",
+			"details": err.Error(),
+		})
+		return
+	}
 
-	// Отдаём
+	// Формируем ответ с полными данными о вакансиях
+	type FullMatch struct {
+		Vacancy   Vacancy `json:"vacancy"`
+		Score     float64 `json:"score"`
+		Reasoning string  `json:"reasoning"`
+	}
+
+	var fullMatches []FullMatch
+	for _, mlMatch := range mlMatches {
+		for _, v := range vacancies {
+			if v.ID == mlMatch.VacancyID {
+				fullMatches = append(fullMatches, FullMatch{
+					Vacancy:   v,
+					Score:     mlMatch.Score,
+					Reasoning: mlMatch.Reasoning,
+				})
+				break
+			}
+		}
+	}
+
 	json.NewEncoder(w).Encode(map[string]any{
 		"resume_id": resume.ID,
-		"matches":   matches,
+		"matches":   fullMatches,
 	})
+}
+
+func (s *Server) addFavoriteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	var req struct {
+		VacancyID int `json:"vacancy_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
+		return
+	}
+
+	userID := 1
+
+	if err := s.storage.AddFavorite(ctx, userID, req.VacancyID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to add favorite"})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"status": "added"})
+}
+
+func (s *Server) removeFavoriteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	vacancyID, err := strconv.Atoi(r.PathValue("vacancyId"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid vacancy id"})
+		return
+	}
+
+	userID := 1
+
+	if err := s.storage.RemoveFavorite(ctx, userID, vacancyID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to remove favorite"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"status": "removed"})
+}
+
+func (s *Server) getFavoritesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	userID := 1
+
+	vacancies, err := s.storage.GetFavorites(ctx, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to get favorites"})
+		return
+	}
+
+	if vacancies == nil {
+		vacancies = []Vacancy{}
+	}
+
+	json.NewEncoder(w).Encode(vacancies)
 }
