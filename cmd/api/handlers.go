@@ -205,3 +205,70 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		"matches":   fullMatches,
 	})
 }
+
+func (s *Server) addFavoriteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	var req struct {
+		VacancyID int `json:"vacancy_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
+		return
+	}
+
+	userID := 1
+
+	if err := s.storage.AddFavorite(ctx, userID, req.VacancyID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to add favorite"})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"status": "added"})
+}
+
+func (s *Server) removeFavoriteHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	vacancyID, err := strconv.Atoi(r.PathValue("vacancyId"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid vacancy id"})
+		return
+	}
+
+	userID := 1
+
+	if err := s.storage.RemoveFavorite(ctx, userID, vacancyID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to remove favorite"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]string{"status": "removed"})
+}
+
+func (s *Server) getFavoritesHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	userID := 1
+
+	vacancies, err := s.storage.GetFavorites(ctx, userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to get favorites"})
+		return
+	}
+
+	if vacancies == nil {
+		vacancies = []Vacancy{}
+	}
+
+	json.NewEncoder(w).Encode(vacancies)
+}

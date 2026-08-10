@@ -31,23 +31,39 @@ func main() {
 
 	server := NewServer(storage, mlClient)
 
+	// Создаём главный mux
+	mux := http.NewServeMux()
+
 	// Health
-	http.HandleFunc("/health", server.healthHandler)
+	mux.HandleFunc("/health", server.healthHandler)
 
 	// Вакансии
-	http.HandleFunc("GET /api/vacancies", server.vacancyHandler)
-	http.HandleFunc("POST /api/vacancies", server.createVacancyHandler)
+	mux.HandleFunc("GET /api/vacancies", server.vacancyHandler)
+	mux.HandleFunc("POST /api/vacancies", server.createVacancyHandler)
 
 	// Резюме
-	http.HandleFunc("GET /api/resumes", server.resumeHandler)
-	http.HandleFunc("POST /api/resumes", server.createResumeHandler)
+	mux.HandleFunc("GET /api/resumes", server.resumeHandler)
+	mux.HandleFunc("POST /api/resumes", server.createResumeHandler)
 
-	http.HandleFunc("GET /api/resumes/{id}/matches", server.matchesHandler)
+	// Матчинг
+	mux.HandleFunc("GET /api/resumes/{id}/matches", server.matchesHandler)
+
+	// Избранное
+	mux.HandleFunc("POST /api/favorites", server.addFavoriteHandler)
+	mux.HandleFunc("DELETE /api/favorites/{vacancyId}", server.removeFavoriteHandler)
+	mux.HandleFunc("GET /api/favorites", server.getFavoritesHandler)
+
+	// Статика фронтенда (раздаём собранный React-бандл)
+	fs := http.FileServer(http.Dir("frontend/dist"))
+	mux.Handle("/", fs)
+
+	// Оборачиваем в CORS middleware
+	handler := corsMiddleware(mux)
 
 	log.Println("Server starting on :8080")
 	log.Printf("ML service URL: %s", mlURL)
 
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", handler); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }
