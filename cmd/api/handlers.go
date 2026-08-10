@@ -7,11 +7,15 @@ import (
 )
 
 type Server struct {
-	storage Storage
+	storage  Storage
+	mlClient *MLClient
 }
 
-func NewServer(storage Storage) *Server {
-	return &Server{storage: storage}
+func NewServer(storage Storage, mlClient *MLClient) *Server {
+	return &Server{
+		storage:  storage,
+		mlClient: mlClient,
+	}
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +152,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Получаем резюме
+	// Получаем резюме из БД
 	resume, err := s.storage.GetResumeByID(ctx, id)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -164,12 +168,40 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Считаем матчинг
-	matches := MatchVacancies(resume, vacancies)
+	// Вызываем ML-сервис
+	mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, vacancies)
+	if err != nil {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   "ML service unavailable",
+			"details": err.Error(),
+		})
+		return
+	}
 
-	// Отдаём
+	// Формируем ответ с полными данными о вакансиях
+	type FullMatch struct {
+		Vacancy   Vacancy `json:"vacancy"`
+		Score     float64 `json:"score"`
+		Reasoning string  `json:"reasoning"`
+	}
+
+	var fullMatches []FullMatch
+	for _, mlMatch := range mlMatches {
+		for _, v := range vacancies {
+			if v.ID == mlMatch.VacancyID {
+				fullMatches = append(fullMatches, FullMatch{
+					Vacancy:   v,
+					Score:     mlMatch.Score,
+					Reasoning: mlMatch.Reasoning,
+				})
+				break
+			}
+		}
+	}
+
 	json.NewEncoder(w).Encode(map[string]any{
 		"resume_id": resume.ID,
-		"matches":   matches,
+		"matches":   fullMatches,
 	})
 }

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Optional
 import httpx
@@ -12,13 +12,11 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Job Matching ML Service")
 
-# Локальная модель как fallback
 logger.info("Loading fallback model...")
 local_model = SentenceTransformer('all-MiniLM-L6-v2')
 
-# URL Ollama (по умолчанию localhost:11434)
 OLLAMA_URL = "http://localhost:11434"
-OLLAMA_MODEL = "llama3.2"  # или "phi3"
+OLLAMA_MODEL = "llama3.2:latest"
 
 
 class Vacancy(BaseModel):
@@ -28,6 +26,8 @@ class Vacancy(BaseModel):
     city: str
     experience: str
     remote: bool
+    skills: List[str] = []  # Новое поле
+    description: str = ""   # Новое поле
 
 
 class Resume(BaseModel):
@@ -59,12 +59,19 @@ class MatchResponse(BaseModel):
 async def match_with_ollama(resume: Resume, vacancies: List[Vacancy]) -> List[MatchResult]:
     """Используем локальную LLM через Ollama"""
     
-    vacancies_text = "\n".join([
-        f"{v.id}. {v.title} at {v.company} ({v.experience}, {v.city}, remote={v.remote})"
-        for v in vacancies
-    ])
+    # Формируем детальное описание вакансий с навыками
+    vacancies_text = ""
+    for v in vacancies:
+        skills_str = ", ".join(v.skills) if v.skills else "Not specified"
+        vacancies_text += f"""
+{v.id}. {v.title} at {v.company}
+   Location: {v.city}, Remote: {v.remote}
+   Experience: {v.experience}
+   Required skills: {skills_str}
+   Description: {v.description[:200] if v.description else "No description"}
+"""
     
-    prompt = f"""You are a job matching expert. Score how well this candidate matches each vacancy.
+    prompt = f"""You are a job matching expert. Analyze how well this candidate matches each vacancy.
 
 CANDIDATE:
 Title: {resume.title}
@@ -75,8 +82,13 @@ About: {resume.about}
 VACANCIES:
 {vacancies_text}
 
-For each vacancy, give a score from 0.0 to 1.0 and one sentence reasoning.
-Respond ONLY with valid JSON, no other text:
+Scoring criteria:
+- Skills match (most important): Do candidate's skills match required skills?
+- Experience level: Does years of experience match vacancy level?
+- Role alignment: Does candidate's background fit the position?
+
+For each vacancy, give a score from 0.0 to 1.0 and brief reasoning.
+Respond ONLY with valid JSON:
 {{"matches": [{{"vacancy_id": 1, "score": 0.85, "reasoning": "..."}}]}}"""
 
     async with httpx.AsyncClient(timeout=60.0) as client:
@@ -86,9 +98,7 @@ Respond ONLY with valid JSON, no other text:
                 "model": OLLAMA_MODEL,
                 "prompt": prompt,
                 "stream": False,
-                "options": {
-                    "temperature": 0.3
-                }
+                "options": {"temperature": 0.3}
             }
         )
         
@@ -98,8 +108,6 @@ Respond ONLY with valid JSON, no other text:
         result = response.json()
         content = result["response"]
         
-        # Парсим JSON из ответа модели
-        # Иногда модель добавляет текст вокруг JSON, ищем его
         start = content.find("{")
         end = content.rfind("}") + 1
         if start == -1 or end == 0:
@@ -118,13 +126,26 @@ Respond ONLY with valid JSON, no other text:
 
 
 def match_with_local_model(resume: Resume, vacancies: List[Vacancy]) -> List[MatchResult]:
-    """Fallback: sentence-transformers"""
+    """Fallback: sentence-transformers с улучшенным текстом"""
     
-    resume_text = f"{resume.title} {' '.join(resume.skills)} {resume.about}"
-    vacancy_texts = [
-        f"{v.title} {v.experience} {v.company}"
-        for v in vacancies
-    ]
+    resume_text = f"""
+Position: {resume.title}
+Skills: {', '.join(resume.skills)}
+Experience: {resume.experience_years} years
+About: {resume.about}
+"""
+    
+    vacancy_texts = []
+    for v in vacancies:
+        skills_str = ", ".join(v.skills) if v.skills else ""
+        text = f"""
+Position: {v.title}
+Company: {v.company}
+Experience: {v.experience}
+Skills: {skills_str}
+Description: {v.description}
+"""
+        vacancy_texts.append(text)
     
     resume_embedding = local_model.encode([resume_text])
     vacancy_embeddings = local_model.encode(vacancy_texts)
@@ -176,6 +197,7 @@ def health():
         "ollama_model": OLLAMA_MODEL,
         "fallback": "sentence-transformers"
     }
+
 
 if __name__ == "__main__":
     import uvicorn

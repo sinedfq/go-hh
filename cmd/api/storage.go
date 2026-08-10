@@ -41,7 +41,7 @@ func (s *PostgresStorage) Close() {
 
 func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error) {
 	query := `
-		SELECT id, title, company, location, experience, remote
+		SELECT id, title, company, location, experience, remote, skills, description
 		FROM vacancies
 		ORDER BY created_at DESC
 	`
@@ -62,6 +62,8 @@ func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error
 			&v.Location,
 			&v.Experience,
 			&v.Remote,
+			&v.Skills,
+			&v.Description,
 		)
 		if err != nil {
 			return nil, err
@@ -69,16 +71,12 @@ func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error
 		vacancies = append(vacancies, v)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return vacancies, nil
+	return vacancies, rows.Err()
 }
 
 func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, error) {
 	query := `
-		SELECT id, title, company, location, experience, remote
+		SELECT id, title, company, location, experience, remote, skills, description
 		FROM vacancies
 		WHERE id = $1
 	`
@@ -91,6 +89,8 @@ func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, 
 		&v.Location,
 		&v.Experience,
 		&v.Remote,
+		&v.Skills,
+		&v.Description,
 	)
 
 	if err != nil {
@@ -105,8 +105,8 @@ func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, 
 
 func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, error) {
 	query := `
-		INSERT INTO vacancies (title, company, location, experience, remote)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO vacancies (title, company, location, experience, remote, skills, description)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
@@ -119,6 +119,8 @@ func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, er
 		v.Location,
 		v.Experience,
 		v.Remote,
+		v.Skills,
+		v.Description,
 	).Scan(&id)
 
 	if err != nil {

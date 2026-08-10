@@ -10,6 +10,7 @@ import (
 func main() {
 	ctx := context.Background()
 
+	// Подключение к БД
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
 		dbURL = "postgres://postgres:postgres@localhost:5432/gohh?sslmode=disable"
@@ -21,7 +22,14 @@ func main() {
 	}
 	defer storage.Close()
 
-	server := NewServer(storage)
+	// ML-клиент
+	mlURL := os.Getenv("ML_SERVICE_URL")
+	if mlURL == "" {
+		mlURL = "http://127.0.0.1:8000"
+	}
+	mlClient := NewMLClient(mlURL)
+
+	server := NewServer(storage, mlClient)
 
 	// Health
 	http.HandleFunc("/health", server.healthHandler)
@@ -34,10 +42,11 @@ func main() {
 	http.HandleFunc("GET /api/resumes", server.resumeHandler)
 	http.HandleFunc("POST /api/resumes", server.createResumeHandler)
 
-	// Матчи
 	http.HandleFunc("GET /api/resumes/{id}/matches", server.matchesHandler)
 
 	log.Println("Server starting on :8080")
+	log.Printf("ML service URL: %s", mlURL)
+
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
