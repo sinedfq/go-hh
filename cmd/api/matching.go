@@ -1,62 +1,80 @@
 package main
 
 import (
+	"fmt"
+	"math"
 	"sort"
 	"strings"
 )
 
-func MatchVacancies(resume Resume, vacancies []Vacancy) []Match {
+// Match представляет результат сопоставления
+type Match struct {
+	VacancyID int     `json:"vacancy_id"`
+	Score     float64 `json:"score"`
+	Reasoning string  `json:"reasoning"`
+}
+
+// SimpleMatch выполняет простое сопоставление без ML-сервиса
+func SimpleMatch(resume Resume, vacancies []Vacancy) []Match {
 	var matches []Match
 
 	for _, v := range vacancies {
-		score := calculateMatchScore(resume, v)
+		score := 0.0
+		var reasons []string
+
+		// Совпадение навыков
+		skillMatches := 0
+		for _, rSkill := range resume.Skills {
+			for _, vSkill := range v.Skills {
+				if strings.EqualFold(rSkill, vSkill) {
+					skillMatches++
+					reasons = append(reasons, fmt.Sprintf("Навык: %s", rSkill))
+				}
+			}
+		}
+
+		if len(resume.Skills) > 0 {
+			skillScore := float64(skillMatches) / float64(len(resume.Skills))
+			score += skillScore * 0.6 // 60% веса на навыки
+		}
+
+		// Совпадение уровня опыта
+		if resume.Experience == v.Experience {
+			score += 0.2 // 20% веса на опыт
+			reasons = append(reasons, "Подходит уровень опыта")
+		}
+
+		// Совпадение по удалёнке
+		if resume.Remote && v.Remote {
+			score += 0.1 // 10% веса
+			reasons = append(reasons, "Удалённая работа")
+		}
+
+		// Совпадение по городу
+		if resume.City != "" && strings.EqualFold(resume.City, v.Location) {
+			score += 0.1 // 10% веса
+			reasons = append(reasons, "Город совпадает")
+		}
+
+		// Округляем до 2 знаков
+		score = math.Round(score*100) / 100
+
+		reasoning := strings.Join(reasons, ", ")
+		if reasoning == "" {
+			reasoning = "Частичное совпадение"
+		}
+
 		matches = append(matches, Match{
-			Vacancy: v,
-			Score:   score,
+			VacancyID: v.ID,
+			Score:     score,
+			Reasoning: reasoning,
 		})
 	}
 
+	// Сортируем по score (убывание)
 	sort.Slice(matches, func(i, j int) bool {
 		return matches[i].Score > matches[j].Score
 	})
 
 	return matches
-}
-
-func calculateMatchScore(resume Resume, vacancy Vacancy) float64 {
-	score := 0.0
-	maxScore := 0.0
-
-	maxScore += 0.6
-	titleLower := strings.ToLower(vacancy.Title)
-
-	if len(resume.Skills) > 0 {
-		matchedSkills := 0
-		for _, skill := range resume.Skills {
-			if strings.Contains(titleLower, strings.ToLower(skill)) {
-				matchedSkills++
-			}
-		}
-		score += 0.6 * float64(matchedSkills) / float64(len(resume.Skills))
-	}
-
-	// 2. Удалёнка (вес 0.2)
-	maxScore += 0.2
-	if vacancy.Remote {
-		score += 0.2
-	}
-
-	// 3. Опыт (вес 0.2)
-	maxScore += 0.2
-	expLower := strings.ToLower(vacancy.Experience)
-
-	if resume.ExperienceYears >= 5 && strings.Contains(expLower, "senior") {
-		score += 0.2
-	} else if resume.ExperienceYears >= 2 && resume.ExperienceYears < 5 && strings.Contains(expLower, "middle") {
-		score += 0.2
-	} else if resume.ExperienceYears <= 2 && strings.Contains(expLower, "junior") {
-		score += 0.2
-	}
-
-	return score / maxScore
 }

@@ -1,0 +1,203 @@
+/* ====== OVERLAY (почти прозрачный, чтобы видеть профиль) ====== */
+.resume-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  animation: resumeOverlayFadeIn 0.3s ease;
+}
+
+@keyframes resumeOverlayFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ====== МОДАЛЬНОЕ ОКНО — APPLE GLASS ====== */
+.resume-modal {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  
+  /* Apple-style glass effect */
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  
+  /* Стеклянная рамка как в macOS */
+  border: 0.5px solid rgba(255, 255, 255, 0.18);
+  border-radius: 24px;
+  
+  /* Многослойная тень */
+  box-shadow: 
+    0 24px 48px rgba(0, 0, 0, 0.12),
+    0 12px 24px rgba(0, 0, 0, 0.08),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+  
+  overflow-y: auto;
+  animation: modalAppear 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 102, 204, 0.5) transparent;
+}
+
+.resume-modal::-webkit-scrollbar {
+  width: 4px;
+}
+
+.resume-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.resume-modal::-webkit-scrollbar-thumb {
+   background: rgba(0, 102, 204, 0.5);
+  border-radius: 2px;
+}
+
+.resume-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 102, 204, 0.8);
+}
+
+@keyframes modalAppear {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Кнопка закрытия — стеклянная */
+.resume-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #666;
+  font-size: 20px;
+  font-weight: 300;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.resume-modal-close:hover {
+  background: rgba(255, 255, 255, 0.8);
+  color: #1a1a1a;
+  transform: scale(1.1);
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.resume-modal-content {
+  padding: 2rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .resume-modal-overlay {
+    padding: 1rem;
+    align-items: flex-end;
+  }
+
+  .resume-modal {
+    max-height: 95vh;
+    border-radius: 24px 24px 0 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .resume-modal {
+    max-width: 100%;
+  }
+}
+
+/* ====== КРАСИВЫЙ СКРОЛЛБАР (macOS style) ====== */
+
+.resume-modal,
+.details-modal {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.resume-modal::-webkit-scrollbar,
+.details-modal::-webkit-scrollbar {
+  width: 8px;
+}
+
+.resume-modal::-webkit-scrollbar-track,
+.details-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.resume-modal::-webkit-scrollbar-thumb,
+.details-modal::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  transition: background 0.2s ease;
+}
+
+.resume-modal::-webkit-scrollbar-thumb:hover,
+.details-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+  background-clip: content-box;
+}
+
+/* ====== КНОПКА ЗАКРЫТИЯ (снаружи модалки) ====== */
+.modal-close-btn {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0.5px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  color: #333;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1a1a1a;
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
