@@ -199,9 +199,8 @@ function App() {
         {user && (
           <div className="sidebar-footer">
             <div
-              className={`user-profile-btn ${mode === 'profile' ? 'active' : ''}`}
+              className="user-profile-btn"
               onClick={() => setMode('profile')}
-              title={user.email}
             >
               <div className="user-avatar">
                 {user.email[0].toUpperCase()}

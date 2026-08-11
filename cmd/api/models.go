@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Health struct {
 	Status string `json:"status"`
 }
@@ -16,12 +18,45 @@ type Vacancy struct {
 }
 
 type Resume struct {
-	ID              int      `json:"id"`
-	Title           string   `json:"title"`
+	ID              int              `json:"id"`
+	UserID          int              `json:"user_id,omitempty"`
+	FullName        string           `json:"full_name"`
+	DesiredPosition string           `json:"desired_position"`
+	Experience      string           `json:"experience"`
+	Skills          []string         `json:"skills"`
+	About           string           `json:"about"`
+	City            string           `json:"city"`
+	Remote          bool             `json:"remote"`
+	WorkExperience  []WorkExperience `json:"work_experience"`
+	CreatedAt       time.Time        `json:"created_at"`
+}
+
+type WorkExperience struct {
+	ID          int        `json:"id"`
+	ResumeID    int        `json:"resume_id"`
+	Company     string     `json:"company"`
+	Position    string     `json:"position"`
+	StartDate   time.Time  `json:"start_date"`
+	EndDate     *time.Time `json:"end_date"`
+	Description string     `json:"description"`
+	CreatedAt   time.Time  `json:"created_at"`
+}
+
+type CreateWorkExperienceRequest struct {
+	Company     string  `json:"company"`
+	Position    string  `json:"position"`
+	StartDate   string  `json:"start_date"` // приходит как строка "2024-01-01"
+	EndDate     *string `json:"end_date"`   // строка или null
+	Description string  `json:"description"`
+}
+type CreateResumeRequest struct {
+	FullName        string   `json:"full_name"`
+	DesiredPosition string   `json:"desired_position"`
+	Experience      string   `json:"experience"`
 	Skills          []string `json:"skills"`
-	ExperienceYears int      `json:"experience_years"`
-	ExpectedSalary  int      `json:"expected_salary"`
 	About           string   `json:"about"`
+	City            string   `json:"city"`
+	Remote          bool     `json:"remote"`
 }
 
 type MLVacancy struct {
@@ -61,7 +96,34 @@ type MLMatchResponse struct {
 	ModelUsed string          `json:"model_used"`
 }
 
-type Match struct {
-	Vacancy Vacancy `json:"vacancy"`
-	Score   float64 `json:"score"`
+type User struct {
+	ID           int       `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"-"` // не отдаём в JSON
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type AuthResponse struct {
+	Token string `json:"token"`
+	User  User   `json:"user"`
+}
+
+type Skill struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+type Position struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }

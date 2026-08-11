@@ -37,23 +37,42 @@ func main() {
 	// Health
 	mux.HandleFunc("/health", server.healthHandler)
 
-	// Вакансии
+	// Аутентификация
+	mux.HandleFunc("POST /api/auth/register", server.registerHandler)
+	mux.HandleFunc("POST /api/auth/login", server.loginHandler)
+	mux.HandleFunc("GET /api/me", server.authMiddleware(server.meHandler))
+
+	// Вакансии (публичные)
 	mux.HandleFunc("GET /api/vacancies", server.vacancyHandler)
 	mux.HandleFunc("POST /api/vacancies", server.createVacancyHandler)
 
 	// Резюме
 	mux.HandleFunc("GET /api/resumes", server.resumeHandler)
-	mux.HandleFunc("POST /api/resumes", server.createResumeHandler)
+	mux.HandleFunc("POST /api/resumes", server.authMiddleware(server.createResumeHandler))
+	mux.HandleFunc("GET /api/my-resume", server.authMiddleware(server.getMyResumeHandler))
+	mux.HandleFunc("DELETE /api/my-resume", server.authMiddleware(server.deleteMyResumeHandler))
 
-	// Матчинг
-	mux.HandleFunc("GET /api/resumes/{id}/matches", server.matchesHandler)
+	// Опыт работы
+	mux.HandleFunc("POST /api/work-experience", server.authMiddleware(server.addWorkExperienceHandler))
+	mux.HandleFunc("DELETE /api/work-experience/{id}", server.authMiddleware(server.deleteWorkExperienceHandler))
 
-	// Избранное
-	mux.HandleFunc("POST /api/favorites", server.addFavoriteHandler)
-	mux.HandleFunc("DELETE /api/favorites/{vacancyId}", server.removeFavoriteHandler)
-	mux.HandleFunc("GET /api/favorites", server.getFavoritesHandler)
+	// Матчинг (требует авторизации)
+	mux.HandleFunc("GET /api/resumes/{id}/matches", server.authMiddleware(server.matchesHandler))
 
-	// Статика фронтенда (раздаём собранный React-бандл)
+	// Избранное (требует авторизации)
+	mux.HandleFunc("POST /api/favorites", server.authMiddleware(server.addFavoriteHandler))
+	mux.HandleFunc("DELETE /api/favorites/{vacancyId}", server.authMiddleware(server.removeFavoriteHandler))
+	mux.HandleFunc("GET /api/favorites", server.authMiddleware(server.getFavoritesHandler))
+
+	// Библиотека навыков
+	mux.HandleFunc("GET /api/skills", server.getSkillsHandler)
+	mux.HandleFunc("POST /api/skills", server.authMiddleware(server.createSkillHandler))
+
+	// Библиотека должностей
+	mux.HandleFunc("GET /api/positions", server.getPositionsHandler)
+	mux.HandleFunc("POST /api/positions", server.authMiddleware(server.createPositionHandler))
+
+	// Статика фронтенда
 	fs := http.FileServer(http.Dir("frontend/dist"))
 	mux.Handle("/", fs)
 
