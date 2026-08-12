@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -28,6 +29,8 @@ type Storage interface {
 	GetWorkExperienceByResumeID(ctx context.Context, resumeID int) ([]WorkExperience, error)
 	DeleteWorkExperience(ctx context.Context, id int) error
 
+	UpdateResume(ctx context.Context, resumeID int, userID int, req CreateResumeRequest) error
+
 	// Избранное
 	AddFavorite(ctx context.Context, userID, vacancyID int) error
 	RemoveFavorite(ctx context.Context, userID, vacancyID int) error
@@ -42,6 +45,8 @@ type Storage interface {
 
 	GetAllPositions(ctx context.Context) ([]Position, error)
 	CreatePosition(ctx context.Context, name string) (Position, error)
+
+	GetCandidateVacancies(ctx context.Context, skills []string, limit int) ([]Vacancy, error)
 }
 
 type PostgresStorage struct {
@@ -439,18 +444,45 @@ func (s *PostgresStorage) GetUserByID(ctx context.Context, id int) (User, error)
 }
 
 func (s *PostgresStorage) CreateWorkExperience(ctx context.Context, resumeID int, req CreateWorkExperienceRequest) (int, error) {
-	// Парсим start_date
-	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	// Парсим start_date — поддерживаем оба формата
+	var startDate time.Time
+	var err error
+
+	// Сначала пробуем простой формат
+	startDate, err = time.Parse("2006-01-02", req.StartDate)
 	if err != nil {
-		return 0, fmt.Errorf("invalid start_date format: %w", err)
+		// Если не получилось, пробуем ISO формат
+		startDate, err = time.Parse(time.RFC3339, req.StartDate)
+		if err != nil {
+			// Если и это не сработало, пробуем дату без времени
+			if len(req.StartDate) >= 10 {
+				startDate, err = time.Parse("2006-01-02", req.StartDate[:10])
+			}
+			if err != nil {
+				return 0, fmt.Errorf("invalid start_date format: %s, error: %w", req.StartDate, err)
+			}
+		}
 	}
 
 	// Парсим end_date (может быть null)
 	var endDate *time.Time
 	if req.EndDate != nil && *req.EndDate != "" {
-		parsed, err := time.Parse("2006-01-02", *req.EndDate)
+		var parsed time.Time
+
+		// Сначала пробуем простой формат
+		parsed, err = time.Parse("2006-01-02", *req.EndDate)
 		if err != nil {
-			return 0, fmt.Errorf("invalid end_date format: %w", err)
+			// Если не получилось, пробуем ISO формат
+			parsed, err = time.Parse(time.RFC3339, *req.EndDate)
+			if err != nil {
+				// Если и это не сработало, пробуем дату без времени
+				if len(*req.EndDate) >= 10 {
+					parsed, err = time.Parse("2006-01-02", (*req.EndDate)[:10])
+				}
+				if err != nil {
+					return 0, fmt.Errorf("invalid end_date format: %s, error: %w", *req.EndDate, err)
+				}
+			}
 		}
 		endDate = &parsed
 	}
@@ -477,7 +509,6 @@ func (s *PostgresStorage) CreateWorkExperience(ctx context.Context, resumeID int
 
 	return id, nil
 }
-
 func (s *PostgresStorage) GetWorkExperienceByResumeID(ctx context.Context, resumeID int) ([]WorkExperience, error) {
 	query := `
 		SELECT id, resume_id, company, position, start_date, end_date, description, created_at
@@ -612,4 +643,84 @@ func (s *PostgresStorage) CreatePosition(ctx context.Context, name string) (Posi
 	}
 
 	return p, nil
+}
+
+func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []string, limit int) ([]Vacancy, error) {
+	// Если навыков в резюме нет — кандидатов нет
+	if len(skills) == 0 {
+		return []Vacancy{}, nil
+	}
+
+	lowerSkills := make([]string, len(skills))
+	for i, sk := range skills {
+		lowerSkills[i] = strings.ToLower(strings.TrimSpace(sk))
+	}
+
+	query := `
+		WITH scored AS (
+			SELECT v.id, v.title, v.company, v.location, v.experience, v.remote,
+			       v.skills, v.description, v.created_at,
+			       COALESCE((
+			           SELECT COUNT(*)
+			           FROM unnest(v.skills) AS skill
+			           WHERE LOWER(skill) = ANY($1)
+			       ), 0) AS skill_overlap
+			FROM vacancies v
+		)
+		SELECT id, title, company, location, experience, remote, skills, description, skill_overlap
+		FROM scored
+		WHERE skill_overlap > 0
+		ORDER BY skill_overlap DESC, created_at DESC
+		LIMIT $2
+	`
+
+	rows, err := s.pool.Query(ctx, query, lowerSkills, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []Vacancy
+	for rows.Next() {
+		var v Vacancy
+		var overlap int
+		err := rows.Scan(
+			&v.ID, &v.Title, &v.Company, &v.Location,
+			&v.Experience, &v.Remote, &v.Skills, &v.Description,
+			&overlap,
+		)
+		if err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, v)
+	}
+
+	if vacancies == nil {
+		vacancies = []Vacancy{}
+	}
+
+	return vacancies, rows.Err()
+}
+
+func (s *PostgresStorage) UpdateResume(ctx context.Context, resumeID int, userID int, req CreateResumeRequest) error {
+	query := `
+		UPDATE resumes 
+		SET full_name = $1, desired_position = $2, experience = $3, 
+		    skills = $4, about = $5, city = $6, remote = $7, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $8 AND user_id = $9
+	`
+
+	_, err := s.pool.Exec(ctx, query,
+		req.FullName,
+		req.DesiredPosition,
+		req.Experience,
+		req.Skills,
+		req.About,
+		req.City,
+		req.Remote,
+		resumeID,
+		userID,
+	)
+
+	return err
 }

@@ -8,81 +8,59 @@ const EXPERIENCE_LEVELS = [
   { value: 'Senior', label: 'Senior', description: '5+ лет опыта' }
 ]
 
-function ResumeForm({ onSuccess, onCancel }) {
+function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
   const [formData, setFormData] = useState({
-    full_name: '',
-    desired_position: '',
-    experience: 'Junior',
-    skills: [],
-    about: '',
-    city: '',
-    remote: false
+    full_name: initialData?.full_name || '',
+    desired_position: initialData?.desired_position || '',
+    experience: initialData?.experience || 'Junior',
+    skills: initialData?.skills || [],
+    about: initialData?.about || '',
+    city: initialData?.city || '',
+    remote: initialData?.remote || false
   })
+
   const [skillInput, setSkillInput] = useState('')
-  const [workExperience, setWorkExperience] = useState([])
+  const [workExperience, setWorkExperience] = useState(initialData?.work_experience || [])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef(null)
+
   const [skillsLibrary, setSkillsLibrary] = useState([])
   const [skillSuggestions, setSkillSuggestions] = useState([])
   const [showSuggestions, setShowSuggestions] = useState(false)
   const suggestionsRef = useRef(null)
+
   const [positionsLibrary, setPositionsLibrary] = useState([])
   const [positionSuggestions, setPositionSuggestions] = useState([])
   const [showPositionSuggestions, setShowPositionSuggestions] = useState(false)
   const positionSuggestionsRef = useRef(null)
+
+  // ====== Загрузка библиотек ======
+  useEffect(() => {
+    const loadLibraries = async () => {
+      try {
+        const [skillsRes, positionsRes] = await Promise.all([
+          axios.get('/api/skills'),
+          axios.get('/api/positions')
+        ])
+        setSkillsLibrary(skillsRes.data || [])
+        setPositionsLibrary(positionsRes.data || [])
+      } catch (err) {
+        console.error('Ошибка загрузки библиотек:', err)
+      }
+    }
+    loadLibraries()
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false)
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Загрузка библиотеки навыков
-  useEffect(() => {
-    const loadSkills = async () => {
-      try {
-        const res = await axios.get('/api/skills')
-        setSkillsLibrary(res.data || [])
-      } catch (err) {
-        console.error('Ошибка загрузки навыков:', err)
-      }
-    }
-    loadSkills()
-  }, [])
-
-  // Закрытие предложений при клике вне
-  useEffect(() => {
-    const handleClickOutside = (e) => {
       if (suggestionsRef.current && !suggestionsRef.current.contains(e.target)) {
         setShowSuggestions(false)
       }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  // Загрузка библиотеки должностей
-  useEffect(() => {
-    const loadPositions = async () => {
-      try {
-        const res = await axios.get('/api/positions')
-        setPositionsLibrary(res.data || [])
-      } catch (err) {
-        console.error('Ошибка загрузки должностей:', err)
-      }
-    }
-    loadPositions()
-  }, [])
-
-  // Закрытие предложений должностей при клике вне
-  useEffect(() => {
-    const handleClickOutside = (e) => {
       if (positionSuggestionsRef.current && !positionSuggestionsRef.current.contains(e.target)) {
         setShowPositionSuggestions(false)
       }
@@ -90,108 +68,6 @@ function ResumeForm({ onSuccess, onCancel }) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  // Фильтрация должностей при вводе
-  const handlePositionInputChange = (e) => {
-    const value = e.target.value
-    setFormData(prev => ({ ...prev, desired_position: value }))
-
-    if (value.trim()) {
-      const filtered = positionsLibrary
-        .filter(pos => pos.name.toLowerCase().includes(value.toLowerCase()))
-        .slice(0, 8)
-      setPositionSuggestions(filtered)
-      setShowPositionSuggestions(filtered.length > 0)
-    } else {
-      setPositionSuggestions([])
-      setShowPositionSuggestions(false)
-    }
-  }
-
-  // Выбор должности из предложений
-  const selectPosition = (positionName) => {
-    setFormData(prev => ({ ...prev, desired_position: positionName }))
-    setShowPositionSuggestions(false)
-  }
-
-  // Добавление новой должности в библиотеку при потере фокуса
-  const handlePositionBlur = async () => {
-    // Небольшая задержка чтобы клик по предложению успел сработать
-    setTimeout(async () => {
-      setShowPositionSuggestions(false)
-      const position = formData.desired_position.trim()
-      if (position && !positionsLibrary.some(p => p.name.toLowerCase() === position.toLowerCase())) {
-        try {
-          await axios.post('/api/positions', { name: position })
-          setPositionsLibrary(prev => [...prev, { id: Date.now(), name: position }])
-        } catch (err) {
-          console.error('Ошибка добавления должности в библиотеку:', err)
-        }
-      }
-    }, 200)
-  }
-
-  // Фильтрация предложений при вводе
-  const handleSkillInputChange = (e) => {
-    const value = e.target.value
-    setSkillInput(value)
-
-    if (value.trim()) {
-      const filtered = skillsLibrary
-        .filter(skill =>
-          skill.name.toLowerCase().includes(value.toLowerCase()) &&
-          !formData.skills.includes(skill.name)
-        )
-        .slice(0, 8)
-      setSkillSuggestions(filtered)
-      setShowSuggestions(filtered.length > 0)
-    } else {
-      setSkillSuggestions([])
-      setShowSuggestions(false)
-    }
-  }
-
-  // Выбор навыка из предложений
-  const selectSkill = (skillName) => {
-    if (!formData.skills.includes(skillName)) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, skillName]
-      }))
-    }
-    setSkillInput('')
-    setShowSuggestions(false)
-  }
-
-  // Добавление нового навыка (в форму и в библиотеку)
-  const addNewSkill = async () => {
-    const skill = skillInput.trim()
-    if (!skill) return
-
-    if (!formData.skills.includes(skill)) {
-      setFormData(prev => ({
-        ...prev,
-        skills: [...prev.skills, skill]
-      }))
-    }
-
-    // Добавляем в библиотеку на сервере
-    try {
-      await axios.post('/api/skills', { name: skill })
-      // Обновляем локальную библиотеку если навыка ещё нет
-      setSkillsLibrary(prev => {
-        if (!prev.some(s => s.name.toLowerCase() === skill.toLowerCase())) {
-          return [...prev, { id: Date.now(), name: skill }]
-        }
-        return prev
-      })
-    } catch (err) {
-      console.error('Ошибка добавления навыка в библиотеку:', err)
-    }
-
-    setSkillInput('')
-    setShowSuggestions(false)
-  }
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -206,6 +82,7 @@ function ResumeForm({ onSuccess, onCancel }) {
     setDropdownOpen(false)
   }
 
+  // ====== Навыки ======
   const addSkill = () => {
     const skill = skillInput.trim()
     if (skill && !formData.skills.includes(skill)) {
@@ -227,7 +104,6 @@ function ResumeForm({ onSuccess, onCancel }) {
   const handleSkillKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault()
-      // Если есть точное совпадение в библиотеке — выбираем его
       const exactMatch = skillsLibrary.find(
         s => s.name.toLowerCase() === skillInput.trim().toLowerCase()
       )
@@ -239,10 +115,104 @@ function ResumeForm({ onSuccess, onCancel }) {
     }
   }
 
+  const handleSkillInputChange = (e) => {
+    const value = e.target.value
+    setSkillInput(value)
+
+    if (value.trim()) {
+      const filtered = skillsLibrary
+        .filter(skill =>
+          skill.name.toLowerCase().includes(value.toLowerCase()) &&
+          !formData.skills.includes(skill.name)
+        )
+        .slice(0, 8)
+      setSkillSuggestions(filtered)
+      setShowSuggestions(filtered.length > 0)
+    } else {
+      setSkillSuggestions([])
+      setShowSuggestions(false)
+    }
+  }
+
+  const selectSkill = (skillName) => {
+    if (!formData.skills.includes(skillName)) {
+      setFormData(prev => ({
+        ...prev,
+        skills: [...prev.skills, skillName]
+      }))
+    }
+    setSkillInput('')
+    setShowSuggestions(false)
+  }
+
+  const addNewSkill = async () => {
+    const skill = skillInput.trim()
+    if (!skill) return
+
+    if (!formData.skills.includes(skill)) {
+      setFormData(prev => ({
+        ...prev,
+        skills: [...prev.skills, skill]
+      }))
+    }
+
+    try {
+      await axios.post('/api/skills', { name: skill })
+      setSkillsLibrary(prev => {
+        if (!prev.some(s => s.name.toLowerCase() === skill.toLowerCase())) {
+          return [...prev, { id: Date.now(), name: skill }]
+        }
+        return prev
+      })
+    } catch (err) {
+      console.error('Ошибка добавления навыка:', err)
+    }
+
+    setSkillInput('')
+    setShowSuggestions(false)
+  }
+
+  // ====== Должности ======
+  const handlePositionInputChange = (e) => {
+    const value = e.target.value
+    setFormData(prev => ({ ...prev, desired_position: value }))
+
+    if (value.trim()) {
+      const filtered = positionsLibrary
+        .filter(pos => pos.name.toLowerCase().includes(value.toLowerCase()))
+        .slice(0, 8)
+      setPositionSuggestions(filtered)
+      setShowPositionSuggestions(filtered.length > 0)
+    } else {
+      setPositionSuggestions([])
+      setShowPositionSuggestions(false)
+    }
+  }
+
+  const selectPosition = (positionName) => {
+    setFormData(prev => ({ ...prev, desired_position: positionName }))
+    setShowPositionSuggestions(false)
+  }
+
+  const handlePositionBlur = async () => {
+    setTimeout(async () => {
+      setShowPositionSuggestions(false)
+      const position = formData.desired_position.trim()
+      if (position && !positionsLibrary.some(p => p.name.toLowerCase() === position.toLowerCase())) {
+        try {
+          await axios.post('/api/positions', { name: position })
+          setPositionsLibrary(prev => [...prev, { id: Date.now(), name: position }])
+        } catch (err) {
+          console.error('Ошибка добавления должности:', err)
+        }
+      }
+    }, 200)
+  }
+
   // ====== Опыт работы ======
   const addWorkExperience = () => {
     setWorkExperience(prev => [...prev, {
-      id: Date.now(), // временный ID для UI
+      id: Date.now(),
       company: '',
       position: '',
       start_date: '',
@@ -268,32 +238,73 @@ function ResumeForm({ onSuccess, onCancel }) {
     setLoading(true)
 
     try {
-      // 1. Создаём резюме
-      const resumeRes = await axios.post('/api/resumes', formData)
-      let updatedResume = resumeRes.data
+      let updatedResume
 
-      // 2. Добавляем опыт работы (если есть)
-      for (const exp of workExperience) {
-        // Пропускаем пустые записи
-        if (!exp.company || !exp.position || !exp.start_date) continue
+      if (isEditMode) {
+        // Режим редактирования — PUT запрос
+        const res = await axios.put('/api/my-resume', formData)
+        updatedResume = res.data
 
-        try {
-          const expRes = await axios.post('/api/work-experience', {
-            company: exp.company,
-            position: exp.position,
-            start_date: exp.start_date,
-            end_date: exp.end_date || null,
-            description: exp.description
-          })
-          updatedResume = expRes.data // сервер возвращает обновлённое резюме
-        } catch (err) {
-          console.error('Ошибка добавления опыта:', err)
+        // Обновляем опыт работы (удаляем все и создаём заново)
+        // Сначала удаляем существующие записи
+        if (initialData?.work_experience) {
+          for (const exp of initialData.work_experience) {
+            try {
+              await axios.delete(`/api/work-experience/${exp.id}`)
+            } catch (err) {
+              console.error('Ошибка удаления опыта:', err)
+            }
+          }
+        }
+
+        // Создаём новые записи
+        for (const exp of workExperience) {
+          if (!exp.company || !exp.position || !exp.start_date) continue
+
+          // Нормализуем даты — убираем время если есть
+          const startDate = exp.start_date.split('T')[0]
+          const endDate = exp.end_date ? exp.end_date.split('T')[0] : null
+
+          try {
+            await axios.post('/api/work-experience', {
+              company: exp.company,
+              position: exp.position,
+              start_date: startDate,
+              end_date: endDate,
+              description: exp.description
+            })
+          } catch (err) {
+            console.error('Ошибка добавления опыта:', err)
+          }
+        }
+
+        // Загружаем обновлённое резюме
+        const freshRes = await axios.get('/api/my-resume')
+        updatedResume = freshRes.data
+      } else {
+        // Режим создания — POST запрос
+        const resumeRes = await axios.post('/api/resumes', formData)
+        updatedResume = resumeRes.data
+
+        for (const exp of workExperience) {
+          if (!exp.company || !exp.position || !exp.start_date) continue
+          try {
+            await axios.post('/api/work-experience', {
+              company: exp.company,
+              position: exp.position,
+              start_date: exp.start_date,
+              end_date: exp.end_date || null,
+              description: exp.description
+            })
+          } catch (err) {
+            console.error('Ошибка добавления опыта:', err)
+          }
         }
       }
 
       onSuccess(updatedResume)
     } catch (err) {
-      const message = err.response?.data?.error || 'Ошибка создания резюме'
+      const message = err.response?.data?.error || 'Ошибка сохранения резюме'
       setError(message)
     } finally {
       setLoading(false)
@@ -304,10 +315,11 @@ function ResumeForm({ onSuccess, onCancel }) {
     level => level.value === formData.experience
   )
 
+  // Остальной JSX без изменений
   return (
     <div className="resume-form-wrapper">
       <form onSubmit={handleSubmit} className="resume-form">
-        <h3>Создание резюме</h3>
+        <h3>{isEditMode ? 'Редактирование резюме' : 'Создание резюме'}</h3>
 
         {/* ====== Основная информация ====== */}
         <div className="form-row">
@@ -419,7 +431,7 @@ function ResumeForm({ onSuccess, onCancel }) {
           </div>
         </div>
 
-        {/* ====== Навыки с автодополнением ====== */}
+        {/* ====== Навыки ====== */}
         <div className="form-group">
           <label>Навыки</label>
           <div className="skills-input-wrapper" ref={suggestionsRef}>
@@ -496,7 +508,6 @@ function ResumeForm({ onSuccess, onCancel }) {
         </div>
 
         {/* ====== Опыт работы ====== */}
-        {/* ====== Опыт работы ====== */}
         <div className="form-group work-experience-section">
           <div className="section-header-form">
             <label>Опыт работы</label>
@@ -544,7 +555,7 @@ function ResumeForm({ onSuccess, onCancel }) {
                     <label>С</label>
                     <input
                       type="date"
-                      value={exp.start_date}
+                      value={exp.start_date ? exp.start_date.split('T')[0] : ''}
                       onChange={(e) => updateWorkExperience(exp.id, 'start_date', e.target.value)}
                     />
                   </div>
@@ -552,7 +563,7 @@ function ResumeForm({ onSuccess, onCancel }) {
                     <label>По</label>
                     <input
                       type="date"
-                      value={exp.end_date}
+                      value={exp.end_date ? exp.end_date.split('T')[0] : ''}
                       onChange={(e) => updateWorkExperience(exp.id, 'end_date', e.target.value)}
                     />
                   </div>
@@ -576,7 +587,10 @@ function ResumeForm({ onSuccess, onCancel }) {
             Отмена
           </button>
           <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Создание...' : 'Создать резюме'}
+            {loading
+              ? (isEditMode ? 'Сохранение...' : 'Создание...')
+              : (isEditMode ? 'Сохранить изменения' : 'Создать резюме')
+            }
           </button>
         </div>
       </form>
