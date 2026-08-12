@@ -72,11 +72,13 @@ type MLVacancy struct {
 
 type MLResume struct {
 	ID              int      `json:"id"`
-	Title           string   `json:"title"`
+	FullName        string   `json:"full_name"`
+	DesiredPosition string   `json:"desired_position"`
+	Experience      string   `json:"experience"`
 	Skills          []string `json:"skills"`
-	ExperienceYears int      `json:"experience_years"`
-	ExpectedSalary  int      `json:"expected_salary"`
 	About           string   `json:"about"`
+	City            string   `json:"city"`
+	Remote          bool     `json:"remote"`
 }
 
 type MLMatchRequest struct {
@@ -126,4 +128,10 @@ type Skill struct {
 type Position struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
+}
+
+type Recommendation struct {
+	Vacancy   Vacancy `json:"vacancy"`
+	Score     float64 `json:"score"`
+	Reasoning string  `json:"reasoning"`
 }

@@ -41,14 +41,15 @@ func experienceToYears(exp string) int {
 }
 
 func (c *MLClient) MatchResumeToVacancies(ctx context.Context, resume Resume, vacancies []Vacancy) ([]MLMatchResult, error) {
-	// Адаптируем новые поля резюме к формату ML-сервиса
 	mlResume := MLResume{
 		ID:              resume.ID,
-		Title:           resume.DesiredPosition, // Используем DesiredPosition вместо Title
+		FullName:        resume.FullName,
+		DesiredPosition: resume.DesiredPosition,
+		Experience:      resume.Experience,
 		Skills:          resume.Skills,
-		ExperienceYears: experienceToYears(resume.Experience), // Конвертируем строку в число
-		ExpectedSalary:  0,                                    // Поле больше не используется
 		About:           resume.About,
+		City:            resume.City,
+		Remote:          resume.Remote,
 	}
 
 	mlVacancies := make([]MLVacancy, len(vacancies))
@@ -57,7 +58,7 @@ func (c *MLClient) MatchResumeToVacancies(ctx context.Context, resume Resume, va
 			ID:          v.ID,
 			Title:       v.Title,
 			Company:     v.Company,
-			City:        v.Location, // Vacancy.Location -> MLVacancy.City
+			City:        v.Location, // Vacancy.Location → MLVacancy.City
 			Experience:  v.Experience,
 			Remote:      v.Remote,
 			Skills:      v.Skills,

@@ -370,10 +370,15 @@
 
 .details-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
   padding-top: 1.5rem;
   margin-top: 1.5rem;
-  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.details-actions .btn {
+  flex: 1;
 }
 
 /* Адаптивность */

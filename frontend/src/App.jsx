@@ -7,19 +7,37 @@ import VacancyDetail from './components/VacancyDetail'
 import FavoritesList from './components/FavoritesList'
 import LoginPage from './pages/LoginPage'
 import ProfilePage from './pages/ProfilePage'
+import RecommendationsPage from './pages/RecommendationsPage'
 import './App.css'
 
 function App() {
   const { user, loading: authLoading, logout } = useAuth()
 
+  // Вакансии и избранное
   const [vacancies, setVacancies] = useState([])
   const [favorites, setFavorites] = useState([])
   const [currentIndex, setCurrentIndex] = useState(-1)
   const [selectedVacancy, setSelectedVacancy] = useState(null)
   const [loading, setLoading] = useState(true)
+
+  // Режимы и модалки
   const [mode, setMode] = useState('browse')
   const [showLoginModal, setShowLoginModal] = useState(false)
 
+  // Рекомендации
+  const [recommendations, setRecommendations] = useState([])
+  const [selectedRecommendedVacancy, setSelectedRecommendedVacancy] = useState(null)
+  const [recommendationsLoaded, setRecommendationsLoaded] = useState(false)
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false)
+
+  // Резюме (для обновления рекомендаций)
+  const [resume, setResume] = useState(null)
+
+  const [matchScores, setMatchScores] = useState({})
+
+  // ====== EFFECTS ======
+
+  // Интерцептор для авто-логаута при 401
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
@@ -33,6 +51,7 @@ function App() {
     return () => axios.interceptors.response.eject(interceptor)
   }, [logout])
 
+  // Загрузка вакансий при старте и избранного при логине
   useEffect(() => {
     if (!authLoading) {
       loadVacancies()
@@ -42,11 +61,43 @@ function App() {
     }
   }, [user, authLoading])
 
+  // Закрытие логин модалки при успешном логине
   useEffect(() => {
     if (user) {
       setShowLoginModal(false)
     }
   }, [user])
+
+  // Загрузка рекомендаций при переключении в режим
+  useEffect(() => {
+    if (mode === 'recommendations' && user && !recommendationsLoaded) {
+      loadRecommendations()
+    }
+  }, [mode, user])
+
+  // Обновление рекомендаций при изменении резюме
+  useEffect(() => {
+    if (user && recommendationsLoaded) {
+      setRecommendationsLoaded(false)
+      if (mode === 'recommendations') {
+        loadRecommendations(true)
+      }
+    }
+  }, [resume])
+
+  useEffect(() => {
+    if (mode === 'swipe' && user && !recommendationsLoaded) {
+      loadRecommendations()
+    }
+  }, [mode, user])
+
+  useEffect(() => {
+    if ((mode === 'recommendations' || mode === 'swipe') && user && !recommendationsLoaded) {
+      loadRecommendations()
+    }
+  }, [mode, user])
+
+  // ====== DATA LOADING ======
 
   const loadVacancies = async () => {
     try {
@@ -81,6 +132,37 @@ function App() {
     }
   }
 
+  const loadRecommendations = async (force = false) => {
+    if (recommendationsLoaded && !force) return
+
+    setRecommendationsLoading(true)
+    try {
+      const url = force ? '/api/recommendations?refresh=true' : '/api/recommendations'
+      const res = await axios.get(url)
+      const recs = res.data.recommendations || []
+      setRecommendations(recs)
+
+      // Создаём мапу vacancy_id -> score
+      const scores = {}
+      recs.forEach(rec => {
+        scores[rec.vacancy.id] = rec.score
+      })
+      setMatchScores(scores)
+
+      if (recs.length > 0) {
+        setSelectedRecommendedVacancy(recs[0].vacancy)
+      } else {
+        setSelectedRecommendedVacancy(null)
+      }
+      setRecommendationsLoaded(true)
+    } catch (err) {
+      console.error('Ошибка загрузки рекомендаций:', err)
+    } finally {
+      setRecommendationsLoading(false)
+    }
+  }
+  // ====== FAVORITES ======
+
   const addToFavorites = async (vacancyId) => {
     if (!user) {
       setShowLoginModal(true)
@@ -103,6 +185,8 @@ function App() {
       console.error('Ошибка удаления из избранного:', err)
     }
   }
+
+  // ====== SWIPE ======
 
   const handleSwipe = (direction, vacancyId) => {
     if (direction === 'right') {
@@ -128,13 +212,17 @@ function App() {
     return favorites.some(fav => fav.id === vacancyId)
   }
 
+  // ====== NAVIGATION ======
+
   const handleModeChange = (newMode) => {
-    if ((newMode === 'swipe' || newMode === 'favorites') && !user) {
+    if ((newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations') && !user) {
       setShowLoginModal(true)
       return
     }
     setMode(newMode)
   }
+
+  // ====== RENDER ======
 
   if (authLoading) {
     return (
@@ -149,11 +237,12 @@ function App() {
 
   return (
     <div className="app">
-      {/* Модальное окно логина — рендерится ПОВЕРХ приложения */}
+      {/* Модальное окно логина */}
       {showLoginModal && (
         <LoginPage onClose={() => setShowLoginModal(false)} />
       )}
 
+      {/* ====== САЙДБАР ====== */}
       <aside className="sidebar">
         <div className="sidebar-logo">
           <h1>GoHH!</h1>
@@ -193,14 +282,24 @@ function App() {
             </div>
           </div>
 
-
+          <div
+            className={`nav-item ${mode === 'recommendations' ? 'active' : ''}`}
+            onClick={() => handleModeChange('recommendations')}
+          >
+            <div className="nav-bar"></div>
+            <div className="nav-label">
+              <span className="nav-title">Рекомендации</span>
+              <span className="nav-subtitle">AI-подбор</span>
+            </div>
+          </div>
         </nav>
 
+        {/* Футер сайдбара */}
         {user && (
           <div className="sidebar-footer">
             <div
-              className="user-profile-btn"
-              onClick={() => setMode('profile')}
+              className={`user-profile-btn ${mode === 'profile' ? 'active' : ''}`}
+              onClick={() => handleModeChange('profile')}
             >
               <div className="user-avatar">
                 {user.email[0].toUpperCase()}
@@ -244,17 +343,20 @@ function App() {
         )}
       </aside>
 
+      {/* ====== ОСНОВНАЯ ОБЛАСТЬ ====== */}
       <div className="main-area">
         <header className="top-header">
           <h2 className="page-title">
             {mode === 'browse' && 'Все вакансии'}
             {mode === 'swipe' && 'Свайпай вакансии'}
             {mode === 'favorites' && 'Избранные вакансии'}
-            {mode === 'profile' && 'Мой профиль'}
+            {mode === 'profile' && 'Профиль'}
+            {mode === 'recommendations' && 'AI-рекомендации'}
           </h2>
         </header>
 
         <div className="content">
+          {/* ====== РЕЖИМ ПРОСМОТРА ====== */}
           {mode === 'browse' && (
             <>
               <VacancyList
@@ -274,6 +376,7 @@ function App() {
             </>
           )}
 
+          {/* ====== РЕЖИМ СВАЙПОВ ====== */}
           {mode === 'swipe' && user && (
             <div className="swipe-container">
               <div className="card-container">
@@ -297,6 +400,7 @@ function App() {
                       vacancy={vacancy}
                       onSwipe={handleSwipe}
                       isTop={index === currentIndex}
+                      matchScore={matchScores[vacancy.id]}
                     />
                   ))
                 )}
@@ -304,6 +408,7 @@ function App() {
             </div>
           )}
 
+          {/* ====== РЕЖИМ ИЗБРАННОГО ====== */}
           {mode === 'favorites' && user && (
             <div className="favorites-container">
               <FavoritesList
@@ -313,8 +418,23 @@ function App() {
             </div>
           )}
 
+          {/* ====== РЕЖИМ ПРОФИЛЯ ====== */}
           {mode === 'profile' && user && (
-            <ProfilePage />
+            <ProfilePage onResumeUpdate={(r) => {
+              setResume(r)
+              setRecommendationsLoaded(false)
+            }} />
+          )}
+
+          {/* ====== РЕЖИМ РЕКОМЕНДАЦИЙ ====== */}
+          {mode === 'recommendations' && user && (
+            <RecommendationsPage
+              recommendations={recommendations}
+              selectedVacancy={selectedRecommendedVacancy}
+              onSelectVacancy={setSelectedRecommendedVacancy}
+              loading={recommendationsLoading}
+              onRefresh={() => loadRecommendations(true)}
+            />
           )}
         </div>
       </div>
