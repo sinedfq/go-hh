@@ -95,6 +95,10 @@ func HashResume(resume Resume) string {
 		"about":            resume.About,
 		"city":             resume.City,
 		"remote":           resume.Remote,
+		"phone":            resume.Phone,
+		"telegram":         resume.Telegram,
+		"github":           resume.GitHub,
+		"linkedin":         resume.LinkedIn,
 		"work_experience":  resume.WorkExperience,
 	})
 	hash := sha256.Sum256(data)

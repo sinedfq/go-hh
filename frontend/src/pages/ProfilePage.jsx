@@ -3,10 +3,11 @@ import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
 import ResumeModal from '../components/ResumeModal'
 import ResumeDetailsModal from '../components/ResumeDetailsModal'
+import PhotoUpload from '../components/PhotoUpload'
 import './ProfilePage.css'
 
 function ProfilePage({ onResumeUpdate }) {
-    const { user, logout } = useAuth()
+    const { user, logout, updateUserPhoto } = useAuth()
     const [resume, setResume] = useState(null)
     const [loading, setLoading] = useState(true)
     const [showResumeModal, setShowResumeModal] = useState(false)
@@ -38,6 +39,45 @@ function ProfilePage({ onResumeUpdate }) {
         } catch (err) {
             console.error('Ошибка сервера:', err)
             setResume(null)
+        }
+    }
+
+    const handleUserPhotoUpload = async (formData) => {
+        console.log('📤 Отправка фото профиля...')
+        try {
+            const res = await axios.post('/api/users/me/photo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            console.log('✅ Ответ сервера:', res.data)
+            console.log('📸 photo_url:', res.data.photo_url)
+            updateUserPhoto(res.data.photo_url)
+        } catch (err) {
+            console.error('❌ Ошибка загрузки фото профиля:')
+            console.error('   Status:', err.response?.status)
+            console.error('   Data:', err.response?.data)
+            console.error('   Message:', err.message)
+            alert('Не удалось загрузить фото: ' + (err.response?.data?.error || err.message))
+            throw err
+        }
+    }
+
+    const handleResumePhotoUpload = async (formData) => {
+        console.log('📤 Отправка фото резюме...')
+        try {
+            const res = await axios.post('/api/resumes/me/photo', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            })
+            console.log('✅ Ответ сервера:', res.data)
+            console.log('📸 photo_url:', res.data.photo_url)
+            setResume(res.data)
+            onResumeUpdate?.(res.data)
+        } catch (err) {
+            console.error('❌ Ошибка загрузки фото резюме:')
+            console.error('   Status:', err.response?.status)
+            console.error('   Data:', err.response?.data)
+            console.error('   Message:', err.message)
+            alert('Не удалось загрузить фото: ' + (err.response?.data?.error || err.message))
+            throw err
         }
     }
 
@@ -117,12 +157,18 @@ function ProfilePage({ onResumeUpdate }) {
                 />
             )}
 
+         
+
             <div className="profile-card">
                 {/* Шапка профиля */}
                 <div className="profile-header">
-                    <div className="avatar">
-                        {user.email[0].toUpperCase()}
-                    </div>
+                    <PhotoUpload
+                        currentPhoto={user.photo_url}
+                        onUpload={handleUserPhotoUpload}
+                        label="Загрузить фото профиля"
+                        size="medium"
+                        fallback={user.email}
+                    />
                     <div className="profile-info">
                         <h2>{user.email}</h2>
                         <p className="member-since">
@@ -155,14 +201,25 @@ function ProfilePage({ onResumeUpdate }) {
                                     className="resume-card clickable"
                                     onClick={() => setShowResumeDetails(true)}
                                 >
-                                    <div className="resume-header">
-                                        <div>
-                                            <h4>{resume.full_name}</h4>
-                                            <p className="resume-position">{resume.desired_position}</p>
+                                    <div className="resume-card-top">
+                                        <div onClick={(e) => e.stopPropagation()}>
+                                            <PhotoUpload
+                                                currentPhoto={resume.photo_url}
+                                                onUpload={handleResumePhotoUpload}
+                                                label="Фото резюме"
+                                                size="small"
+                                                fallback={resume.full_name}  // ← ДОБАВЛЕНО: буква имени
+                                            />
                                         </div>
-                                        <div className="resume-badges">
-                                            <span className="badge">{resume.experience}</span>
-                                            {resume.remote && <span className="badge remote">Удалённо</span>}
+                                        <div className="resume-header">
+                                            <div>
+                                                <h4>{resume.full_name}</h4>
+                                                <p className="resume-position">{resume.desired_position}</p>
+                                            </div>
+                                            <div className="resume-badges">
+                                                <span className="badge">{resume.experience}</span>
+                                                {resume.remote && <span className="badge remote">Удалённо</span>}
+                                            </div>
                                         </div>
                                     </div>
 

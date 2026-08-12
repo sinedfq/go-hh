@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useContext } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import axios from 'axios'
 
 const AuthContext = createContext(null)
@@ -8,57 +8,75 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Восстанавливаем пользователя из localStorage при загрузке
     const token = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
     
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
-      checkAuth()
-    } else {
-      setLoading(false)
+    if (token && savedUser) {
+      try {
+        const parsedUser = JSON.parse(savedUser)
+        setUser(parsedUser)
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      } catch (err) {
+        localStorage.removeItem('token')
+        localStorage.removeItem('user')
+      }
     }
+    
+    setLoading(false)
   }, [])
-
-  const checkAuth = async () => {
-    try {
-      const res = await axios.get('/api/me')
-      setUser(res.data)
-    } catch (err) {
-      localStorage.removeItem('token')
-      delete axios.defaults.headers.common['Authorization']
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const login = async (email, password) => {
     const res = await axios.post('/api/auth/login', { email, password })
-    localStorage.setItem('token', res.data.token)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`
-    setUser(res.data.user)
-    return res.data
+    const { token, user: userData } = res.data
+    
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userData))
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    
+    setUser(userData)
+    return userData
   }
 
   const register = async (email, password) => {
     const res = await axios.post('/api/auth/register', { email, password })
-    localStorage.setItem('token', res.data.token)
-    axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`
-    setUser(res.data.user)
-    return res.data
+    const { token, user: userData } = res.data
+    
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userData))
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    
+    setUser(userData)
+    return userData
   }
 
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('user')
     delete axios.defaults.headers.common['Authorization']
     setUser(null)
   }
 
-  const skipAuth = () => {
-    // Просто закрываем модалку, не меняем состояние
-    setUser(null)
+  // НОВАЯ ФУНКЦИЯ — обновление фото пользователя
+  const updateUserPhoto = (photoUrl) => {
+    setUser(prev => {
+      if (!prev) return prev
+      const updated = { ...prev, photo_url: photoUrl }
+      // Обновляем и в localStorage
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, skipAuth }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout,
+      updateUserPhoto  // ← ДОБАВЛЕНО
+    }}>
       {children}
     </AuthContext.Provider>
   )

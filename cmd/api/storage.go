@@ -47,6 +47,10 @@ type Storage interface {
 	CreatePosition(ctx context.Context, name string) (Position, error)
 
 	GetCandidateVacancies(ctx context.Context, skills []string, limit int) ([]Vacancy, error)
+
+	UpdateUserPhoto(ctx context.Context, userID int, photoURL string) error
+	UpdateResumePhoto(ctx context.Context, resumeID, userID int, photoURL string) error
+	IncrementResumeViews(ctx context.Context, resumeID int) error
 }
 
 type PostgresStorage struct {
@@ -167,7 +171,9 @@ func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, er
 
 func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 	query := `
-		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote, created_at
+		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote,
+		       COALESCE(phone, ''), COALESCE(telegram, ''), COALESCE(github, ''), COALESCE(linkedin, ''),
+		       COALESCE(photo_url, ''), COALESCE(views, 0), created_at
 		FROM resumes
 		ORDER BY created_at DESC
 	`
@@ -191,6 +197,12 @@ func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 			&r.About,
 			&r.City,
 			&r.Remote,
+			&r.Phone,
+			&r.Telegram,
+			&r.GitHub,
+			&r.LinkedIn,
+			&r.PhotoURL,
+			&r.Views,
 			&r.CreatedAt,
 		)
 		if err != nil {
@@ -208,7 +220,9 @@ func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 
 func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, error) {
 	query := `
-		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote, created_at
+		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote,
+		       COALESCE(phone, ''), COALESCE(telegram, ''), COALESCE(github, ''), COALESCE(linkedin, ''),
+		       COALESCE(photo_url, ''), COALESCE(views, 0), created_at
 		FROM resumes
 		WHERE id = $1
 	`
@@ -224,64 +238,12 @@ func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, er
 		&r.About,
 		&r.City,
 		&r.Remote,
-		&r.CreatedAt,
-	)
-
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return Resume{}, errors.New("resume not found")
-		}
-		return Resume{}, err
-	}
-
-	return r, nil
-}
-
-func (s *PostgresStorage) CreateResume(ctx context.Context, userID int, req CreateResumeRequest) (int, error) {
-	query := `
-		INSERT INTO resumes (user_id, full_name, desired_position, experience, skills, about, city, remote)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id
-	`
-
-	var id int
-	err := s.pool.QueryRow(ctx, query,
-		userID,
-		req.FullName,
-		req.DesiredPosition,
-		req.Experience,
-		req.Skills,
-		req.About,
-		req.City,
-		req.Remote,
-	).Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
-func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Resume, error) {
-	query := `
-		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote, created_at
-		FROM resumes
-		WHERE user_id = $1
-		LIMIT 1
-	`
-
-	var r Resume
-	err := s.pool.QueryRow(ctx, query, userID).Scan(
-		&r.ID,
-		&r.UserID,
-		&r.FullName,
-		&r.DesiredPosition,
-		&r.Experience,
-		&r.Skills,
-		&r.About,
-		&r.City,
-		&r.Remote,
+		&r.Phone,
+		&r.Telegram,
+		&r.GitHub,
+		&r.LinkedIn,
+		&r.PhotoURL,
+		&r.Views,
 		&r.CreatedAt,
 	)
 
@@ -302,6 +264,82 @@ func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Re
 	return r, nil
 }
 
+func (s *PostgresStorage) CreateResume(ctx context.Context, userID int, req CreateResumeRequest) (int, error) {
+	query := `
+		INSERT INTO resumes (user_id, full_name, desired_position, experience, skills, about, city, remote, phone, telegram, github, linkedin)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+		RETURNING id
+	`
+
+	var id int
+	err := s.pool.QueryRow(ctx, query,
+		userID,
+		req.FullName,
+		req.DesiredPosition,
+		req.Experience,
+		req.Skills,
+		req.About,
+		req.City,
+		req.Remote,
+		req.Phone,
+		req.Telegram,
+		req.GitHub,
+		req.LinkedIn,
+	).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Resume, error) {
+	query := `
+		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote,
+		       COALESCE(phone, ''), COALESCE(telegram, ''), COALESCE(github, ''), COALESCE(linkedin, ''),
+		       COALESCE(photo_url, ''), COALESCE(views, 0), created_at
+		FROM resumes
+		WHERE user_id = $1
+		LIMIT 1
+	`
+
+	var r Resume
+	err := s.pool.QueryRow(ctx, query, userID).Scan(
+		&r.ID,
+		&r.UserID,
+		&r.FullName,
+		&r.DesiredPosition,
+		&r.Experience,
+		&r.Skills,
+		&r.About,
+		&r.City,
+		&r.Remote,
+		&r.Phone,
+		&r.Telegram,
+		&r.GitHub,
+		&r.LinkedIn,
+		&r.PhotoURL,
+		&r.Views,
+		&r.CreatedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Resume{}, errors.New("resume not found")
+		}
+		return Resume{}, err
+	}
+
+	// Загружаем опыт работы
+	workExp, err := s.GetWorkExperienceByResumeID(ctx, r.ID)
+	if err != nil {
+		return Resume{}, err
+	}
+	r.WorkExperience = workExp
+
+	return r, nil
+}
 func (s *PostgresStorage) DeleteResume(ctx context.Context, resumeID, userID int) error {
 	query := `DELETE FROM resumes WHERE id = $1 AND user_id = $2`
 
@@ -395,7 +433,7 @@ func (s *PostgresStorage) CreateUser(ctx context.Context, email, passwordHash st
 
 func (s *PostgresStorage) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	query := `
-		SELECT id, email, password_hash, created_at
+		SELECT id, email, password_hash, COALESCE(photo_url, ''), created_at
 		FROM users
 		WHERE email = $1
 	`
@@ -405,6 +443,7 @@ func (s *PostgresStorage) GetUserByEmail(ctx context.Context, email string) (Use
 		&u.ID,
 		&u.Email,
 		&u.PasswordHash,
+		&u.PhotoURL,
 		&u.CreatedAt,
 	)
 
@@ -420,7 +459,7 @@ func (s *PostgresStorage) GetUserByEmail(ctx context.Context, email string) (Use
 
 func (s *PostgresStorage) GetUserByID(ctx context.Context, id int) (User, error) {
 	query := `
-		SELECT id, email, password_hash, created_at
+		SELECT id, email, password_hash, COALESCE(photo_url, ''), created_at
 		FROM users
 		WHERE id = $1
 	`
@@ -430,6 +469,7 @@ func (s *PostgresStorage) GetUserByID(ctx context.Context, id int) (User, error)
 		&u.ID,
 		&u.Email,
 		&u.PasswordHash,
+		&u.PhotoURL,
 		&u.CreatedAt,
 	)
 
@@ -442,7 +482,6 @@ func (s *PostgresStorage) GetUserByID(ctx context.Context, id int) (User, error)
 
 	return u, nil
 }
-
 func (s *PostgresStorage) CreateWorkExperience(ctx context.Context, resumeID int, req CreateWorkExperienceRequest) (int, error) {
 	// Парсим start_date — поддерживаем оба формата
 	var startDate time.Time
@@ -706,8 +745,10 @@ func (s *PostgresStorage) UpdateResume(ctx context.Context, resumeID int, userID
 	query := `
 		UPDATE resumes 
 		SET full_name = $1, desired_position = $2, experience = $3, 
-		    skills = $4, about = $5, city = $6, remote = $7, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $8 AND user_id = $9
+		    skills = $4, about = $5, city = $6, remote = $7,
+		    phone = $8, telegram = $9, github = $10, linkedin = $11,
+		    updated_at = CURRENT_TIMESTAMP
+		WHERE id = $12 AND user_id = $13
 	`
 
 	_, err := s.pool.Exec(ctx, query,
@@ -718,9 +759,31 @@ func (s *PostgresStorage) UpdateResume(ctx context.Context, resumeID int, userID
 		req.About,
 		req.City,
 		req.Remote,
+		req.Phone,
+		req.Telegram,
+		req.GitHub,
+		req.LinkedIn,
 		resumeID,
 		userID,
 	)
 
+	return err
+}
+
+func (s *PostgresStorage) UpdateUserPhoto(ctx context.Context, userID int, photoURL string) error {
+	query := `UPDATE users SET photo_url = $1 WHERE id = $2`
+	_, err := s.pool.Exec(ctx, query, photoURL, userID)
+	return err
+}
+
+func (s *PostgresStorage) UpdateResumePhoto(ctx context.Context, resumeID, userID int, photoURL string) error {
+	query := `UPDATE resumes SET photo_url = $1 WHERE id = $2 AND user_id = $3`
+	_, err := s.pool.Exec(ctx, query, photoURL, resumeID, userID)
+	return err
+}
+
+func (s *PostgresStorage) IncrementResumeViews(ctx context.Context, resumeID int) error {
+	query := `UPDATE resumes SET views = views + 1 WHERE id = $1`
+	_, err := s.pool.Exec(ctx, query, resumeID)
 	return err
 }

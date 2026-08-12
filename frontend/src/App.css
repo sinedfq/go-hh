@@ -1156,3 +1156,35 @@ body:has(.login-overlay) .sidebar {
     width: 0;
     height: 0;
 }
+
+.swipe-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 12px;
+}
+
+.like-overlay {
+    background: linear-gradient(to top, rgba(0, 102, 204, 0.7) 0%, transparent 60%);
+}
+
+.nope-overlay {
+    background: linear-gradient(to top, rgba(220, 53, 69, 0.7) 0%, transparent 60%);
+}
+
+.overlay-text {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}

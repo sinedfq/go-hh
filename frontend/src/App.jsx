@@ -302,7 +302,11 @@ function App() {
               onClick={() => handleModeChange('profile')}
             >
               <div className="user-avatar">
-                {user.email[0].toUpperCase()}
+                {user.photo_url ? (
+                  <img src={user.photo_url} alt={user.email} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                ) : (
+                  user.email[0].toUpperCase()
+                )}
               </div>
               <div className="user-profile-label">
                 <span className="user-profile-title">Профиль</span>

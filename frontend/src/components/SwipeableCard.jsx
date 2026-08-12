@@ -1,10 +1,50 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 
 function SwipeableCard({ vacancy, onSwipe, isTop, matchScore }) {
   const x = useMotionValue(0)
   const [exitDirection, setExitDirection] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
+
+  // Блокируем скролл когда карточка активна
+  useEffect(() => {
+    if (isTop) {
+      // Находим .content и блокируем скролл
+      const contentEl = document.querySelector('.content')
+      if (contentEl) {
+        contentEl.style.overflow = 'hidden'
+        contentEl.style.touchAction = 'none'
+      }
+      
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      
+      return () => {
+        if (contentEl) {
+          contentEl.style.overflow = ''
+          contentEl.style.touchAction = ''
+        }
+        document.body.style.overflow = ''
+        document.body.style.touchAction = ''
+      }
+    }
+  }, [isTop])
+
+  // Блокируем скролл при drag
+  useEffect(() => {
+    if (isDragging) {
+      const contentEl = document.querySelector('.content')
+      if (contentEl) {
+        contentEl.style.overflow = 'hidden'
+      }
+      
+      return () => {
+        if (contentEl && isTop) {
+          contentEl.style.overflow = 'hidden' // Остаётся hidden пока карточка активна
+        }
+      }
+    }
+  }, [isDragging, isTop])
 
   const rotate = useTransform(x, [-400, 0, 400], [-30, 0, 30])
   const likeOpacity = useTransform(x, [0, 150, 250], [0, 0.5, 1])
@@ -13,6 +53,12 @@ function SwipeableCard({ vacancy, onSwipe, isTop, matchScore }) {
   const handleDragStart = () => {
     if (!isTop) return
     setIsDragging(true)
+    
+    // Блокируем скролл при начале drag
+    const contentEl = document.querySelector('.content')
+    if (contentEl) {
+      contentEl.style.overflow = 'hidden'
+    }
   }
 
   const handleDragEnd = (event, info) => {
@@ -40,7 +86,6 @@ function SwipeableCard({ vacancy, onSwipe, isTop, matchScore }) {
     setTimeout(() => onSwipe(dir, vacancy.id), 400)
   }
 
-  // Определяем цвет и текст бейджа
   const getScoreColor = (score) => {
     if (score === undefined || score === null) return '#868e96'
     if (score >= 0.7) return '#2e7d32'
@@ -48,13 +93,12 @@ function SwipeableCard({ vacancy, onSwipe, isTop, matchScore }) {
     return '#c62828'
   }
 
-  // Рендерим бейдж
   const renderScoreBadge = () => {
     if (matchScore === undefined || matchScore === null) {
       return (
         <div className="match-score-badge unknown" title="Не проанализировано AI">
           <span className="score-number">—</span>
-          <span className="score-suffix">0 %</span>
+          <span className="score-suffix">нет данных</span>
         </div>
       )
     }

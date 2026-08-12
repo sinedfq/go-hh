@@ -750,3 +750,62 @@
 .position-suggestion-item:not(:last-child) {
   border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
 }
+
+/* ====== СЕКЦИЯ КОНТАКТОВ В ФОРМЕ ====== */
+.contacts-section {
+    margin-top: 1.5rem;
+}
+
+.contacts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+
+.contact-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.contact-icon {
+    position: absolute;
+    left: 0.875rem;
+    color: #999;
+    pointer-events: none;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.contact-input-wrapper input {
+    width: 100%;
+    padding: 0.75rem 0.875rem 0.75rem 2.5rem;
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.contact-input-wrapper input:focus {
+    border-color: #0066cc;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.contact-input-wrapper input:focus + .contact-icon,
+.contact-input-wrapper:focus-within .contact-icon {
+    color: #0066cc;
+}
+
+.contact-input-wrapper input::placeholder {
+    color: #aaa;
+}
+
+@media (max-width: 600px) {
+    .contacts-grid {
+        grid-template-columns: 1fr;
+    }
+}

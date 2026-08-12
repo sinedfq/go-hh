@@ -19,7 +19,7 @@ type Vacancy struct {
 
 type Resume struct {
 	ID              int              `json:"id"`
-	UserID          int              `json:"user_id,omitempty"`
+	UserID          int              `json:"user_id"`
 	FullName        string           `json:"full_name"`
 	DesiredPosition string           `json:"desired_position"`
 	Experience      string           `json:"experience"`
@@ -27,8 +27,14 @@ type Resume struct {
 	About           string           `json:"about"`
 	City            string           `json:"city"`
 	Remote          bool             `json:"remote"`
-	WorkExperience  []WorkExperience `json:"work_experience"`
+	Phone           string           `json:"phone"`
+	Telegram        string           `json:"telegram"`
+	GitHub          string           `json:"github"`
+	LinkedIn        string           `json:"linkedin"`
 	CreatedAt       time.Time        `json:"created_at"`
+	WorkExperience  []WorkExperience `json:"work_experience,omitempty"`
+	PhotoURL        string           `json:"photo_url"`
+	Views           int              `json:"views"`
 }
 
 type WorkExperience struct {
@@ -57,6 +63,10 @@ type CreateResumeRequest struct {
 	About           string   `json:"about"`
 	City            string   `json:"city"`
 	Remote          bool     `json:"remote"`
+	Phone           string   `json:"phone"`
+	Telegram        string   `json:"telegram"`
+	GitHub          string   `json:"github"`
+	LinkedIn        string   `json:"linkedin"`
 }
 
 type MLVacancy struct {
@@ -101,7 +111,8 @@ type MLMatchResponse struct {
 type User struct {
 	ID           int       `json:"id"`
 	Email        string    `json:"email"`
-	PasswordHash string    `json:"-"` // не отдаём в JSON
+	PasswordHash string    `json:"-"`
+	PhotoURL     string    `json:"photo_url"`
 	CreatedAt    time.Time `json:"created_at"`
 }
 
