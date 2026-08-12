@@ -76,6 +76,17 @@ func main() {
 	// Рекомендации (требует авторизации и резюме)
 	mux.HandleFunc("GET /api/recommendations", server.authMiddleware(server.recommendationsHandler))
 
+	// Фото (требует авторизации)
+	mux.HandleFunc("POST /api/users/me/photo", server.authMiddleware(server.uploadUserPhotoHandler))
+	mux.HandleFunc("POST /api/resumes/me/photo", server.authMiddleware(server.uploadResumePhotoHandler))
+
+	// Счётчик просмотров резюме
+	mux.HandleFunc("POST /api/resumes/{id}/view", server.viewResumeHandler)
+
+	// Раздача загруженных фото (публичная)
+	uploadsFS := http.FileServer(http.Dir("uploads"))
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", uploadsFS))
+
 	// Статика фронтенда
 	fs := http.FileServer(http.Dir("frontend/dist"))
 	mux.Handle("/", fs)

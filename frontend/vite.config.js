@@ -10,6 +10,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+      },
+      // ← ДОБАВЛЕНО: прокси для загруженных файлов
+      '/uploads': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
       }
     }
   }
