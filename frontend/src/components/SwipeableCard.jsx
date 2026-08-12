@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 
-function SwipeableCard({ vacancy, onSwipe, isTop }) {
+function SwipeableCard({ vacancy, onSwipe, isTop, matchScore }) {
   const x = useMotionValue(0)
   const [exitDirection, setExitDirection] = useState(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -28,14 +28,11 @@ function SwipeableCard({ vacancy, onSwipe, isTop }) {
       setExitDirection('left')
       setTimeout(() => onSwipe('left', vacancy.id), 400)
     } else {
-      // Свайп не завершён — возвращаем кнопки
       setIsDragging(false)
     }
   }
 
-  const handleDrag = () => {
-    // Ничего не делаем, просто позволяем тянуть
-  }
+  const handleDrag = () => {}
 
   const handleButtonClick = (dir) => {
     if (!isTop || exitDirection) return
@@ -43,7 +40,38 @@ function SwipeableCard({ vacancy, onSwipe, isTop }) {
     setTimeout(() => onSwipe(dir, vacancy.id), 400)
   }
 
-  // Анимация вылета
+  // Определяем цвет и текст бейджа
+  const getScoreColor = (score) => {
+    if (score === undefined || score === null) return '#868e96'
+    if (score >= 0.7) return '#2e7d32'
+    if (score >= 0.4) return '#f57c00'
+    return '#c62828'
+  }
+
+  // Рендерим бейдж
+  const renderScoreBadge = () => {
+    if (matchScore === undefined || matchScore === null) {
+      return (
+        <div className="match-score-badge unknown" title="Не проанализировано AI">
+          <span className="score-number">—</span>
+          <span className="score-suffix">0 %</span>
+        </div>
+      )
+    }
+
+    const percent = Math.round(matchScore * 100)
+    return (
+      <div
+        className="match-score-badge"
+        style={{ '--score-color': getScoreColor(matchScore) }}
+        title={`Совместимость: ${percent}%`}
+      >
+        <span className="score-number">{percent}</span>
+        <span className="score-suffix">%</span>
+      </div>
+    )
+  }
+
   const exitAnimation = exitDirection === 'right' 
     ? { x: 600, opacity: 0, rotate: 35 }
     : exitDirection === 'left'
@@ -75,8 +103,11 @@ function SwipeableCard({ vacancy, onSwipe, isTop }) {
     >
       <div className="card-content">
         <div className="card-header">
-          <h2>{vacancy.title}</h2>
-          <div className="company">{vacancy.company}</div>
+          <div className="card-header-content">
+            <h2>{vacancy.title}</h2>
+            <div className="company">{vacancy.company}</div>
+          </div>
+          {renderScoreBadge()}
         </div>
 
         <div className="card-meta">
@@ -112,7 +143,6 @@ function SwipeableCard({ vacancy, onSwipe, isTop }) {
         )}
       </div>
 
-      {/* Кнопки: показываем только когда не свайпаем и карточка не улетает */}
       {isTop && !exitDirection && !isDragging && (
         <div className="card-buttons">
           <button 
@@ -132,7 +162,6 @@ function SwipeableCard({ vacancy, onSwipe, isTop }) {
         </div>
       )}
 
-      {/* Градиентные оверлеи */}
       <motion.div 
         className="swipe-overlay like-overlay"
         style={{ opacity: likeOpacity }}

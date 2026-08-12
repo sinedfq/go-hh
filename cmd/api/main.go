@@ -51,6 +51,7 @@ func main() {
 	mux.HandleFunc("POST /api/resumes", server.authMiddleware(server.createResumeHandler))
 	mux.HandleFunc("GET /api/my-resume", server.authMiddleware(server.getMyResumeHandler))
 	mux.HandleFunc("DELETE /api/my-resume", server.authMiddleware(server.deleteMyResumeHandler))
+	mux.HandleFunc("PUT /api/my-resume", server.authMiddleware(server.updateMyResumeHandler))
 
 	// Опыт работы
 	mux.HandleFunc("POST /api/work-experience", server.authMiddleware(server.addWorkExperienceHandler))
@@ -71,6 +72,9 @@ func main() {
 	// Библиотека должностей
 	mux.HandleFunc("GET /api/positions", server.getPositionsHandler)
 	mux.HandleFunc("POST /api/positions", server.authMiddleware(server.createPositionHandler))
+
+	// Рекомендации (требует авторизации и резюме)
+	mux.HandleFunc("GET /api/recommendations", server.authMiddleware(server.recommendationsHandler))
 
 	// Статика фронтенда
 	fs := http.FileServer(http.Dir("frontend/dist"))

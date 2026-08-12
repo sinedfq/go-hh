@@ -12,12 +12,14 @@ import (
 type Server struct {
 	storage  Storage
 	mlClient *MLClient
+	recCache *RecommendationsCache
 }
 
 func NewServer(storage Storage, mlClient *MLClient) *Server {
 	return &Server{
 		storage:  storage,
 		mlClient: mlClient,
+		recCache: NewRecommendationsCache(),
 	}
 }
 
@@ -80,6 +82,7 @@ func (s *Server) createVacancyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	v.ID = id
+	s.recCache.InvalidateAll()
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(v)
 }
@@ -197,6 +200,7 @@ func (s *Server) getMyResumeHandler(w http.ResponseWriter, r *http.Request) {
 			json.NewEncoder(w).Encode(map[string]string{"error": "resume not found"})
 			return
 		}
+		s.recCache.Invalidate(claims.UserID)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{
 			"error":   "failed to get resume",
@@ -231,6 +235,7 @@ func (s *Server) deleteMyResumeHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to delete resume"})
 		return
 	}
+	s.recCache.Invalidate(claims.UserID)
 
 	json.NewEncoder(w).Encode(map[string]string{"status": "deleted"})
 }
@@ -257,7 +262,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Получаем все вакансии
-	vacancies, err := s.storage.GetAllVacancies(ctx)
+	candidates, err := s.storage.GetCandidateVacancies(ctx, resume.Skills, 30)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "internal error"})
@@ -265,7 +270,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Вызываем ML-сервис
-	mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, vacancies)
+	mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, candidates)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -284,7 +289,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 
 	var fullMatches []FullMatch
 	for _, mlMatch := range mlMatches {
-		for _, v := range vacancies {
+		for _, v := range candidates {
 			if v.ID == mlMatch.VacancyID {
 				fullMatches = append(fullMatches, FullMatch{
 					Vacancy:   v,
@@ -530,10 +535,15 @@ func (s *Server) addWorkExperienceHandler(w http.ResponseWriter, r *http.Request
 
 	var req CreateWorkExperienceRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("Decode error in addWorkExperience: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
 		return
 	}
+
+	// Логируем что получили
+	log.Printf("Adding work experience: company=%s, position=%s, start_date=%s",
+		req.Company, req.Position, req.StartDate)
 
 	if req.Company == "" || req.Position == "" || req.StartDate == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -543,16 +553,20 @@ func (s *Server) addWorkExperienceHandler(w http.ResponseWriter, r *http.Request
 
 	_, err = s.storage.CreateWorkExperience(ctx, resume.ID, req)
 	if err != nil {
+		log.Printf("CreateWorkExperience error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create work experience"})
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   "failed to create work experience",
+			"details": err.Error(),
+		})
 		return
 	}
 
 	updatedResume, _ := s.storage.GetResumeByUserID(ctx, claims.UserID)
+	s.recCache.Invalidate(claims.UserID)
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(updatedResume)
 }
-
 func (s *Server) deleteWorkExperienceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	ctx := r.Context()
@@ -578,6 +592,7 @@ func (s *Server) deleteWorkExperienceHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	updatedResume, _ := s.storage.GetResumeByUserID(ctx, claims.UserID)
+	s.recCache.Invalidate(claims.UserID)
 	json.NewEncoder(w).Encode(updatedResume)
 }
 
@@ -667,4 +682,159 @@ func (s *Server) createPositionHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(position)
+}
+
+func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	claims := getUserFromContext(ctx)
+	if claims == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	// Получаем резюме пользователя
+	resume, err := s.storage.GetResumeByUserID(ctx, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "resume not found"})
+		return
+	}
+
+	resumeHash := HashResume(resume)
+	forceRefresh := r.URL.Query().Get("refresh") == "true"
+
+	// ====== ПРОВЕРЯЕМ КЭШ ======
+	if !forceRefresh {
+		if cached, ok := s.recCache.Get(claims.UserID, resumeHash); ok {
+			w.Header().Set("X-Cache", "HIT")
+			log.Printf("Recommendations cache HIT for user %d", claims.UserID)
+			json.NewEncoder(w).Encode(map[string]any{
+				"resume":          resume,
+				"recommendations": cached.Recommendations,
+				"model_used":      cached.ModelUsed,
+				"from_cache":      true,
+			})
+			return
+		}
+	}
+
+	// ====== КЭША НЕТ — СЧИТАЕМ ЗАНОВО ======
+	w.Header().Set("X-Cache", "MISS")
+	log.Printf("Recommendations cache MISS for user %d, calling ML service", claims.UserID)
+
+	// Этап 1: отбор кандидатов
+	const candidateLimit = 30
+	candidates, err := s.storage.GetCandidateVacancies(ctx, resume.Skills, candidateLimit)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to fetch candidates"})
+		return
+	}
+
+	var recommendations []Recommendation
+	modelUsed := "none"
+
+	if len(candidates) > 0 {
+		// Этап 2: AI-ранжирование
+		mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, candidates)
+		if err != nil {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error":   "ML service unavailable",
+				"details": err.Error(),
+			})
+			return
+		}
+
+		for _, mlMatch := range mlMatches {
+			for _, v := range candidates {
+				if v.ID == mlMatch.VacancyID {
+					recommendations = append(recommendations, Recommendation{
+						Vacancy:   v,
+						Score:     mlMatch.Score,
+						Reasoning: mlMatch.Reasoning,
+					})
+					break
+				}
+			}
+		}
+		modelUsed = "ml-service"
+	}
+
+	// Гарантируем не-nil массив для JSON
+	if recommendations == nil {
+		recommendations = []Recommendation{}
+	}
+
+	// ====== СОХРАНЯЕМ В КЭШ ======
+	s.recCache.Set(claims.UserID, recommendations, resumeHash, modelUsed)
+
+	json.NewEncoder(w).Encode(map[string]any{
+		"resume":          resume,
+		"recommendations": recommendations,
+		"model_used":      modelUsed,
+		"from_cache":      false,
+	})
+}
+
+func (s *Server) updateMyResumeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	claims := getUserFromContext(ctx)
+	if claims == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	// Получаем текущее резюме
+	currentResume, err := s.storage.GetResumeByUserID(ctx, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "resume not found"})
+		return
+	}
+
+	var req CreateResumeRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
+		return
+	}
+
+	// Валидация
+	if req.FullName == "" || req.DesiredPosition == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "full_name and desired_position are required"})
+		return
+	}
+
+	if req.Experience == "" {
+		req.Experience = "Junior"
+	}
+
+	if req.Skills == nil {
+		req.Skills = []string{}
+	}
+
+	if err := s.storage.UpdateResume(ctx, currentResume.ID, claims.UserID, req); err != nil {
+		log.Printf("UpdateResume error: %v", err) // ← ДОБАВЛЕНО
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error":   "failed to update resume",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// Инвалидируем кэш рекомендаций
+	s.recCache.Invalidate(claims.UserID)
+
+	// Возвращаем обновлённое резюме
+	updatedResume, _ := s.storage.GetResumeByUserID(ctx, claims.UserID)
+	json.NewEncoder(w).Encode(updatedResume)
 }
