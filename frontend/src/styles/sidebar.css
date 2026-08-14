@@ -1,0 +1,292 @@
+.sidebar {
+    width: 80px;
+    background: white;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    transition: width 0.3s ease;
+    z-index: 50;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sidebar:hover {
+    width: 240px;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.06);
+}
+
+.sidebar-logo {
+    padding: 1.5rem 1rem;
+    border-bottom: 1px solid #f0f0f0;
+    text-align: left;
+}
+
+.sidebar-logo h1 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0066cc;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.sidebar-nav {
+    flex: 1;
+    padding: 1rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+    background: #e0e0e0;
+    border-radius: 2px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 0.625rem 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    overflow: hidden;
+}
+
+.nav-item:hover {
+    background: #f0f7ff;
+}
+
+.nav-item.active {
+    background: transparent;
+}
+
+.nav-bar {
+    width: 4px;
+    height: 36px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.nav-item:hover .nav-bar {
+    background: #0066cc;
+    height: 40px;
+}
+
+.nav-item.active .nav-bar {
+    background: #0066cc;
+    height: 44px;
+    box-shadow: 0 0 12px rgba(0, 102, 204, 0.4);
+}
+
+.nav-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    opacity: 0;
+    max-width: 0;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.sidebar:hover .nav-label {
+    opacity: 1;
+    max-width: 180px;
+}
+
+.nav-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+.nav-item.active .nav-title {
+    color: #0066cc;
+}
+
+.nav-subtitle {
+    font-size: 0.7rem;
+    color: #999;
+    white-space: nowrap;
+}
+
+.sidebar-footer {
+    padding: 1rem 0.75rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar:hover .sidebar-footer {
+    align-items: stretch;
+}
+
+.user-profile-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+}
+
+.user-profile-btn:hover {
+    background: #f0f7ff;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #0066cc;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.user-profile-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .user-profile-label {
+    opacity: 1;
+    max-width: 160px;
+}
+
+.user-profile-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+.user-profile-email {
+    font-size: 0.7rem;
+    color: #999;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.sidebar:not(:hover) .user-profile-btn {
+    justify-content: center;
+    padding: 0.5rem 0;
+    width: 100%;
+}
+
+.sidebar:not(:hover) .user-profile-label {
+    display: none;
+}
+
+.logout-btn {
+    padding: 0.625rem 0.875rem;
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid #ffc9c9;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: #fff5f5;
+    border-color: var(--danger);
+}
+
+.sidebar:not(:hover) .logout-btn {
+    font-size: 0;
+    padding: 0.625rem;
+    border: none;
+}
+
+.sidebar:not(:hover) .logout-btn::before {
+    content: "⎋";
+    font-size: 1.25rem;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.login-btn:hover {
+    background: var(--accent-hover);
+}
+
+.login-icon {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+}
+
+.login-text {
+    white-space: nowrap;
+    opacity: 0;
+    max-width: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar:hover .login-text {
+    opacity: 1;
+    max-width: 100px;
+}
+
+.sidebar:not(:hover) .login-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid #e0e0e0;
+}
+
+.sidebar:not(:hover) .login-btn:hover {
+    background: var(--accent-light);
+    border-color: var(--accent);
+}
+
+.sidebar:not(:hover) .login-text {
+    display: none;
+}

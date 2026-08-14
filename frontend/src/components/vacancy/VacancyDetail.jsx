@@ -1,4 +1,4 @@
-function VacancyDetail({ vacancy, isFavorite, onAddFavorite, onRemoveFavorite }) {
+function VacancyDetail({ vacancy, isFavorite, onAddFavorite, onRemoveFavorite, onOpenVacancy, onOpenCompany }) {
   if (!vacancy) {
     return (
       <div className="empty-state">
@@ -9,17 +9,36 @@ function VacancyDetail({ vacancy, isFavorite, onAddFavorite, onRemoveFavorite })
   }
 
   return (
-    <div className="detail-card">
+    <div
+      className="detail-card clickable"
+      onClick={() => onOpenVacancy && onOpenVacancy(vacancy.id)}
+      title="Открыть страницу вакансии"
+    >
       <div className="detail-header">
         <h2>{vacancy.title}</h2>
-        <div className="company">{vacancy.company}</div>
+        <div
+          className="company"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (vacancy.company_id && onOpenCompany) {
+              onOpenCompany(vacancy.company_id)
+            }
+          }}
+          style={{
+            cursor: vacancy.company_id ? 'pointer' : 'default',
+            color: vacancy.company_id ? '#0066cc' : 'inherit'
+          }}
+          title={vacancy.company_id ? 'Открыть страницу компании' : ''}
+        >
+          {vacancy.company}
+        </div>
       </div>
 
       <div className="detail-meta">
         <div className="meta-item">
           <span className="meta-label">Локация</span>
           <span className="meta-value">
-            {vacancy.city}
+            {vacancy.location}
             {vacancy.remote && <span className="badge remote">Удалённо</span>}
           </span>
         </div>
@@ -49,16 +68,22 @@ function VacancyDetail({ vacancy, isFavorite, onAddFavorite, onRemoveFavorite })
 
       <div className="detail-actions">
         {!isFavorite(vacancy.id) ? (
-          <button 
+          <button
             className="btn btn-primary"
-            onClick={() => onAddFavorite(vacancy.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onAddFavorite(vacancy.id)
+            }}
           >
             Добавить в избранное
           </button>
         ) : (
-          <button 
+          <button
             className="btn btn-secondary"
-            onClick={() => onRemoveFavorite(vacancy.id)}
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemoveFavorite(vacancy.id)
+            }}
           >
             Убрать из избранного
           </button>

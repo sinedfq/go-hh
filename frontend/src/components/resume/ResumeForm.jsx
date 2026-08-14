@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { formatPhone, normalizePhone, normalizeUrl, normalizeTelegram } from '../utils/format'
+import { formatPhone, normalizePhone, normalizeUrl, normalizeTelegram } from '../../utils/format'
 import axios from 'axios'
 import './ResumeForm.css'
 
@@ -204,9 +204,21 @@ function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
     setShowPositionSuggestions(false)
   }
 
-  const handlePositionBlur = async () => {
+  const handlePositionBlur = async (e) => {
+    // Если клик был внутри списка подсказок — НЕ закрываем dropdown
+    // и НЕ создаём должность (это сделает selectPosition)
+    const relatedTarget = e.relatedTarget
+    if (relatedTarget && positionSuggestionsRef.current &&
+      positionSuggestionsRef.current.contains(relatedTarget)) {
+      return
+    }
+
     setTimeout(async () => {
-      setShowPositionSuggestions(false)
+      // Если dropdown всё ещё открыт — значит это был клик по подсказке
+      if (showPositionSuggestions) {
+        return
+      }
+
       const position = formData.desired_position.trim()
       if (position && !positionsLibrary.some(p => p.name.toLowerCase() === position.toLowerCase())) {
         try {
@@ -216,6 +228,7 @@ function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
           console.error('Ошибка добавления должности:', err)
         }
       }
+      setShowPositionSuggestions(false)
     }, 200)
   }
 
@@ -325,7 +338,10 @@ function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
                       key={pos.id}
                       type="button"
                       className="position-suggestion-item"
-                      onClick={() => selectPosition(pos.name)}
+                      onMouseDown={(e) => {
+                        e.preventDefault()  // Предотвращает blur input'а
+                        selectPosition(pos.name)
+                      }}
                     >
                       {pos.name}
                     </button>
@@ -424,7 +440,10 @@ function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
                     key={skill.id}
                     type="button"
                     className="skill-suggestion-item"
-                    onClick={() => selectSkill(skill.name)}
+                    onMouseDown={(e) => {
+                      e.preventDefault()
+                      selectSkill(skill.name)
+                    }}
                   >
                     {skill.name}
                   </button>

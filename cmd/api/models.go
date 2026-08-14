@@ -7,14 +7,20 @@ type Health struct {
 }
 
 type Vacancy struct {
-	ID          int      `json:"id"`
-	Title       string   `json:"title"`
-	Company     string   `json:"company"`
-	Location    string   `json:"city"`
-	Experience  string   `json:"experience"`
-	Remote      bool     `json:"remote"`
-	Skills      []string `json:"skills"`
-	Description string   `json:"description"`
+	ID           int      `json:"id"`
+	Title        string   `json:"title"`
+	Company      string   `json:"company"`
+	CompanyID    int      `json:"company_id"`
+	Location     string   `json:"location"`
+	Experience   string   `json:"experience"`
+	Remote       bool     `json:"remote"`
+	Skills       []string `json:"skills"`
+	Description  string   `json:"description"`
+	Address      string   `json:"address"`
+	Latitude     float64  `json:"latitude"`
+	Longitude    float64  `json:"longitude"`
+	Views        int      `json:"views"`
+	AuthorUserID int      `json:"author_user_id"`
 }
 
 type Resume struct {
@@ -73,7 +79,7 @@ type MLVacancy struct {
 	ID          int      `json:"id"`
 	Title       string   `json:"title"`
 	Company     string   `json:"company"`
-	City        string   `json:"city"`
+	Location    string   `json:"location"` // ← location вместо city
 	Experience  string   `json:"experience"`
 	Remote      bool     `json:"remote"`
 	Skills      []string `json:"skills"`
@@ -145,4 +151,23 @@ type Recommendation struct {
 	Vacancy   Vacancy `json:"vacancy"`
 	Score     float64 `json:"score"`
 	Reasoning string  `json:"reasoning"`
+}
+
+type Company struct {
+	ID          int       `json:"id"`
+	Name        string    `json:"name"`
+	Description string    `json:"description"`
+	Industry    string    `json:"industry"`
+	Size        string    `json:"size"`
+	City        string    `json:"city"`
+	Website     string    `json:"website"`
+	LogoURL     string    `json:"logo_url"`
+	PhotoURL    string    `json:"photo_url"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type CompanyWithStats struct {
+	Company
+	VacanciesCount int `json:"vacancies_count"`
+	TotalViews     int `json:"total_views"`
 }

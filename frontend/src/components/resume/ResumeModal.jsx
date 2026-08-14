@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import ModalPortal from './ModalPortal'
+import ModalPortal from '../common/ModalPortal'
 import ResumeForm from './ResumeForm'
 import './ResumeModal.css'
 

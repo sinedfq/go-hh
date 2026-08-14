@@ -19,7 +19,7 @@ func NewMLClient(baseURL string) *MLClient {
 	return &MLClient{
 		baseURL: baseURL,
 		httpClient: &http.Client{
-			Timeout: 60 * time.Second,
+			Timeout: 120 * time.Second,
 		},
 	}
 }
@@ -41,29 +41,42 @@ func experienceToYears(exp string) int {
 }
 
 func (c *MLClient) MatchResumeToVacancies(ctx context.Context, resume Resume, vacancies []Vacancy) ([]MLMatchResult, error) {
+	// Нормализуем резюме — nil skills → пустой slice
+	resumeSkills := resume.Skills
+	if resumeSkills == nil {
+		resumeSkills = []string{}
+	}
+
 	mlResume := MLResume{
 		ID:              resume.ID,
 		FullName:        resume.FullName,
 		DesiredPosition: resume.DesiredPosition,
 		Experience:      resume.Experience,
-		Skills:          resume.Skills,
+		Skills:          resumeSkills,
 		About:           resume.About,
 		City:            resume.City,
 		Remote:          resume.Remote,
 	}
 
-	mlVacancies := make([]MLVacancy, len(vacancies))
-	for i, v := range vacancies {
-		mlVacancies[i] = MLVacancy{
+	// ВАЖНО: make с capacity, но длиной 0 — чтобы append работал правильно
+	mlVacancies := make([]MLVacancy, 0, len(vacancies))
+	for _, v := range vacancies {
+		// Нормализуем skills — nil → пустой slice
+		vacancySkills := v.Skills
+		if vacancySkills == nil {
+			vacancySkills = []string{}
+		}
+
+		mlVacancies = append(mlVacancies, MLVacancy{
 			ID:          v.ID,
 			Title:       v.Title,
 			Company:     v.Company,
-			City:        v.Location, // Vacancy.Location → MLVacancy.City
+			Location:    v.Location,
 			Experience:  v.Experience,
 			Remote:      v.Remote,
-			Skills:      v.Skills,
+			Skills:      vacancySkills,
 			Description: v.Description,
-		}
+		})
 	}
 
 	request := MLMatchRequest{
@@ -75,6 +88,9 @@ func (c *MLClient) MatchResumeToVacancies(ctx context.Context, resume Resume, va
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal request: %w", err)
 	}
+
+	// Для отладки — можно раскомментировать чтобы увидеть что отправляется
+	// log.Printf("ML request: %s", string(jsonData))
 
 	url := fmt.Sprintf("%s/match", c.baseURL)
 	req, err := http.NewRequestWithContext(ctx, "POST", url, bytes.NewBuffer(jsonData))
@@ -97,6 +113,9 @@ func (c *MLClient) MatchResumeToVacancies(ctx context.Context, resume Resume, va
 	}
 
 	var mlResponse MLMatchResponse
+	if err := json.Unmarshal([]byte(`{}`), &mlResponse); err == nil {
+		// пустое чтение чтобы проверить структуру
+	}
 	if err := json.NewDecoder(resp.Body).Decode(&mlResponse); err != nil {
 		return nil, fmt.Errorf("failed to decode ML response: %w", err)
 	}

@@ -1,0 +1,73 @@
+/* ============================================
+   ОСНОВНАЯ ОБЛАСТЬ
+   ============================================ */
+
+.main-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    height: 100vh;
+}
+
+.top-header {
+    padding: 0 2rem;
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.page-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.3px;
+}
+
+.content {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* ============================================
+   СКРЫВАЕМ СКРОЛЛБАР В МОДАЛКАХ
+   ============================================ */
+
+.details-modal,
+.resume-modal,
+.details-modal-content,
+.resume-modal-content {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.details-modal::-webkit-scrollbar,
+.resume-modal::-webkit-scrollbar,
+.details-modal-content::-webkit-scrollbar,
+.resume-modal-content::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+    background: transparent;
+}
+
+body:has(.resume-modal-overlay),
+body:has(.details-modal-overlay),
+body:has(.login-overlay) {
+    overflow: hidden;
+}
+
+body:has(.resume-modal-overlay) .sidebar,
+body:has(.details-modal-overlay) .sidebar,
+body:has(.login-overlay) .sidebar {
+    display: none;
+}

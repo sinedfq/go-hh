@@ -37,6 +37,8 @@ func main() {
 	// Health
 	mux.HandleFunc("/health", server.healthHandler)
 
+	// ====== API МАРШРУТЫ (ДО СТАТИКИ!) ======
+
 	// Аутентификация
 	mux.HandleFunc("POST /api/auth/register", server.registerHandler)
 	mux.HandleFunc("POST /api/auth/login", server.loginHandler)
@@ -82,6 +84,13 @@ func main() {
 
 	// Счётчик просмотров резюме
 	mux.HandleFunc("POST /api/resumes/{id}/view", server.viewResumeHandler)
+
+	// Компании (публичные) — ПЕРЕНЕСЕНО ВЫШЕ!
+	mux.HandleFunc("GET /api/companies", server.getAllCompaniesHandler)
+	mux.HandleFunc("GET /api/companies/{id}", server.getCompanyHandler)
+	mux.HandleFunc("GET /api/companies/{id}/vacancies", server.getCompanyVacanciesHandler)
+
+	// ====== СТАТИКА (В САМОМ КОНЦЕ) ======
 
 	// Раздача загруженных фото (публичная)
 	uploadsFS := http.FileServer(http.Dir("uploads"))

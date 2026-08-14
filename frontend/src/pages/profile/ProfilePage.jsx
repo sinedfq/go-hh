@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import { useAuth } from '../contexts/AuthContext'
-import ResumeModal from '../components/ResumeModal'
-import ResumeDetailsModal from '../components/ResumeDetailsModal'
-import PhotoUpload from '../components/PhotoUpload'
+import { useAuth } from '../../contexts/AuthContext'
+import ResumeModal from '../../components/resume/ResumeModal'
+import ResumeDetailsModal from '../../components/resume/ResumeDetailsModal'
+import PhotoUpload from '../../components/common/PhotoUpload'
 import './ProfilePage.css'
 
 function ProfilePage({ onResumeUpdate }) {
