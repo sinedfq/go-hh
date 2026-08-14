@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
-import PhotoUpload from './PhotoUpload'
-import ModalPortal from './ModalPortal'
+import PhotoUpload from '../common/PhotoUpload'
+import ModalPortal from '../common/ModalPortal'
 import ResumeModal from './ResumeModal'
 import './ResumeDetailsModal.css'
-import { displayUrl } from '../utils/format'
+import { displayUrl } from '../../utils/format'
 
 function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
   const [showWorkExpForm, setShowWorkExpForm] = useState(false)

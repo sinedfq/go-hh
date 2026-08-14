@@ -1,13 +1,7 @@
-import VacancyDetail from '../components/VacancyDetail'
+import VacancyDetail from '../../components/vacancy/VacancyDetail'
 import './RecommendationsPage.css'
 
-function RecommendationsPage({ 
-  recommendations, 
-  selectedVacancy, 
-  onSelectVacancy, 
-  loading, 
-  onRefresh 
-}) {
+function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy, loading, onRefresh, onOpenVacancy }) {
   const getScoreColor = (score) => {
     if (score >= 0.7) return '#2e7d32'
     if (score >= 0.4) return '#f57c00'
@@ -66,18 +60,18 @@ function RecommendationsPage({
                 {recommendations.length} вакансий
               </p>
             </div>
-            <button 
-              className="refresh-btn" 
+            <button
+              className="refresh-btn"
               onClick={onRefresh}
               title="Обновить рекомендации"
               disabled={loading}
             >
-              <svg 
-                width="18" 
-                height="18" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
                 strokeWidth="2"
                 className={loading ? 'spinning' : ''}
               >
@@ -122,10 +116,11 @@ function RecommendationsPage({
               <VacancyDetail
                 vacancy={selectedVacancy}
                 isFavorite={() => false}
-                onAddFavorite={() => {}}
-                onRemoveFavorite={() => {}}
+                onAddFavorite={() => { }}
+                onRemoveFavorite={() => { }}
+                onOpenVacancy={onOpenVacancy}
               />
-              
+
               {currentRecommendation && (
                 <div className="ai-reasoning">
                   <div className="ai-reasoning-header">
@@ -142,10 +137,10 @@ function RecommendationsPage({
                       Совпадение: {Math.round(currentRecommendation.score * 100)}%
                     </div>
                   </div>
-                  
+
                   <h3>Почему эта вакансия подходит</h3>
                   <p>{currentRecommendation.reasoning}</p>
-                  
+
                   <div className="ai-footer">
                     <span className="ai-model-info">
                       Powered by ML Service

@@ -809,3 +809,28 @@
         grid-template-columns: 1fr;
     }
 }
+
+/* ====== КУРСОР В ПОЛЯХ ВВОДА ====== */
+.form-group input,
+.form-group textarea,
+.skills-input input,
+.contact-input-wrapper input,
+.work-experience-item input,
+.work-experience-item textarea,
+.work-exp-form input,
+.work-exp-form textarea {
+    cursor: text !important;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.skills-input input:focus,
+.contact-input-wrapper input:focus {
+    cursor: text !important;
+}
+
+/* Кнопки-подсказки — используем cursor pointer */
+.position-suggestion-item,
+.skill-suggestion-item {
+    cursor: pointer !important;
+}

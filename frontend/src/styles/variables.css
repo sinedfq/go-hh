@@ -1,0 +1,49 @@
+/* ============================================
+   ДИЗАЙН-СИСТЕМА
+   ============================================ */
+
+:root {
+    --bg: #f8f9fa;
+    --surface: #ffffff;
+    --border: #e9ecef;
+    --border-light: #f1f3f5;
+    --text-primary: #212529;
+    --text-secondary: #495057;
+    --text-muted: #868e96;
+    --accent: #0066cc;
+    --accent-hover: #0057b3;
+    --accent-light: #e7f1ff;
+    --danger: #e03131;
+    --success: #2b8a3e;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+}
+
+html,
+body {
+    overflow-x: hidden;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}

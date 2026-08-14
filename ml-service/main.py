@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
 import httpx
 import json
@@ -18,15 +18,15 @@ local_model = SentenceTransformer('all-MiniLM-L6-v2')
 OLLAMA_URL = "http://localhost:11434"
 OLLAMA_MODEL = "llama3.2:latest"
 
-# Минимальный score для возврата в рекомендациях
 MIN_SCORE_THRESHOLD = 0.3
 
 
 class Vacancy(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: int
     title: str
     company: str
-    city: str
+    location: str  # ← БЫЛО city, СТАЛО location
     experience: str
     remote: bool
     skills: List[str] = []
@@ -34,6 +34,7 @@ class Vacancy(BaseModel):
 
 
 class Resume(BaseModel):
+    model_config = ConfigDict(extra="ignore")
     id: int
     full_name: str
     desired_position: str
@@ -62,7 +63,6 @@ class MatchResponse(BaseModel):
 
 
 def experience_to_years(exp: str) -> int:
-    """Конвертирует строковый уровень опыта в годы"""
     exp_lower = exp.lower()
     if 'junior' in exp_lower:
         return 1
@@ -76,94 +76,76 @@ def experience_to_years(exp: str) -> int:
 
 
 def normalize(text: str) -> str:
-    """Нормализация текста для сравнения"""
     return text.lower().strip()
 
 
 def has_role_match(resume_position: str, vacancy_title: str) -> bool:
-    """Проверяет совпадение роли (мягкое)"""
     rp = normalize(resume_position)
     vt = normalize(vacancy_title)
 
-    # Ключевые слова-маркеры для ролей
-    role_keywords = {
-        'go': ['go developer', 'golang', 'go backend', 'go engineer'],
-        'python': ['python developer', 'python backend', 'python engineer'],
-        'java': ['java developer', 'java backend', 'java engineer'],
-        'frontend': ['frontend', 'react', 'vue', 'angular', 'js developer'],
-        'backend': ['backend', 'server-side'],
+    role_groups = {
+        'backend': ['go', 'golang', 'python', 'java', 'c#', 'c++', 'php', 'ruby', 'rust', 'scala', 
+                    'backend', 'server-side', 'node.js', 'nodejs'],
+        'frontend': ['frontend', 'front-end', 'react', 'vue', 'angular', 'js developer', 
+                     'javascript developer', 'typescript developer', 'ui developer', 'web developer'],
         'fullstack': ['fullstack', 'full-stack', 'full stack'],
-        'data': ['data engineer', 'data scientist', 'data analyst', 'ml engineer', 'etl'],
-        'devops': ['devops', 'sre', 'infrastructure', 'platform engineer'],
-        'mobile': ['ios', 'android', 'mobile', 'swift', 'kotlin developer'],
-        'qa': ['qa', 'test', 'quality assurance'],
-        'manager': ['manager', 'lead', 'head of'],
+        'data': ['data engineer', 'data scientist', 'data analyst', 'ml engineer', 'etl', 
+                 'bi analyst', 'data architect', 'big data'],
+        'devops': ['devops', 'sre', 'infrastructure', 'platform engineer', 'cloud engineer', 
+                   'kubernetes', 'docker', 'ci/cd'],
+        'mobile': ['ios', 'android', 'mobile', 'swift', 'kotlin developer', 'flutter', 'react native'],
+        'qa': ['qa', 'test', 'quality assurance', 'automation qa', 'qa automation', 'sdet'],
+        'manager': ['manager', 'product manager', 'project manager', 'head of', 'team lead', 'tech lead'],
     }
 
-    # Определяем роль резюме
-    resume_roles = set()
-    for role, keywords in role_keywords.items():
+    resume_groups = set()
+    for group, keywords in role_groups.items():
         if any(kw in rp for kw in keywords):
-            resume_roles.add(role)
+            resume_groups.add(group)
 
-    # Если не определили роль — считаем backend по умолчанию
-    if not resume_roles:
-        resume_roles.add('backend')
-
-    # Определяем роль вакансии
-    vacancy_roles = set()
-    for role, keywords in role_keywords.items():
+    vacancy_groups = set()
+    for group, keywords in role_groups.items():
         if any(kw in vt for kw in keywords):
-            vacancy_roles.add(role)
+            vacancy_groups.add(group)
 
-    # Если не определили роль вакансии — ищем в описании
-    if not vacancy_roles:
-        return True  # Не знаем роль — не штрафуем
+    if not resume_groups or not vacancy_groups:
+        return True
 
-    # Проверяем пересечение
-    return bool(resume_roles & vacancy_roles)
+    if 'fullstack' in resume_groups or 'fullstack' in vacancy_groups:
+        return True
+
+    return bool(resume_groups & vacancy_groups)
 
 
 def count_skill_overlap(resume_skills: List[str], vacancy_skills: List[str]) -> int:
-    """Считает количество совпадающих навыков (case-insensitive)"""
     rs = set(normalize(s) for s in resume_skills)
     vs = set(normalize(s) for s in vacancy_skills)
     return len(rs & vs)
 
 
 def apply_hard_penalties(score: float, resume: Resume, vacancy: Vacancy, reasoning: str) -> (float, str):
-    """
-    Применяет жёсткие штрафы программно, даже если LLM их не применила.
-    Это страховка от завышенных оценок.
-    """
     penalties = []
 
-    # Штраф 1: Роль не совпадает — максимум 0.35
     if not has_role_match(resume.desired_position, vacancy.title):
         if score > 0.35:
             penalties.append(f"Штраф: должность '{vacancy.title}' не соответствует '{resume.desired_position}'")
             score = min(score, 0.35)
 
-    # Штраф 2: Нет ни одного общего навыка — максимум 0.2
     overlap = count_skill_overlap(resume.skills, vacancy.skills)
     if overlap == 0 and len(resume.skills) > 0 and len(vacancy.skills) > 0:
         if score > 0.2:
             penalties.append("Штраф: нет общих навыков")
             score = min(score, 0.2)
-
-    # Штраф 3: Мало общих навыков (< 2) — максимум 0.5
     elif overlap < 2 and len(vacancy.skills) >= 3:
         if score > 0.55:
             penalties.append(f"Штраф: всего {overlap} общих навыков из {len(vacancy.skills)}")
             score = min(score, 0.55)
 
-    # Штраф 4: Remote preference mismatch
     if resume.remote and not vacancy.remote:
         if score > 0.7:
             penalties.append("Штраф: кандидат ищет удалёнку, а вакансия офисная")
             score = min(score, 0.7)
 
-    # Бонус: много общих навыков
     if overlap >= 3 and len(vacancy.skills) > 0:
         bonus_ratio = overlap / len(vacancy.skills)
         if bonus_ratio >= 0.5 and score < 0.75:
@@ -176,14 +158,12 @@ def apply_hard_penalties(score: float, resume: Resume, vacancy: Vacancy, reasoni
 
 
 async def match_with_ollama(resume: Resume, vacancies: List[Vacancy]) -> List[MatchResult]:
-    """Используем локальную LLM через Ollama с жёсткими правилами"""
-
     vacancies_text = ""
     for v in vacancies:
         skills_str = ", ".join(v.skills) if v.skills else "Не указаны"
         vacancies_text += f"""
 {v.id}. {v.title} в компании {v.company}
-   Город: {v.city}, Удалёнка: {"Да" if v.remote else "Нет"}
+   Город: {v.location}, Удалёнка: {"Да" if v.remote else "Нет"}  # ← БЫЛО city
    Опыт: {v.experience}
    Требуемые навыки: {skills_str}
    Описание: {v.description[:250] if v.description else "Нет описания"}
@@ -195,9 +175,31 @@ async def match_with_ollama(resume: Resume, vacancies: List[Vacancy]) -> List[Ma
 
 КРИТИЧЕСКИ ВАЖНЫЕ ПРАВИЛА ОЦЕНКИ:
 1. СОВПАДЕНИЕ ДОЛЖНОСТИ (самое важное):
-   - Если желаемая должность кандидата НЕ СОВПАДАЕТ с вакансией (например, кандидат хочет "Go Developer", а вакансия "Data Engineer") — score ДОЛЖЕН быть НЕ БОЛЕЕ 0.35.
-   - Совпадение должно быть по сути роли, а не по словам. "Backend Developer" и "Go Engineer" — это совпадение. "Go Developer" и "Frontend Developer" — это НЕ совпадение.
+   ПРАВИЛА ГРУПП ДОЛЖНОСТЕЙ (роли внутри одной группы СОВМЕСТИМЫ между собой):
+   
+   - BACKEND группа: Go Developer, Python Developer, Java Developer, Backend Developer, Server-side Engineer
+     → Все эти роли СОВМЕСТИМЫ между собой. Если кандидат "Go Developer" а вакансия "Backend Developer" или "Python Developer" — это ХОРОШЕЕ совпадение (score 0.6-0.85), а не штраф.
+   
+   - FRONTEND группа: Frontend Developer, React Developer, Vue Developer, Angular Developer, JavaScript Developer
+     → Все совместимы между собой.
+   
+   - DATA группа: Data Engineer, Data Scientist, ML Engineer, BI Analyst
+     → Все совместимы между собой.
+   
+   - DEVOPS группа: DevOps Engineer, SRE, Platform Engineer, Cloud Engineer
+     → Все совместимы между собой.
+   
+   - МОБАЙЛ группа: iOS Developer, Android Developer, Mobile Developer, Flutter Developer
+     → Все совместимы между собой.
+   
+   - QA группа: QA Engineer, QA Automation, Test Engineer, SDET
+     → Все совместимы между собой.
 
+   ШТРАФ только если роли из РАЗНЫХ групп:
+   - Go Developer + Frontend Developer → штраф (score ≤ 0.35)
+   - Backend Developer + QA Engineer → штраф (score ≤ 0.35)
+   - Python Developer + Data Scientist → НЕ штраф, но частично (score 0.4-0.6)
+   
 2. СОВПАДЕНИЕ НАВЫКОВ:
    - Если у кандидата нет НИ ОДНОГО общего навыка с вакансией — score НЕ БОЛЕЕ 0.2.
    - Если общих навыков 1 из 4+ — score НЕ БОЛЕЕ 0.5.
@@ -212,11 +214,11 @@ async def match_with_ollama(resume: Resume, vacancies: List[Vacancy]) -> List[Ma
    - Если кандидат хочет удалёнку, а вакансия только офисная — штраф 0.1-0.15.
 
 ШКАЛА ОЦЕНОК:
-- 0.9-1.0: Идеальное совпадение — та же роль, почти все навыки совпадают
-- 0.7-0.89: Хорошее совпадение — роль та же, большинство навыков совпадают
-- 0.5-0.69: Частичное совпадение — роль похожа, но часть навыков не хватает
-- 0.3-0.49: Слабое совпадение — роль не та, но есть пересечение по навыкам
-- 0.0-0.29: Не подходит — совсем другая роль и нет общих навыков
+- 0.9-1.0: Идеальное совпадение
+- 0.7-0.89: Хорошее совпадение
+- 0.5-0.69: Частичное совпадение
+- 0.3-0.49: Слабое совпадение
+- 0.0-0.29: Не подходит
 
 КАНДИДАТ:
 Имя: {resume.full_name}
@@ -274,8 +276,6 @@ async def match_with_ollama(resume: Resume, vacancies: List[Vacancy]) -> List[Ma
 
 
 def match_with_local_model(resume: Resume, vacancies: List[Vacancy]) -> List[MatchResult]:
-    """Fallback: sentence-transformers + жёсткие штрафы"""
-
     resume_skills_str = ", ".join(resume.skills) if resume.skills else ""
     resume_text = f"""
 Position: {resume.desired_position}
@@ -294,7 +294,7 @@ Position: {v.title}
 Company: {v.company}
 Experience: {v.experience}
 Skills: {skills_str}
-City: {v.city}
+City: {v.location}  # ← БЫЛО city
 Remote: {"Yes" if v.remote else "No"}
 Description: {v.description}
 """
@@ -307,19 +307,15 @@ Description: {v.description}
 
     matches = []
     for vacancy, sim in zip(vacancies, similarities):
-        # Базовый score из embeddings
         score = float(max(0, min(1, (sim + 1) / 2)))
 
-        # Усиливаем сигнал от навыков (embeddings его плохо ловят)
         overlap = count_skill_overlap(resume.skills, vacancy.skills)
         if len(vacancy.skills) > 0:
             skill_ratio = overlap / len(vacancy.skills)
-            # Смешиваем: 40% embeddings + 60% skills overlap
             score = score * 0.4 + skill_ratio * 0.6
 
         reasoning = f"Совпадение навыков: {overlap}/{len(vacancy.skills)}"
 
-        # Применяем штрафы
         score, reasoning = apply_hard_penalties(score, resume, vacancy, reasoning)
 
         matches.append(MatchResult(
@@ -333,8 +329,6 @@ Description: {v.description}
 
 @app.post("/match", response_model=MatchResponse)
 async def match(request: MatchRequest):
-    """Главный эндпоинт: Ollama → fallback на embeddings + жёсткие штрафы"""
-
     model_used = "local-embeddings"
 
     try:
@@ -347,7 +341,6 @@ async def match(request: MatchRequest):
         matches = match_with_local_model(request.resume, request.vacancies)
         model_used = "local-embeddings-fallback"
 
-    # Пост-обработка: применяем жёсткие штрафы даже к LLM-результатам
     vacancy_map = {v.id: v for v in request.vacancies}
     processed_matches = []
     for m in matches:
@@ -355,7 +348,6 @@ async def match(request: MatchRequest):
         if not vacancy:
             continue
 
-        # Применяем штрафы как страховку
         final_score, final_reasoning = apply_hard_penalties(
             m.score,
             request.resume,
@@ -363,7 +355,6 @@ async def match(request: MatchRequest):
             m.reasoning or ""
         )
 
-        # Фильтруем по минимальному порогу
         if final_score >= MIN_SCORE_THRESHOLD:
             processed_matches.append(MatchResult(
                 vacancy_id=m.vacancy_id,
@@ -402,3 +393,4 @@ if __name__ == "__main__":
     print("Swagger UI: http://127.0.0.1:8000/docs")
     print("="*50 + "\n")
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
