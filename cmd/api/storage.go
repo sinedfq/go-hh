@@ -12,7 +12,7 @@ type Storage interface {
 	GetVacancyByID(ctx context.Context, id int) (Vacancy, error)
 	CreateVacancy(ctx context.Context, v Vacancy) (int, error)
 	IncrementVacancyViews(ctx context.Context, vacancyID int) error
-	SearchVacancies(ctx context.Context, query string, limit int) ([]Vacancy, error)
+	SearchVacancies(ctx context.Context, filters SearchFilters) ([]Vacancy, int, error)
 	GetCandidateVacancies(ctx context.Context, skills []string, desiredPosition string, experience string, limit int) ([]Vacancy, error)
 
 	// Резюме

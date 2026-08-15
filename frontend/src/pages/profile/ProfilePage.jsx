@@ -161,7 +161,7 @@ function ProfilePage({ onResumeUpdate }) {
 
             <div className="profile-card">
                 {/* Шапка профиля */}
-                <div className="profile-header">
+                <div className="profile-header animate-in" style={{ animationDelay: '0ms' }}>
                     <PhotoUpload
                         currentPhoto={user.photo_url}
                         onUpload={handleUserPhotoUpload}

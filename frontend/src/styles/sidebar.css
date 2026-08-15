@@ -41,14 +41,14 @@
     overflow-x: hidden;
 }
 
-.sidebar-nav::-webkit-scrollbar {
+/* .sidebar-nav::-webkit-scrollbar {
     width: 4px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
     background: #e0e0e0;
     border-radius: 2px;
-}
+} */
 
 .nav-item {
     display: flex;

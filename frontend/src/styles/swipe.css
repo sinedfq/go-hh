@@ -28,9 +28,12 @@
     box-shadow: var(--shadow-md);
     overflow: hidden;
     cursor: grab;
-    touch-action: pan-y !important;
+    touch-action: none !important;
     user-select: none;
+    -webkit-user-select: none;
     will-change: transform;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .swipe-card:active {
@@ -43,6 +46,8 @@
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }

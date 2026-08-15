@@ -45,8 +45,10 @@ func main() {
 	mux.HandleFunc("GET /api/me", server.authMiddleware(server.meHandler))
 
 	// Вакансии (публичные)
+	mux.HandleFunc("GET /api/vacancies/search", server.searchVacanciesHandler) // ← ВАЖНО: ДО /api/vacancies
 	mux.HandleFunc("GET /api/vacancies", server.vacancyHandler)
 	mux.HandleFunc("POST /api/vacancies", server.createVacancyHandler)
+	mux.HandleFunc("POST /api/vacancies/{id}/view", server.viewVacancyHandler)
 
 	// Резюме
 	mux.HandleFunc("GET /api/resumes", server.resumeHandler)

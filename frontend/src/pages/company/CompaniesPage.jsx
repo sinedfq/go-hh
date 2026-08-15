@@ -66,12 +66,13 @@ function CompaniesPage({ onSelectVacancy }) {
     }
 
     return (
-        <div className="companies-page">
+        <div className="companies-page animate-in">
             <div className="companies-grid">
-                {companies.map(company => (
+                {companies.map((company, index) => (
                     <div
                         key={company.id}
-                        className="company-card"
+                        className="company-card animate-in"
+                        style={{ animationDelay: `${index * 50}ms` }}
                         onClick={() => setSelectedCompanyId(company.id)}
                     >
                         <div className="company-logo">
