@@ -1,37 +1,116 @@
 /* ============================================
-   АДАПТИВНОСТЬ
+   АДАПТИВНОСТЬ + МОБИЛЬНАЯ НАВИГАЦИЯ
    ============================================ */
 
+/* ====== Десктоп: мобильные элементы скрыты ====== */
+.mobile-more-btn {
+    display: none;
+}
+
+.header-profile {
+    display: none;
+}
+
+/* ====== Меню "Ещё" (bottom sheet) ====== */
+.mobile-more-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 300;
+    animation: fadeIn 0.2s ease;
+}
+
+.mobile-more-sheet {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-radius: 16px 16px 0 0;
+    padding: 0.75rem 1rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    animation: sheetUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-more-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background: #e0e0e0;
+    margin: 0 auto 0.75rem;
+}
+
+.mobile-more-item {
+    padding: 0.875rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.mobile-more-item:active {
+    background: var(--accent-light);
+}
+
+.mobile-more-logout {
+    color: var(--danger);
+}
+
+@keyframes sheetUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+/* ====== ПЛАНШЕТЫ ====== */
 @media (max-width: 1024px) {
     .vacancy-list {
         width: 300px;
     }
 }
 
+/* ====== ТЕЛЕФОНЫ: САЙДБАР СНИЗУ ====== */
 @media (max-width: 768px) {
     .app {
         flex-direction: column;
     }
 
+    /* Сайдбар — фиксированный нижний бар */
     .sidebar {
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
-        height: auto;
-        position: sticky;
-        top: 0;
+        height: 64px;
         flex-direction: row;
         border-right: none;
-        border-bottom: 1px solid #e0e0e0;
-        padding: 0.5rem;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+        z-index: 9999;
+        padding: 0;
+        overflow: visible;
     }
 
     .sidebar:hover {
         width: 100%;
-        box-shadow: none;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
     }
 
     .sidebar-logo {
-        padding: 0.5rem 1rem;
-        border-bottom: none;
+        display: none;
     }
 
     .sidebar-nav {
@@ -39,16 +118,23 @@
         padding: 0;
         flex: 1;
         justify-content: space-around;
+        align-items: center;
+        overflow: visible;
+        gap: 0;
     }
 
     .nav-item {
         flex-direction: column;
         gap: 0.25rem;
-        padding: 0.5rem;
+        padding: 0.5rem 0.75rem;
     }
 
     .nav-bar {
         width: 24px;
+        height: 3px;
+    }
+
+    .nav-item.active .nav-bar {
         height: 3px;
     }
 
@@ -59,28 +145,109 @@
     }
 
     .nav-title {
-        font-size: 0.7rem;
+        font-size: 0.625rem;
     }
 
     .nav-subtitle {
         display: none;
     }
 
+    /* Профиль и лишние пункты убираем из бара */
     .sidebar-footer {
         display: none;
     }
 
+    .more-only {
+        display: none;
+    }
+
+    .mobile-more-btn {
+        display: flex;
+    }
+
+    /* Основная область учитывает нижний бар */
+    .app {
+        height: 100vh;
+        height: 100dvh;
+        /* реальные устройства */
+    }
+
+    .main-area {
+        height: calc(100vh - 64px);
+        height: calc(100dvh - 64px);
+    }
+
+    /* Страница НЕ скроллится целиком — скроллится только .content */
+    html,
+    body {
+        height: 100%;
+        overflow: hidden;
+    }
+
+    /* Шапка: заголовок + профиль */
     .top-header {
         padding: 0 1rem;
         height: 56px;
+        justify-content: space-between;
     }
 
     .page-title {
         font-size: 1.125rem;
     }
 
+    .header-profile {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .header-profile-btn {
+        background: transparent;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        border-radius: 50%;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    .header-profile-btn:focus,
+    .header-profile-btn:active {
+        outline: none;
+        box-shadow: none;
+    }
+
+    .header-profile-btn:active .header-avatar {
+        transform: scale(0.92);
+    }
+
+    .header-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        font-weight: 700;
+        transition: transform 0.15s ease;
+    }
+
+    .header-login-btn {
+        padding: 0.5rem 1rem;
+        background: var(--accent);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
     .content {
         padding: 1rem;
+        padding-bottom: 1.5rem;
     }
 
     .content:has(.vacancy-list) {
@@ -98,18 +265,120 @@
         max-height: none;
     }
 
-    .card-container {
-        height: 520px;
-    }
-
     .favorites-grid {
         grid-template-columns: 1fr;
+    }
+
+    /* Свайпы — высота под экран */
+    .card-container {
+        height: calc(100vh - 220px);
+        min-height: 450px;
+        max-height: 580px;
+    }
+
+    .card-content {
+        padding: 1.25rem;
+    }
+
+    .card-header-content h2 {
+        font-size: 1.375rem;
+    }
+
+    .card-meta,
+    .detail-meta {
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 0.875rem 1rem;
+    }
+
+    .card-buttons {
+        bottom: 1rem;
+        gap: 0.5rem;
+        padding: 0 0.75rem;
+    }
+
+    .card-btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+
+    .match-score-badge {
+        min-width: 48px;
+        height: 48px;
+        border-radius: 12px;
+    }
+
+    .score-number {
+        font-size: 1.125rem;
+    }
+
+    .overlay-text {
+        font-size: 1.5rem;
+        bottom: 5rem;
+    }
+}
+
+/* ====== МАЛЕНЬКИЕ ТЕЛЕФОНЫ ====== */
+@media (max-width: 600px) {
+    .sidebar {
+        height: 56px;
+    }
+
+    .nav-item {
+        padding: 0.375rem 0.5rem;
+    }
+
+    .nav-title {
+        font-size: 0.5625rem;
+    }
+
+    .nav-bar {
+        width: 20px;
+        height: 2px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+
+    .main-area {
+        height: calc(100vh - 56px);
+        height: calc(100dvh - 56px);
+    }
+
+    .top-header {
+        height: 48px;
+        padding: 0 0.75rem;
+    }
+
+    .page-title {
+        font-size: 1rem;
+    }
+
+    .content {
+        padding: 0.75rem;
+        padding-bottom: 1rem;
+    }
+
+    .card-container {
+        height: calc(100vh - 200px);
+        min-height: 400px;
+    }
+
+    .card-header-content h2 {
+        font-size: 1.25rem;
+    }
+
+    .card-btn {
+        padding: 0.5rem 0.625rem;
+        font-size: 0.75rem;
     }
 }
 
 @media (max-width: 480px) {
     .card-container {
-        height: 480px;
+        min-height: 380px;
     }
 
     .detail-meta,
@@ -123,8 +392,74 @@
     }
 }
 
-@media (max-width: 700px) {
-    .favorites-grid {
-        grid-template-columns: 1fr;
+/* ============================================
+   ОТКЛЮЧЕНИЕ АНИМАЦИЙ НА МОБИЛЬНЫХ
+   ============================================ */
+
+/* Пользователи с reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Touch-устройства: убираем hover-эффекты */
+@media (hover: none) {
+
+    .detail-card:hover,
+    .vacancy-detail-wrapper.clickable:hover,
+    .favorite-card:hover {
+        transform: none;
+        box-shadow: none;
+    }
+
+    .nav-item:hover {
+        background: transparent;
+    }
+
+    .nav-item:hover .nav-bar {
+        background: #e0e0e0;
+        height: 36px;
+    }
+
+    .card-btn-skip:hover,
+    .card-btn-like:hover {
+        background: var(--surface);
+        border-color: var(--border);
+        color: var(--text-primary);
+    }
+
+    .card-btn-info:hover {
+        background: white;
+        color: #0066cc;
+    }
+
+    .company:hover,
+    .detail-header .company:hover {
+        text-decoration: none;
+    }
+}
+
+/* Мобильные: отключаем transition для скорости */
+@media (max-width: 768px) {
+
+    .nav-item,
+    .nav-bar,
+    .nav-label,
+    .user-profile-btn,
+    .detail-card,
+    .vacancy-detail-wrapper,
+    .favorite-card,
+    .favorite-remove-btn,
+    .vacancy-item,
+    .card-btn,
+    .btn {
+        transition: none;
     }
 }

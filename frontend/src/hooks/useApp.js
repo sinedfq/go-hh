@@ -1,50 +1,87 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
 
 export function useApp() {
     const { user, loading: authLoading, logout } = useAuth()
 
-    // Вакансии и избранное
+    // ====== ВАКАНСИИ И ИЗБРАННОЕ ======
     const [vacancies, setVacancies] = useState([])
     const [favorites, setFavorites] = useState([])
     const [currentIndex, setCurrentIndex] = useState(-1)
-    const [selectedVacancy, setSelectedVacancy] = useState(null)
     const [loading, setLoading] = useState(true)
 
-    // Режимы и модалки
-    const [mode, setMode] = useState('browse')
+    // Выбранная вакансия через ID (сохраняется в sessionStorage)
+    const [selectedVacancyId, setSelectedVacancyId] = useState(() => {
+        const saved = sessionStorage.getItem('selectedVacancyId')
+        return saved ? parseInt(saved) : null
+    })
+
+    // Вычисляемая выбранная вакансия
+    const selectedVacancy = vacancies.find(v => v.id === selectedVacancyId) || vacancies[0] || null
+
+    // ====== РЕЖИМЫ И МОДАЛКИ ======
+    const [mode, setMode] = useState(() => {
+        return sessionStorage.getItem('currentMode') || 'browse'
+    })
     const [showLoginModal, setShowLoginModal] = useState(false)
 
-    // Рекомендации
+    // ====== РЕКОМЕНДАЦИИ ======
     const [recommendations, setRecommendations] = useState([])
     const [selectedRecommendedVacancy, setSelectedRecommendedVacancy] = useState(null)
     const [recommendationsLoaded, setRecommendationsLoaded] = useState(false)
     const [recommendationsLoading, setRecommendationsLoading] = useState(false)
 
-    // Резюме (для обновления рекомендаций)
+    // ====== РЕЗЮМЕ ======
     const [resume, setResume] = useState(null)
     const [matchScores, setMatchScores] = useState({})
 
-    // Страницы
+    // ====== СТРАНИЦЫ (вакансия/компания) ======
     const [vacancyPageId, setVacancyPageId] = useState(null)
     const [companyPageId, setCompanyPageId] = useState(null)
 
-    // ====== DATA LOADING ======
+    // ====== ПОИСК И ФИЛЬТРЫ ======
+    const [searchFilters, setSearchFilters] = useState(() => {
+        const params = new URLSearchParams(window.location.search)
+        return {
+            query: params.get('q') || '',
+            location: params.get('location') || '',
+            experience: params.get('experience') || '',
+            remote: params.get('remote') === 'true' ? true : null,
+            skills: params.get('skills') ? params.get('skills').split(',').map(s => s.trim()).filter(Boolean) : []
+        }
+    })
+
+    const [cities, setCities] = useState([])
+    const [allSkills, setAllSkills] = useState([])
+
+    const [searchResults, setSearchResults] = useState([])
+    const [searchTotal, setSearchTotal] = useState(0)
+    const [searchLoading, setSearchLoading] = useState(false)
+
+    // ====== СКРОЛЛ (через ref для корректного чтения) ======
+    const scrollPositionsRef = useRef({})
+
+    useEffect(() => {
+        const saved = sessionStorage.getItem('scrollPositions')
+        if (saved) {
+            try {
+                scrollPositionsRef.current = JSON.parse(saved)
+            } catch (e) {
+                scrollPositionsRef.current = {}
+            }
+        }
+    }, [])
+
+    // ====== ЗАГРУЗКА ДАННЫХ ======
 
     const loadVacancies = async () => {
         try {
             setLoading(true)
             const res = await axios.get('/api/vacancies')
-            let data = res.data
-            if (!Array.isArray(data)) {
-                data = data.value || []
-            }
+            const data = Array.isArray(res.data) ? res.data : []
             setVacancies(data)
             setCurrentIndex(data.length - 1)
-            if (data.length > 0 && !selectedVacancy) {
-                setSelectedVacancy(data[0])
-            }
             setLoading(false)
         } catch (err) {
             console.error('Ошибка загрузки вакансий:', err)
@@ -52,16 +89,28 @@ export function useApp() {
         }
     }
 
+    const loadFilterOptions = async () => {
+        try {
+            const res = await axios.get('/api/vacancies')
+            const allVacancies = Array.isArray(res.data) ? res.data : []
+            const uniqueCities = [...new Set(allVacancies.map(v => v.location).filter(Boolean))]
+            setCities(uniqueCities.sort())
+
+            const skillsRes = await axios.get('/api/skills')
+            const skills = Array.isArray(skillsRes.data) ? skillsRes.data : []
+            setAllSkills(skills.map(s => s.name).sort())
+        } catch (err) {
+            console.error('Ошибка загрузки опций фильтров:', err)
+        }
+    }
+
     const loadFavorites = async () => {
         try {
             const res = await axios.get('/api/favorites')
-            let data = res.data
-            if (!Array.isArray(data)) {
-                data = []
-            }
+            const data = Array.isArray(res.data) ? res.data : []
             setFavorites(data)
         } catch (err) {
-            console.error('Ошибка загрузки избранных:', err)
+            console.error('Ошибка загрузки избранного:', err)
         }
     }
 
@@ -81,11 +130,7 @@ export function useApp() {
             })
             setMatchScores(scores)
 
-            if (recs.length > 0) {
-                setSelectedRecommendedVacancy(recs[0].vacancy)
-            } else {
-                setSelectedRecommendedVacancy(null)
-            }
+            setSelectedRecommendedVacancy(recs.length > 0 ? recs[0].vacancy : null)
             setRecommendationsLoaded(true)
         } catch (err) {
             console.error('Ошибка загрузки рекомендаций:', err)
@@ -94,7 +139,7 @@ export function useApp() {
         }
     }
 
-    // ====== FAVORITES ======
+    // ====== ИЗБРАННОЕ ======
 
     const addToFavorites = async (vacancyId) => {
         if (!user) {
@@ -103,7 +148,7 @@ export function useApp() {
         }
         try {
             await axios.post('/api/favorites', { vacancy_id: vacancyId })
-            loadFavorites()
+            await loadFavorites()
         } catch (err) {
             console.error('Ошибка добавления в избранное:', err)
         }
@@ -113,7 +158,7 @@ export function useApp() {
         if (!user) return
         try {
             await axios.delete(`/api/favorites/${vacancyId}`)
-            loadFavorites()
+            await loadFavorites()
         } catch (err) {
             console.error('Ошибка удаления из избранного:', err)
         }
@@ -123,7 +168,7 @@ export function useApp() {
         return favorites.some(fav => fav.id === vacancyId)
     }
 
-    // ====== SWIPE ======
+    // ====== СВАЙПЫ ======
 
     const handleSwipe = (direction, vacancyId) => {
         if (direction === 'right') {
@@ -131,19 +176,61 @@ export function useApp() {
         }
         setCurrentIndex(prev => {
             const nextIndex = prev - 1
-            if (nextIndex >= 0 && vacancies[nextIndex]) {
-                setSelectedVacancy(vacancies[nextIndex])
-            }
-            return nextIndex
+            return nextIndex >= 0 ? nextIndex : prev
         })
     }
 
-    // ====== NAVIGATION ======
+    // ====== ВЫБОР ВАКАНСИИ В ПРОСМОТРЕ ======
+
+    const setSelectedVacancy = (vacancy) => {
+        if (vacancy && vacancy.id) {
+            setSelectedVacancyId(vacancy.id)
+            sessionStorage.setItem('selectedVacancyId', vacancy.id.toString())
+        } else {
+            setSelectedVacancyId(null)
+            sessionStorage.removeItem('selectedVacancyId')
+        }
+    }
+
+    // ====== СКРОЛЛ ======
+
+    const saveScrollPosition = () => {
+        const content = document.querySelector('.content')
+        if (content) {
+            const position = content.scrollTop
+            scrollPositionsRef.current = {
+                ...scrollPositionsRef.current,
+                [mode]: position
+            }
+            sessionStorage.setItem('scrollPositions', JSON.stringify(scrollPositionsRef.current))
+        }
+    }
+
+    const restoreScrollPosition = (targetMode) => {
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const content = document.querySelector('.content')
+                const position = scrollPositionsRef.current[targetMode]
+                if (content && position !== undefined) {
+                    content.scrollTop = position
+                } else if (content) {
+                    content.scrollTop = 0
+                }
+            })
+        })
+    }
+
+    // ====== НАВИГАЦИЯ ======
 
     const openVacancyPage = (id) => {
         setCompanyPageId(null)
         setVacancyPageId(id)
-        window.history.pushState({ vacancyId: id }, '', `?vacancy=${id}`)
+
+        const params = new URLSearchParams(window.location.search)
+        params.set('vacancy', id)
+        // Убираем company из URL если есть
+        params.delete('company')
+        window.history.pushState({ vacancyId: id, companyId: null }, '', `?${params.toString()}`)
     }
 
     const closeVacancyPage = () => {
@@ -154,12 +241,30 @@ export function useApp() {
     const openCompanyPage = (id) => {
         setVacancyPageId(null)
         setCompanyPageId(id)
-        window.history.pushState({ companyId: id }, '', `?company=${id}`)
+
+        const params = new URLSearchParams(window.location.search)
+        params.set('company', id)
+        // Сохраняем vacancy в URL если есть
+        window.history.pushState({ vacancyId: vacancyPageId, companyId: id }, '', `?${params.toString()}`)
     }
 
     const closeCompanyPage = () => {
         setCompanyPageId(null)
         window.history.back()
+    }
+
+    const clearSearchFromURL = () => {
+        const params = new URLSearchParams(window.location.search)
+        const searchKeys = ['q', 'location', 'experience', 'remote', 'skills']
+        const hasSearchParams = searchKeys.some(key => params.has(key))
+
+        if (hasSearchParams) {
+            searchKeys.forEach(key => params.delete(key))
+            const newUrl = params.toString()
+                ? `?${params.toString()}`
+                : window.location.pathname
+            window.history.replaceState({}, '', newUrl)
+        }
     }
 
     const handleModeChange = (newMode) => {
@@ -169,15 +274,66 @@ export function useApp() {
             window.history.back()
         }
 
+        // Очищаем URL от фильтров поиска при смене режима
+        clearSearchFromURL()
+
         if ((newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations') && !user) {
             setShowLoginModal(true)
             return
         }
+
         setMode(newMode)
+    }
+
+    // ====== ФИЛЬТРЫ ======
+
+    const updateFilters = (filters) => {
+        setSearchFilters(filters)
+    }
+
+    const applyFilters = async (filters, goToSearch = false) => {
+        setSearchFilters(filters)
+
+        const params = new URLSearchParams()
+        if (filters.query) params.set('q', filters.query)
+        if (filters.location) params.set('location', filters.location)
+        if (filters.experience) params.set('experience', filters.experience)
+        if (filters.remote === true) params.set('remote', 'true')
+        if (filters.skills && filters.skills.length > 0) {
+            params.set('skills', filters.skills.join(','))
+        }
+
+        const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname
+        window.history.replaceState({}, '', newUrl)
+
+        try {
+            setSearchLoading(true)
+            const res = await axios.get(`/api/vacancies/search?${params.toString()}`)
+            setSearchResults(res.data.vacancies || [])
+            setSearchTotal(res.data.total_count || 0)
+
+            if (goToSearch) {
+                setMode('search')
+            }
+        } catch (err) {
+            console.error('Ошибка поиска:', err)
+        } finally {
+            setSearchLoading(false)
+        }
+    }
+
+    const resetFilters = () => {
+        const empty = { query: '', location: '', experience: '', remote: null, skills: [] }
+        setSearchFilters(empty)
+        window.history.replaceState({}, '', window.location.pathname)
+        setSearchResults([])
+        setSearchTotal(0)
+        loadVacancies()
     }
 
     // ====== EFFECTS ======
 
+    // Парсим URL при первой загрузке (вакансии/компании/фильтры)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const vacancyId = params.get('vacancy')
@@ -185,12 +341,21 @@ export function useApp() {
 
         const newState = {}
         if (companyId) {
-            newState.companyId = parseInt(companyId)
-            setCompanyPageId(parseInt(companyId))
+            const id = parseInt(companyId)
+            newState.companyId = id
+            setCompanyPageId(id)
         }
         if (vacancyId) {
-            newState.vacancyId = parseInt(vacancyId)
-            setVacancyPageId(parseInt(vacancyId))
+            const id = parseInt(vacancyId)
+            newState.vacancyId = id
+            setVacancyPageId(id)
+        }
+
+        // Если в URL только фильтры поиска (без id) - открываем поиск
+        const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
+            .some(key => params.get(key))
+        if (hasSearchFilters && !vacancyId && !companyId) {
+            setMode('search')
         }
 
         window.history.replaceState(
@@ -198,8 +363,10 @@ export function useApp() {
             '',
             window.location.pathname + window.location.search
         )
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
+    // Axios interceptor - авто-логаут при 401
     useEffect(() => {
         const interceptor = axios.interceptors.response.use(
             (response) => response,
@@ -213,36 +380,54 @@ export function useApp() {
         return () => axios.interceptors.response.eject(interceptor)
     }, [logout])
 
+    // Первичная загрузка данных
     useEffect(() => {
-        if (!authLoading) {
-            loadVacancies()
-            if (user) {
-                loadFavorites()
-            }
+        if (authLoading) return
+
+        loadVacancies()
+        loadFilterOptions()
+
+        if (user) {
+            loadFavorites()
         }
+
+        // Если есть фильтры в URL - применяем их
+        const params = new URLSearchParams(window.location.search)
+        const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
+            .some(key => params.get(key))
+        if (hasSearchFilters) {
+            applyFilters(searchFilters)
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, authLoading])
 
+    // Закрытие логин-модалки при успешном логине
     useEffect(() => {
         if (user) {
             setShowLoginModal(false)
         }
     }, [user])
 
+    // Загрузка рекомендаций при переходе в соответствующие режимы
     useEffect(() => {
         if ((mode === 'recommendations' || mode === 'swipe') && user && !recommendationsLoaded) {
             loadRecommendations()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, user])
 
+    // Обновление рекомендаций при изменении резюме
     useEffect(() => {
-        if (user && recommendationsLoaded) {
+        if (user && recommendationsLoaded && resume) {
             setRecommendationsLoaded(false)
             if (mode === 'recommendations') {
                 loadRecommendations(true)
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resume])
 
+    // Popstate - обработка кнопки "Назад" в браузере
     useEffect(() => {
         const handlePopState = (event) => {
             const state = event.state
@@ -259,40 +444,145 @@ export function useApp() {
         return () => window.removeEventListener('popstate', handlePopState)
     }, [])
 
+    // Сохраняем режим в sessionStorage при смене
+    useEffect(() => {
+        sessionStorage.setItem('currentMode', mode)
+    }, [mode])
+
+    // ====== СКРОЛЛ: сброс при смене вкладки, восстановление при возврате со страницы ======
+    const prevPageRef = useRef({ vacancy: null, company: null })
+
+    useEffect(() => {
+        const wasOnPage = !!(prevPageRef.current.vacancy || prevPageRef.current.company)
+        const isOnPage = !!(vacancyPageId || companyPageId)
+
+        if (!isOnPage) {
+            if (wasOnPage) {
+                // Вернулись с вакансии/компании — восстанавливаем позицию
+                restoreScrollPosition(mode)
+            } else {
+                // Переключили вкладку — сбрасываем наверх
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        const content = document.querySelector('.content')
+                        if (content) content.scrollTop = 0
+                    })
+                })
+            }
+        }
+
+        prevPageRef.current = { vacancy: vacancyPageId, company: companyPageId }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode, vacancyPageId, companyPageId])
+
+    // Синхронизация URL с режимом и фильтрами
+    useEffect(() => {
+        // Если мы на странице вакансии/компании — не трогаем URL
+        if (vacancyPageId || companyPageId) return
+
+        const params = new URLSearchParams(window.location.search)
+
+        if (mode === 'search') {
+            // Для режима "search" — восстанавливаем фильтры в URL
+            const newParams = new URLSearchParams()
+            if (searchFilters.query) newParams.set('q', searchFilters.query)
+            if (searchFilters.location) newParams.set('location', searchFilters.location)
+            if (searchFilters.experience) newParams.set('experience', searchFilters.experience)
+            if (searchFilters.remote === true) newParams.set('remote', 'true')
+            if (searchFilters.skills && searchFilters.skills.length > 0) {
+                newParams.set('skills', searchFilters.skills.join(','))
+            }
+
+            const newUrl = newParams.toString()
+                ? `?${newParams.toString()}`
+                : window.location.pathname
+
+            // Обновляем только если URL действительно отличается
+            const currentUrl = window.location.pathname + window.location.search
+            if (newUrl !== currentUrl) {
+                window.history.replaceState({}, '', newUrl)
+            }
+        } else {
+            // Для других режимов — удаляем параметры поиска из URL
+            const searchKeys = ['q', 'location', 'experience', 'remote', 'skills']
+            const hasSearchParams = searchKeys.some(key => params.has(key))
+
+            if (hasSearchParams) {
+                searchKeys.forEach(key => params.delete(key))
+                const newUrl = params.toString()
+                    ? `?${params.toString()}`
+                    : window.location.pathname
+                window.history.replaceState({}, '', newUrl)
+            }
+        }
+    }, [mode, searchFilters, vacancyPageId, companyPageId])
+
+    // ====== RETURN ======
+
     return {
+        // Auth
         user,
         authLoading,
         logout,
-        vacancies,
-        favorites,
-        currentIndex,
-        selectedVacancy,
-        loading,
-        mode,
         showLoginModal,
         setShowLoginModal,
+
+        // Вакансии
+        vacancies,
+        loading,
+        selectedVacancy,
+        setSelectedVacancy,
+        currentIndex,
+        loadVacancies,
+
+        // Избранное
+        favorites,
+        isFavorite,
+        addToFavorites,
+        removeFromFavorites,
+        loadFavorites,
+
+        // Рекомендации
         recommendations,
         selectedRecommendedVacancy,
         setSelectedRecommendedVacancy,
         recommendationsLoading,
+        recommendationsLoaded,
+        setRecommendationsLoaded,
+        loadRecommendations,
+
+        // Резюме
         resume,
         setResume,
         matchScores,
+
+        // Режим
+        mode,
+        handleModeChange,
+
+        // Навигация
         vacancyPageId,
         companyPageId,
-        setSelectedVacancy,
-        setRecommendationsLoaded,
-        loadVacancies,
-        loadFavorites,
-        loadRecommendations,
-        addToFavorites,
-        removeFromFavorites,
-        isFavorite,
-        handleSwipe,
         openVacancyPage,
         closeVacancyPage,
         openCompanyPage,
         closeCompanyPage,
-        handleModeChange,
+
+        // Поиск и фильтры
+        searchFilters,
+        cities,
+        allSkills,
+        searchResults,
+        searchTotal,
+        searchLoading,
+        updateFilters,
+        applyFilters,
+        resetFilters,
+
+        // Скролл
+        saveScrollPosition,
+
+        // Свайпы
+        handleSwipe,
     }
 }

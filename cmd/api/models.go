@@ -171,3 +171,13 @@ type CompanyWithStats struct {
 	VacanciesCount int `json:"vacancies_count"`
 	TotalViews     int `json:"total_views"`
 }
+
+type SearchFilters struct {
+	Query      string   `json:"query"`
+	Location   string   `json:"location"`
+	Experience string   `json:"experience"`
+	Remote     *bool    `json:"remote"`
+	Skills     []string `json:"skills"`
+	Limit      int      `json:"limit"`
+	Offset     int      `json:"offset"`
+}

@@ -1,0 +1,380 @@
+.filter-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.filter-panel.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.filter-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    animation: fadeInUp 0.3s ease backwards;
+}
+
+.filter-section:nth-child(1) {
+    animation-delay: 0.05s;
+}
+
+.filter-section:nth-child(2) {
+    animation-delay: 0.1s;
+}
+
+.filter-section:nth-child(3) {
+    animation-delay: 0.15s;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.filter-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Улучшенный SELECT с градиентом */
+.select-wrapper {
+    position: relative;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    background: linear-gradient(to bottom, var(--surface), var(--bg));
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-family: inherit;
+    font-weight: 500;
+}
+
+.filter-select:hover {
+    border-color: var(--accent);
+    background: linear-gradient(to bottom, var(--accent-light), var(--surface));
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(0, 102, 204, 0.1);
+    background: var(--surface);
+}
+
+.select-arrow {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.select-wrapper:hover .select-arrow {
+    color: var(--accent);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.filter-select:focus~.select-arrow {
+    transform: translateY(-50%) rotate(180deg) scale(1.1);
+    color: var(--accent);
+}
+
+/* Стили для опций */
+.filter-select option {
+    padding: 0.75rem;
+    background: var(--surface);
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.filter-select option:hover {
+    background: var(--accent-light);
+}
+
+/* Чипсы */
+.chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.chip {
+    padding: 0.375rem 0.875rem;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+}
+
+.chip:active {
+    transform: scale(0.96);
+}
+
+.chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.25);
+}
+
+.chip.active:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: white;
+}
+
+/* Toggle Switch */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    user-select: none;
+    padding: 0.5rem 0;
+}
+
+.toggle-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    border-radius: 13px;
+    background: var(--border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.toggle-slider::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.toggle-switch input:checked+.toggle-slider {
+    background: var(--accent);
+}
+
+.toggle-switch input:checked+.toggle-slider::after {
+    transform: translateX(22px);
+}
+
+.toggle-switch:hover .toggle-slider {
+    background: #d0d0d0;
+}
+
+.toggle-switch input:checked~.toggle-text {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+.toggle-text {
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+/* Кнопки действий */
+.filter-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    animation: fadeInUp 0.3s ease backwards;
+    animation-delay: 0.2s;
+}
+
+.filter-actions .btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+.filter-actions .btn:active {
+    transform: scale(0.97);
+}
+
+.filter-actions .btn-primary svg {
+    transition: transform 0.2s ease;
+}
+
+.filter-actions .btn-primary:hover svg {
+    transform: translateX(3px);
+}
+
+.reset-badge {
+    background: var(--danger);
+    color: white;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.0625rem 0.375rem;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+    animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes badgePop {
+    from {
+        transform: scale(0.6);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ====== КАСТОМНЫЙ SELECT ====== */
+.custom-select {
+    position: relative;
+}
+
+.custom-select-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.625rem 1rem;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: 0.9375rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: inherit;
+}
+
+.custom-select-btn.has-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.custom-select-btn:hover,
+.custom-select-btn.open {
+    border-color: var(--accent);
+}
+
+.custom-select-btn:focus {
+    outline: none;
+}
+
+.custom-select-arrow {
+    color: var(--text-muted);
+    flex-shrink: 0;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.custom-select-btn.open .custom-select-arrow {
+    transform: rotate(180deg);
+    color: var(--accent);
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    max-height: 240px;
+    overflow-y: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 100;
+    animation: dropdownOpen 0.2s ease;
+}
+
+@keyframes dropdownOpen {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.custom-select-option {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.custom-select-option:hover {
+    background: var(--accent-light);
+}
+
+.custom-select-option.selected {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-weight: 600;
+}

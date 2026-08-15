@@ -1,0 +1,376 @@
+.search-results-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* ====== ЗАГОЛОВОК ПОИСКА ====== */
+.search-header {
+  margin-bottom: 2rem;
+}
+
+.search-bar-wrapper {
+  display: flex;
+  gap: 1rem;
+  align-items: stretch;
+}
+
+.search-bar-wrapper .search-bar {
+  flex: 1;
+}
+
+.filter-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.filter-toggle-button:hover {
+  background: var(--bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-toggle-button.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.filter-panel-wrapper {
+  margin-top: 1rem;
+}
+
+/* ====== СЧЁТЧИК РЕЗУЛЬТАТОВ ====== */
+.results-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.5rem;
+  background: var(--accent-light);
+  border-radius: var(--radius-md);
+  border-left: 4px solid var(--accent);
+}
+
+.count-number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.count-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* ====== СЕТКА РЕЗУЛЬТАТОВ ====== */
+.search-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ====== КАРТОЧКА РЕЗУЛЬТАТА ====== */
+.search-result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.search-result-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--accent), #00d4ff);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+
+.search-result-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 102, 204, 0.15);
+  border-color: var(--accent);
+}
+
+.search-result-card:hover::before {
+  transform: scaleX(1);
+}
+
+.result-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.result-card-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.result-card-company {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.result-card-meta {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.result-card-skills {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.result-card-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
+}
+
+.result-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-light);
+}
+
+/* ====== ДЕТАЛЬ ПОИСКА ====== */
+.search-detail-view {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* ====== АНИМАЦИИ ====== */
+
+/* Fade in для контейнеров */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-fade-in-delayed {
+  animation: fadeIn 0.3s ease-out 0.1s backwards;
+}
+
+/* Slide down для панели фильтров */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Анимация появления результатов поиска */
+@keyframes searchResultIn {
+  0% {
+    opacity: 0;
+    transform: translateY(40px) scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translateY(-8px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-search-result {
+  animation: searchResultIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+/* ====== АДАПТИВНОСТЬ ====== */
+
+@media (max-width: 1024px) {
+  .search-results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-results-container {
+    padding: 0 0.75rem;
+  }
+
+  .search-bar-wrapper {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .filter-toggle-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .search-results-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .search-result-card {
+    padding: 1.25rem;
+  }
+
+  .result-card-title {
+    font-size: 1rem;
+  }
+
+  .search-detail-view {
+    padding: 0 0.75rem;
+  }
+
+  .results-count {
+    padding: 0.875rem 1.25rem;
+  }
+
+  .count-number {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .search-result-card {
+    padding: 1rem;
+  }
+
+  .result-card-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .result-card-skills {
+    gap: 0.375rem;
+  }
+
+  .skill-tag {
+    font-size: 0.6875rem;
+    padding: 0.25rem 0.625rem;
+  }
+}
+
+/* ====== АДАПТИВНОСТЬ ====== */
+
+@media (max-width: 1024px) {
+    .search-results-grid {
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.25rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .search-results-container {
+        padding: 0 0.75rem;
+    }
+
+    .search-bar-wrapper {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .filter-toggle-button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .search-results-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .search-result-card {
+        padding: 1.25rem;
+    }
+
+    .result-card-title {
+        font-size: 1rem;
+    }
+
+    .search-detail-view {
+        padding: 0 0.75rem;
+    }
+
+    .results-count {
+        padding: 0.875rem 1.25rem;
+    }
+
+    .count-number {
+        font-size: 1.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-result-card {
+        padding: 1rem;
+    }
+
+    .result-card-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .result-card-skills {
+        gap: 0.375rem;
+    }
+
+    .skill-tag {
+        font-size: 0.6875rem;
+        padding: 0.25rem 0.625rem;
+    }
+}

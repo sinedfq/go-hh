@@ -7,9 +7,11 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    height: auto;
+    min-height: 100%;
+    padding-bottom: 2rem;
 }
 
-/* Кнопка назад */
 .vacancy-page .back-btn {
     display: inline-flex;
     align-items: center;
@@ -32,7 +34,7 @@
     background: #f0f7ff;
 }
 
-/* ====== LAYOUT: две колонки ====== */
+/* Layout: две колонки */
 .vacancy-page-layout {
     display: grid;
     grid-template-columns: 1fr 340px;
@@ -40,7 +42,7 @@
     align-items: start;
 }
 
-/* ====== ЛЕВАЯ КОЛОНКА ====== */
+/* Левая колонка */
 .vacancy-main {
     display: flex;
     flex-direction: column;
@@ -133,7 +135,6 @@
     opacity: 0.8;
 }
 
-/* Секции */
 .vacancy-section-card {
     background: white;
     border-radius: 16px;
@@ -155,17 +156,27 @@
     white-space: pre-wrap;
 }
 
+/* Навыки — flex-wrap + правильная ширина */
 .vacancy-skills {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    min-height: 0;
 }
 
-/* ====== ПРАВАЯ КОЛОНКА ====== */
+.vacancy-skills .skill-tag {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* Правая колонка */
 .vacancy-sidebar {
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    overflow: visible;
+    height: auto;
+    max-height: none;
 }
 
 .vacancy-location-card,
@@ -185,7 +196,6 @@
     font-weight: 600;
 }
 
-/* Плейсхолдер для будущей карты */
 .location-placeholder {
     display: flex;
     flex-direction: column;
@@ -217,7 +227,6 @@
     margin: 0;
 }
 
-/* Статистика */
 .vacancy-stats-card {
     padding: 1.25rem 1.5rem;
 }
@@ -239,45 +248,41 @@
     font-weight: 700;
 }
 
-/* Действия */
 .vacancy-actions-card {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     padding: 1.25rem;
+    overflow: visible;
+    height: auto;
+    max-height: none;
+}
+
+.vacancy-actions-card h3 {
+    margin-bottom: 0.75rem;
+}
+
+.vacancy-actions-card .btn {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.875rem 1rem;
+    white-space: normal;
+    word-break: break-word;
+    flex-shrink: 0;
+}
+
+.vacancy-actions-card .btn-block {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-block {
     width: 100%;
 }
 
-/* ====== АДАПТИВНОСТЬ ====== */
-@media (max-width: 1024px) {
-    .vacancy-page-layout {
-        grid-template-columns: 1fr;
-    }
-
-    .vacancy-sidebar {
-        order: -1;
-    }
-}
-
-@media (max-width: 600px) {
-    .vacancy-header-card {
-        padding: 1.25rem;
-    }
-
-    .vacancy-title-row {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .vacancy-title-row h1 {
-        font-size: 1.375rem;
-    }
-}
-
-/* ====== ЯНДЕКС КАРТА ====== */
+/* Яндекс карта */
 .yandex-map {
     height: 280px;
     width: 100%;
@@ -296,3 +301,174 @@
     align-items: center;
     gap: 0.375rem;
 }
+
+/* Адаптивность */
+/* ============================================
+   АДАПТИВНОСТЬ
+   ============================================ */
+
+/* Планшет: sidebar снизу */
+@media (max-width: 1024px) {
+    .vacancy-page-layout {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .vacancy-sidebar {
+        order: 1; /* после описания, а не перед */
+    }
+}
+
+/* Телефон */
+@media (max-width: 768px) {
+    .vacancy-page {
+        padding-bottom: 2rem;
+        gap: 1rem;
+    }
+
+    .vacancy-page-layout {
+        gap: 1rem;
+    }
+
+    .vacancy-header-card {
+        padding: 1.25rem;
+        border-radius: 14px;
+    }
+
+    .vacancy-title-row {
+        flex-direction: column;
+        gap: 0.625rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .vacancy-title-row h1 {
+        font-size: 1.375rem;
+    }
+
+    .vacancy-company-row {
+        margin-bottom: 1rem;
+    }
+
+    .company-name,
+    .company-link {
+        font-size: 1rem;
+    }
+
+    .vacancy-meta-badges {
+        gap: 0.375rem;
+    }
+
+    .meta-badge {
+        padding: 0.3rem 0.625rem;
+        font-size: 0.75rem;
+    }
+
+    .vacancy-section-card {
+        padding: 1.25rem;
+        border-radius: 14px;
+    }
+
+    .vacancy-section-card h3 {
+        font-size: 0.9375rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .vacancy-description {
+        font-size: 0.875rem;
+        line-height: 1.6;
+    }
+
+    .vacancy-skills {
+        gap: 0.375rem;
+    }
+
+    .vacancy-skills .skill-tag {
+        padding: 0.3rem 0.625rem;
+        font-size: 0.8125rem;
+    }
+
+    /* Sidebar на мобильных — без ограничений */
+    .vacancy-sidebar {
+        gap: 1rem;
+        width: 100%;
+        overflow: visible;
+    }
+
+    .vacancy-location-card,
+    .vacancy-stats-card,
+    .vacancy-actions-card {
+        padding: 1.25rem;
+        border-radius: 14px;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: visible;
+        height: auto;
+    }
+
+    .yandex-map {
+        height: 220px;
+        border-radius: 10px;
+        width: 100%;
+    }
+
+    /* Кнопки на мобильных — всегда видны */
+    .vacancy-actions-card {
+        gap: 0.625rem;
+        padding: 1.25rem;
+    }
+
+    .vacancy-actions-card .btn {
+        width: 100%;
+        min-height: 48px;
+        padding: 0.875rem 1rem;
+        font-size: 0.9375rem;
+        white-space: normal;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .vacancy-header-card {
+        padding: 1rem;
+    }
+
+    .vacancy-title-row h1 {
+        font-size: 1.25rem;
+    }
+
+    .vacancy-section-card {
+        padding: 1rem;
+    }
+
+    .yandex-map {
+        height: 200px;
+    }
+
+    .vacancy-actions-card .btn {
+        min-height: 46px;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* УБРАТЬ дубликат — УДАЛИ блок @media (max-width: 600px) если он есть */
+
+@media (max-width: 600px) {
+    .vacancy-header-card {
+        padding: 1.25rem;
+    }
+
+    .vacancy-title-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .vacancy-title-row h1 {
+        font-size: 1.375rem;
+    }
+
+    .vacancy-section-card {
+        padding: 1.25rem;
+    }
+}
+

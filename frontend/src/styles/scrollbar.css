@@ -1,0 +1,46 @@
+/* styles/scrollbar.css — только общее правило, без специфичных */
+* {
+    scrollbar-width: thin !important;
+    scrollbar-color: #0066cc transparent !important;
+}
+
+*::-webkit-scrollbar {
+    width: 8px !important;
+    height: 8px !important;
+    background: transparent !important;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent !important;
+    border-radius: 0 !important;
+}
+
+*::-webkit-scrollbar-thumb {
+    background: #0066cc !important;
+    border-radius: 0 !important;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: #0052a3 !important;
+}
+
+*::-webkit-scrollbar-button {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent !important;
+}
+
+/* Только для карт — светлый на тёмном фоне */
+.vacancy-map *::-webkit-scrollbar-thumb,
+.yandex-map *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.vacancy-map *::-webkit-scrollbar-thumb:hover,
+.yandex-map *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5) !important;
+}

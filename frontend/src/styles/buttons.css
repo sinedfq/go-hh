@@ -86,3 +86,34 @@
     font-weight: 500;
     border: 1px solid var(--border);
 }
+
+/* ============================================
+   УНИВЕРСАЛЬНЫЙ ФИКС ДЛЯ КНОПОК НА МОБИЛЬНЫХ
+   ============================================ */
+
+.btn {
+    white-space: normal;
+    word-wrap: break-word;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-block {
+    width: 100% !important;
+    display: flex !important;
+}
+
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        min-height: 44px;
+    }
+    
+    .btn-small {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8125rem;
+    }
+}

@@ -1,495 +1,763 @@
 /* Модальное окно */
 .login-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  animation: overlayFadeIn 0.3s ease;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 2rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: overlayFadeIn 0.3s ease;
+    overflow-y: auto;
 }
 
 @keyframes overlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* Кнопка закрытия */
 .close-modal-btn {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: transparent;
-  color: white;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10;
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    color: white;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
 }
 
 .close-modal-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: rotate(90deg);
+    background: rgba(0, 0, 0, 0.5);
+    transform: rotate(90deg);
 }
 
 /* Контейнер логина */
 .login-container {
-  position: relative;
-  width: 100%;
-  max-width: 750px;
-  height: 520px;
-  background: white;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  animation: modalSlideUp 0.4s ease;
+    position: relative;
+    width: 100%;
+    max-width: 750px;
+    height: 520px;
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    animation: modalSlideUp 0.4s ease;
 }
 
 @keyframes modalSlideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Панели */
 .login-brand,
 .login-form-container {
-  position: absolute;
-  top: 0;
-  width: 50%;
-  height: 100%;
-  transition: all 0.5s ease;
+    position: absolute;
+    top: 0;
+    width: 50%;
+    height: 100%;
+    transition: all 0.5s ease;
 }
 
 .login-container.login-mode .login-brand {
-  left: 0;
+    left: 0;
 }
 
 .login-container.login-mode .login-form-container {
-  right: 0;
+    right: 0;
 }
 
 .login-container.register-mode .login-brand {
-  left: 50%;
+    left: 50%;
 }
 
 .login-container.register-mode .login-form-container {
-  right: 50%;
+    right: 50%;
 }
 
 /* Панель брендинга */
 .login-brand {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
-  background: #0066cc;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+    background: #0066cc;
 }
 
 .brand-content {
-  position: relative;
-  z-index: 2;
-  padding: 2.5rem;
-  transition: opacity 0.3s ease;
+    position: relative;
+    z-index: 2;
+    padding: 2.5rem;
+    transition: opacity 0.3s ease;
 }
 
 .login-container.register-mode .brand-content {
-  opacity: 0.85;
+    opacity: 0.85;
 }
 
 .login-container.login-mode .brand-content {
-  opacity: 1;
+    opacity: 1;
 }
 
 .brand-title {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -1px;
-  margin-bottom: 0.75rem;
-  color: white;
+    font-size: 2.25rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 0.75rem;
+    color: white;
 }
 
 .brand-tagline {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 2rem;
-  line-height: 1.6;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+    margin-bottom: 2rem;
+    line-height: 1.6;
 }
 
 .brand-features {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .feature {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 0.9rem;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    transition: all 0.2s ease;
 }
 
 .feature:hover {
-  background: rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.18);
 }
 
 .feature-icon {
-  width: 6px;
-  height: 6px;
-  background: white;
-  border-radius: 50%;
-  flex-shrink: 0;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    flex-shrink: 0;
 }
 
 /* Панель формы */
 .login-form-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2.5rem;
-  background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem;
+    background: white;
+    overflow-y: auto;
 }
 
 .form-wrapper {
-  width: 100%;
-  max-width: 320px;
-  animation: formFadeIn 0.4s ease 0.1s both;
+    width: 100%;
+    max-width: 320px;
+    animation: formFadeIn 0.4s ease 0.1s both;
 }
 
 @keyframes formFadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .form-header {
-  margin-bottom: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-header h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1a1a1a;
-  margin-bottom: 0.25rem;
-  margin-top: 2.75rem;
-  letter-spacing: -0.5px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
 }
 
 .form-header p {
-  color: #666;
-  font-size: 0.875rem;
+    color: #666;
+    font-size: 0.875rem;
 }
 
 /* Табы */
 .tab-switcher {
-  display: flex;
-  gap: 0.375rem;
-  margin-bottom: 1.5rem;
-  background: #f5f5f5;
-  padding: 0.25rem;
-  border-radius: 10px;
+    display: flex;
+    gap: 0.375rem;
+    margin-bottom: 1.5rem;
+    background: #f5f5f5;
+    padding: 0.25rem;
+    border-radius: 10px;
 }
 
 .tab {
-  flex: 1;
-  padding: 0.625rem;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #666;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    flex: 1;
+    padding: 0.625rem;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .tab:hover {
-  color: #1a1a1a;
+    color: #1a1a1a;
 }
 
 .tab.active {
-  background: white;
-  color: #0066cc;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    background: white;
+    color: #0066cc;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 /* Форма */
 .login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
 }
 
 .input-group label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #1a1a1a;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1a1a1a;
 }
 
 .input-group input {
-  padding: 0.75rem 0.875rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-  outline: none;
-  background: #fafafa;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    outline: none;
+    background: #fafafa;
+    width: 100%;
 }
 
 .input-group input:focus {
-  border-color: #0066cc;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: #0066cc;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .input-group input::placeholder {
-  color: #999;
+    color: #999;
 }
 
 .error-message {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  background: #fff5f5;
-  color: #c53030;
-  padding: 0.75rem 0.875rem;
-  border-radius: 10px;
-  font-size: 0.8rem;
-  border-left: 3px solid #dc3545;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    background: #fff5f5;
+    color: #c53030;
+    padding: 0.75rem 0.875rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    border-left: 3px solid #dc3545;
 }
 
 .btn-submit {
-  padding: 0.875rem;
-  background: #0066cc;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 0.25rem;
+    padding: 0.875rem;
+    background: #0066cc;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 0.25rem;
 }
 
 .btn-submit:hover:not(:disabled) {
-  background: #0052a3;
+    background: #0052a3;
 }
 
 .btn-submit:active:not(:disabled) {
-  transform: scale(0.98);
+    transform: scale(0.98);
 }
 
 .btn-submit:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .btn-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
 .spinner-small {
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Разделитель */
 .divider {
-  display: flex;
-  align-items: center;
-  text-align: center;
-  margin: 1.25rem 0;
-  color: #999;
-  font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.25rem 0;
+    color: #999;
+    font-size: 0.8rem;
 }
 
 .divider::before,
 .divider::after {
-  content: '';
-  flex: 1;
-  border-bottom: 1px solid #e0e0e0;
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 .divider span {
-  padding: 0 0.875rem;
+    padding: 0 0.875rem;
 }
 
 /* Кнопка "Продолжить без регистрации" */
 .btn-skip {
-  width: 100%;
-  padding: 0.875rem;
-  background: white;
-  color: #0066cc;
-  border: 1px solid #0066cc;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
+    width: 100%;
+    padding: 0.875rem;
+    background: white;
+    color: #0066cc;
+    border: 1px solid #0066cc;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
 .btn-skip:hover {
-  background: #f0f7ff;
+    background: #f0f7ff;
 }
 
 .btn-skip:active {
-  transform: scale(0.98);
+    transform: scale(0.98);
 }
 
 .form-footer {
-  text-align: center;
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #f0f0f0;
+    text-align: center;
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #f0f0f0;
 }
 
 .form-footer p {
-  color: #666;
-  font-size: 0.8rem;
+    color: #666;
+    font-size: 0.8rem;
 }
 
 .link-btn {
-  background: none;
-  border: none;
-  color: #0066cc;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0;
-  font-size: 0.8rem;
-  transition: color 0.2s;
+    background: none;
+    border: none;
+    color: #0066cc;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8rem;
+    transition: color 0.2s;
 }
 
 .link-btn:hover {
-  color: #0052a3;
-  text-decoration: underline;
+    color: #0052a3;
+    text-decoration: underline;
 }
 
-/* Адаптивность */
+/* ====== АДАПТИВНОСТЬ ДЛЯ ПЛАНШЕТОВ ====== */
+@media (max-width: 900px) {
+    .login-overlay {
+        padding: 1.5rem;
+    }
+
+    .login-container {
+        height: auto;
+        min-height: 520px;
+        max-height: calc(100vh - 3rem);
+        overflow-y: auto;
+    }
+
+    .login-brand,
+    .login-form-container {
+        position: relative;
+        width: 100%;
+        height: auto;
+        left: 0 !important;
+        right: 0 !important;
+    }
+
+    .login-container.login-mode,
+    .login-container.register-mode {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .login-container.register-mode {
+        flex-direction: column-reverse;
+    }
+
+    .login-brand {
+        min-height: 220px;
+    }
+
+    .brand-content {
+        padding: 2rem 1.5rem;
+    }
+
+    .brand-title {
+        font-size: 1.875rem;
+    }
+
+    .brand-tagline {
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .brand-features {
+        gap: 0.75rem;
+    }
+
+    .feature {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.85rem;
+    }
+
+    .login-form-container {
+        padding: 2rem 1.5rem;
+    }
+}
+
+/* ====== АДАПТИВНОСТЬ ДЛЯ ТЕЛЕФОНОВ ====== */
 @media (max-width: 768px) {
-  .login-overlay {
-    padding: 1rem;
-  }
+    /* Fullscreen модалка на мобильных */
+    .login-overlay {
+        padding: 0;
+        align-items: stretch;
+    }
 
-  .login-container {
-    height: auto;
-    min-height: 600px;
-  }
+    .login-container {
+        max-width: 100%;
+        max-height: 100vh;
+        min-height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+    }
 
-  .login-brand,
-  .login-form-container {
-    position: relative;
-    width: 100%;
-    left: 0 !important;
-    right: 0 !important;
-  }
+    /* Кнопка закрытия внутри контейнера */
+    .close-modal-btn {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: none;
+        z-index: 10;
+    }
 
-  .login-container.login-mode,
-  .login-container.register-mode {
-    display: flex;
-    flex-direction: column;
-  }
+    .login-brand {
+        min-height: 200px;
+    }
 
-  .login-container.register-mode {
-    flex-direction: column-reverse;
-  }
+    .brand-content {
+        padding: 3.5rem 1.5rem 2rem;
+    }
 
-  .login-brand {
-    min-height: 200px;
-  }
+    .brand-title {
+        font-size: 1.75rem;
+    }
 
-  .brand-content {
-    padding: 2rem 1.5rem;
-  }
+    .brand-tagline {
+        font-size: 0.875rem;
+        margin-bottom: 1.25rem;
+    }
 
-  .brand-title {
-    font-size: 1.75rem;
-  }
+    .brand-features {
+        gap: 0.625rem;
+    }
 
-  .brand-tagline {
-    font-size: 0.875rem;
-    margin-bottom: 1.5rem;
-  }
+    .feature {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8125rem;
+        gap: 0.625rem;
+    }
 
-  .brand-features {
-    gap: 0.75rem;
-  }
+    .login-form-container {
+        padding: 1.5rem;
+    }
 
-  .feature {
-    padding: 0.625rem 0.875rem;
-    font-size: 0.85rem;
-  }
+    .form-wrapper {
+        max-width: 100%;
+    }
 
-  .login-form-container {
-    padding: 2rem 1.5rem;
-  }
+    .form-header {
+        margin-bottom: 1.25rem;
+    }
+
+    .form-header h2 {
+        font-size: 1.375rem;
+    }
+
+    .form-header p {
+        font-size: 0.8125rem;
+    }
+
+    .tab-switcher {
+        margin-bottom: 1.25rem;
+    }
+
+    .login-form {
+        gap: 0.875rem;
+    }
+
+    .input-group input {
+        padding: 0.75rem;
+        font-size: 1rem; /* Предотвращает zoom на iOS */
+    }
+
+    .btn-submit,
+    .btn-skip {
+        padding: 0.875rem;
+        font-size: 1rem;
+    }
+
+    .divider {
+        margin: 1rem 0;
+    }
+
+    .form-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+    }
 }
 
+/* ====== МАЛЕНЬКИЕ ТЕЛЕФОНЫ ====== */
 @media (max-width: 480px) {
-  .login-container {
-    border-radius: 12px;
-    min-height: auto;
-  }
+    .brand-content {
+        padding: 3rem 1.25rem 1.5rem;
+    }
 
-  .brand-content {
-    padding: 1.5rem;
-  }
+    .brand-title {
+        font-size: 1.5rem;
+    }
 
-  .brand-title {
-    font-size: 1.5rem;
-  }
+    .brand-tagline {
+        font-size: 0.8125rem;
+        margin-bottom: 1rem;
+    }
 
-  .login-form-container {
-    padding: 1.5rem;
-  }
+    .brand-features {
+        gap: 0.5rem;
+    }
 
-  .form-header h2 {
-    font-size: 1.25rem;
-  }
+    .feature {
+        padding: 0.5rem 0.625rem;
+        font-size: 0.75rem;
+    }
+
+    .feature-icon {
+        width: 5px;
+        height: 5px;
+    }
+
+    .login-form-container {
+        padding: 1.25rem;
+    }
+
+    .form-header h2 {
+        font-size: 1.25rem;
+    }
+
+    .tab-switcher {
+        margin-bottom: 1rem;
+    }
+
+    .login-form {
+        gap: 0.75rem;
+    }
+
+    .input-group {
+        gap: 0.25rem;
+    }
+
+    .input-group label {
+        font-size: 0.75rem;
+    }
+
+    .input-group input {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .error-message {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-submit,
+    .btn-skip {
+        padding: 0.75rem;
+    }
+
+    .form-footer p,
+    .link-btn {
+        font-size: 0.75rem;
+    }
+}
+
+/* ====== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (iPhone SE, Galaxy Fold) ====== */
+@media (max-width: 380px) {
+    .brand-content {
+        padding: 2.5rem 1rem 1.25rem;
+    }
+
+    .brand-title {
+        font-size: 1.375rem;
+    }
+
+    .brand-features {
+        display: none; /* Скрываем фичи на очень маленьких экранах */
+    }
+
+    .login-form-container {
+        padding: 1rem;
+    }
+
+    .form-header h2 {
+        font-size: 1.125rem;
+    }
+
+    .tab-switcher {
+        padding: 0.2rem;
+    }
+
+    .tab {
+        padding: 0.5rem;
+        font-size: 0.8125rem;
+    }
+}
+
+/* ====== LANDSCAPE НА ТЕЛЕФОНАХ ====== */
+@media (max-height: 600px) and (max-width: 900px) {
+    .login-brand {
+        min-height: 140px;
+    }
+
+    .brand-content {
+        padding: 2rem 1.5rem 1rem;
+    }
+
+    .brand-title {
+        font-size: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .brand-tagline {
+        margin-bottom: 1rem;
+    }
+
+    .brand-features {
+        gap: 0.5rem;
+    }
+
+    .feature {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .login-form-container {
+        padding: 1.5rem;
+    }
+
+    .form-header {
+        margin-bottom: 1rem;
+    }
+
+    .login-form {
+        gap: 0.75rem;
+    }
+
+    .input-group input {
+        padding: 0.625rem 0.75rem;
+    }
+
+    .btn-submit,
+    .btn-skip {
+        padding: 0.75rem;
+    }
+
+    .divider {
+        margin: 0.75rem 0;
+    }
+
+    .form-footer {
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+    }
+}
+
+/* ====== iOS SAFE AREA ====== */
+@supports (padding: max(0px)) {
+    @media (max-width: 768px) {
+        .close-modal-btn {
+            top: max(1rem, env(safe-area-inset-top));
+            right: max(1rem, env(safe-area-inset-right));
+        }
+
+        .brand-content {
+            padding-top: max(3.5rem, calc(env(safe-area-inset-top) + 2rem));
+            padding-bottom: max(2rem, env(safe-area-inset-bottom));
+        }
+
+        .login-form-container {
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+        }
+    }
 }

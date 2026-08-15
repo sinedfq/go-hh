@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func (s *Server) vacancyHandler(w http.ResponseWriter, r *http.Request) {
@@ -98,20 +99,41 @@ func (s *Server) searchVacanciesHandler(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	ctx := r.Context()
 
-	query := r.URL.Query().Get("q")
-	if query == "" {
-		json.NewEncoder(w).Encode([]Vacancy{})
-		return
+	filters := SearchFilters{
+		Query:      strings.TrimSpace(r.URL.Query().Get("q")),
+		Location:   strings.TrimSpace(r.URL.Query().Get("location")),
+		Experience: strings.TrimSpace(r.URL.Query().Get("experience")),
+		Limit:      50,
+		Offset:     0,
 	}
 
-	limit := 10
-	if l := r.URL.Query().Get("limit"); l != "" {
-		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 {
-			limit = parsed
+	// Парсим remote
+	if remoteStr := r.URL.Query().Get("remote"); remoteStr != "" {
+		remoteBool := remoteStr == "true"
+		filters.Remote = &remoteBool
+	}
+
+	// Парсим skills (через запятую)
+	if skillsStr := r.URL.Query().Get("skills"); skillsStr != "" {
+		filters.Skills = strings.Split(skillsStr, ",")
+		for i := range filters.Skills {
+			filters.Skills[i] = strings.TrimSpace(filters.Skills[i])
 		}
 	}
 
-	vacancies, err := s.storage.SearchVacancies(ctx, query, limit)
+	// Парсим limit/offset
+	if l := r.URL.Query().Get("limit"); l != "" {
+		if parsed, err := strconv.Atoi(l); err == nil && parsed > 0 && parsed <= 100 {
+			filters.Limit = parsed
+		}
+	}
+	if o := r.URL.Query().Get("offset"); o != "" {
+		if parsed, err := strconv.Atoi(o); err == nil && parsed >= 0 {
+			filters.Offset = parsed
+		}
+	}
+
+	vacancies, totalCount, err := s.storage.SearchVacancies(ctx, filters)
 	if err != nil {
 		log.Printf("SearchVacancies error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -119,5 +141,10 @@ func (s *Server) searchVacanciesHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	json.NewEncoder(w).Encode(vacancies)
+	json.NewEncoder(w).Encode(map[string]any{
+		"vacancies":   vacancies,
+		"total_count": totalCount,
+		"limit":       filters.Limit,
+		"offset":      filters.Offset,
+	})
 }

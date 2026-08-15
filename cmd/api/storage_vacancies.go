@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"strings"
 
@@ -93,20 +94,96 @@ func (s *PostgresStorage) IncrementVacancyViews(ctx context.Context, vacancyID i
 	return err
 }
 
-func (s *PostgresStorage) SearchVacancies(ctx context.Context, query string, limit int) ([]Vacancy, error) {
-	sql := `
-		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
-		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0),
-		       COALESCE(author_user_id, 0)
-		FROM vacancies
-		WHERE LOWER(title) LIKE LOWER($1)
-		ORDER BY created_at DESC
-		LIMIT $2
-	`
+func (s *PostgresStorage) SearchVacancies(ctx context.Context, filters SearchFilters) ([]Vacancy, int, error) {
+	var conditions []string
+	var args []interface{}
+	argIndex := 1
 
-	rows, err := s.pool.Query(ctx, sql, "%"+query+"%", limit)
+	// Базовый SELECT
+	baseQuery := `
+        SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
+               COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0),
+               COALESCE(author_user_id, 0)
+        FROM vacancies
+    `
+
+	// ====== ПОИСКОВЫЙ ЗАПРОС ======
+	if filters.Query != "" {
+		q := "%" + strings.ToLower(filters.Query) + "%"
+		conditions = append(conditions, fmt.Sprintf(
+			`(LOWER(title) LIKE $%d OR LOWER(company) LIKE $%d OR LOWER(description) LIKE $%d)`,
+			argIndex, argIndex, argIndex,
+		))
+		args = append(args, q)
+		argIndex++
+	}
+
+	// ====== ФИЛЬТР: ГОРОД ======
+	if filters.Location != "" {
+		conditions = append(conditions, fmt.Sprintf(`LOWER(location) = LOWER($%d)`, argIndex))
+		args = append(args, filters.Location)
+		argIndex++
+	}
+
+	// ====== ФИЛЬТР: ОПЫТ ======
+	if filters.Experience != "" {
+		conditions = append(conditions, fmt.Sprintf(`LOWER(experience) = LOWER($%d)`, argIndex))
+		args = append(args, filters.Experience)
+		argIndex++
+	}
+
+	// ====== ФИЛЬТР: УДАЛЁНКА ======
+	if filters.Remote != nil {
+		conditions = append(conditions, fmt.Sprintf(`remote = $%d`, argIndex))
+		args = append(args, *filters.Remote)
+		argIndex++
+	}
+
+	// ====== ФИЛЬТР: НАВЫКИ (пересечение массивов) ======
+	if len(filters.Skills) > 0 {
+		lowerSkills := make([]string, len(filters.Skills))
+		for i, sk := range filters.Skills {
+			lowerSkills[i] = strings.ToLower(sk)
+		}
+		conditions = append(conditions, fmt.Sprintf(
+			`EXISTS (SELECT 1 FROM unnest(skills) AS skill WHERE LOWER(skill) = ANY($%d))`,
+			argIndex,
+		))
+		args = append(args, lowerSkills)
+		argIndex++
+	}
+
+	// Собираем WHERE
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// ====== COUNT запрос ======
+	countQuery := `SELECT COUNT(*) FROM vacancies` + whereClause
+	var totalCount int
+	countArgs := make([]interface{}, len(args))
+	copy(countArgs, args)
+	if err := s.pool.QueryRow(ctx, countQuery, countArgs...).Scan(&totalCount); err != nil {
+		return nil, 0, err
+	}
+
+	// ====== LIMIT / OFFSET ======
+	limit := filters.Limit
+	if limit <= 0 {
+		limit = 50
+	}
+	offset := filters.Offset
+
+	finalQuery := baseQuery + whereClause +
+		` ORDER BY created_at DESC` +
+		fmt.Sprintf(` LIMIT $%d OFFSET $%d`, argIndex, argIndex+1)
+	args = append(args, limit, offset)
+
+	rows, err := s.pool.Query(ctx, finalQuery, args...)
 	if err != nil {
-		return nil, err
+		log.Printf("SearchVacancies error: %v, query: %s", err, finalQuery)
+		return nil, 0, err
 	}
 	defer rows.Close()
 
@@ -119,7 +196,7 @@ func (s *PostgresStorage) SearchVacancies(ctx context.Context, query string, lim
 			&v.Address, &v.Latitude, &v.Longitude, &v.Views, &v.AuthorUserID,
 		)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		vacancies = append(vacancies, v)
 	}
@@ -128,7 +205,7 @@ func (s *PostgresStorage) SearchVacancies(ctx context.Context, query string, lim
 		vacancies = []Vacancy{}
 	}
 
-	return vacancies, rows.Err()
+	return vacancies, totalCount, rows.Err()
 }
 
 // ============ КАНДИДАТЫ ДЛЯ РЕКОМЕНДАЦИЙ ============

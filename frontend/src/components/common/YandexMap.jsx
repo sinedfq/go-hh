@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react'
+import './YandexMap.css'
 
 const YANDEX_MAPS_API_KEY = '186fe7c5-d63b-402e-84d7-3ccae8e1b92b'
 
-// Кэшируем промис загрузки чтобы скрипт подключался один раз
 let ymapsPromise = null
 
-function loadYmaps() {
+// Экспортируем функцию чтобы другие компоненты могли её использовать
+export function loadYmaps() {
     if (window.ymaps) {
         return Promise.resolve(window.ymaps)
     }
@@ -41,25 +42,38 @@ function YandexMap({ latitude, longitude, title, address }) {
                     containerRef.current,
                     {
                         center: [latitude, longitude],
-                        zoom: 14,
+                        zoom: 15,
                         controls: ['zoomControl']
                     },
                     {
-                        suppressMapOpenBlock: true // не блокировать скролл страницы
+                        suppressMapOpenBlock: true
                     }
                 )
 
-                // Метка вакансии
+                // Кастомный layout маркера (в стиле VacancyMap)
+                const markerLayout = ymaps.templateLayoutFactory.createClass(
+                    '<div class="detail-map-marker">' +
+                    '<div class="detail-map-marker-box">' +
+                    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>' +
+                    '<circle cx="12" cy="10" r="3"/>' +
+                    '</svg>' +
+                    '</div>' +
+                    '</div>'
+                )
+
+                // Маркер без балуна и подписи
                 const placemark = new ymaps.Placemark(
                     [latitude, longitude],
+                    {},
                     {
-                        balloonContentHeader: `<strong>${title}</strong>`,
-                        balloonContentBody: address || '',
-                        hintContent: title
-                    },
-                    {
-                        preset: 'islands#blueDotIconWithCaption',
-                        iconCaption: title
+                        iconLayout: markerLayout,
+                        iconShape: {
+                            type: 'Rectangle',
+                            coordinates: [[0, 0], [44, 44]]
+                        },
+                        iconOffset: [-22, -44], // маркер указывает острием вниз
+                        draggable: false,
                     }
                 )
 
@@ -69,7 +83,6 @@ function YandexMap({ latitude, longitude, title, address }) {
                 console.error('Ошибка загрузки Яндекс.Карт:', err)
             })
 
-        // Очистка при размонтировании
         return () => {
             destroyed = true
             if (mapRef.current) {
@@ -77,7 +90,7 @@ function YandexMap({ latitude, longitude, title, address }) {
                 mapRef.current = null
             }
         }
-    }, [latitude, longitude, title, address])
+    }, [latitude, longitude])
 
     return <div ref={containerRef} className="yandex-map" />
 }
