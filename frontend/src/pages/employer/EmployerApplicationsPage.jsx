@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './EmployerPages.css'
 
-function EmployerApplicationsPage({ onOpenVacancy, onOpenResume }) {
+function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }) {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all') // all / new / viewed / accepted / rejected
@@ -258,6 +258,18 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume }) {
                                             {isUpdating ? '...' : '✕ Отклонить'}
                                         </button>
                                     )}
+
+                                    {/* Кнопка чата */}
+                                    <button
+                                        className="btn btn-primary btn-small"
+                                        onClick={() => onOpenChatApp && onOpenChatApp()}
+                                        disabled={!app.conversation_id}
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                        </svg>
+                                        Чат
+                                    </button>
                                 </div>
                             </div>
                         )

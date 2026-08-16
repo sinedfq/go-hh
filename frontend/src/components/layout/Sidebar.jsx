@@ -95,6 +95,8 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                 </div>
                             </div>
 
+
+
                             {/* Только десктоп */}
                             <div className={`nav-item desktop-only ${mode === 'recommendations' ? 'active' : ''}`} onClick={() => handleMode('recommendations')}>
                                 <div className="nav-bar"></div>
@@ -124,6 +126,8 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                             </div>
                         </>
                     )}
+
+
 
                     {/* ====== РАБОТОДАТЕЛЬ (десктоп-пункты) ====== */}
                     {isEmployer && (
@@ -187,6 +191,8 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                 </div>
                             </div>
 
+
+
                             <div className={`nav-item desktop-only ${mode === 'stats' ? 'active' : ''}`} onClick={() => handleMode('stats')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
@@ -228,7 +234,13 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                     {user ? (
                         <>
                             <div className="user-profile-btn" onClick={() => handleMode('profile')}>
-                                <div className="user-avatar">{getAvatarLetter()}</div>
+                                <div className="user-avatar">
+                                    {user.photo_url ? (
+                                        <img src={user.photo_url} alt={user.email} />
+                                    ) : (
+                                        getAvatarLetter()
+                                    )}
+                                </div>
                                 <div className="user-profile-label">
                                     <span className="user-profile-title">{user.name || 'Профиль'}</span>
                                     <span className="user-profile-email">{user.email}</span>
@@ -328,10 +340,13 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     className={`mobile-more-item ${mode === 'profile' ? 'active' : ''}`}
                                     onClick={() => handleMode('profile')}
                                 >
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                                        <circle cx="12" cy="7" r="4" />
-                                    </svg>
+                                    <div className="mobile-more-avatar">
+                                        {user.photo_url ? (
+                                            <img src={user.photo_url} alt="" />
+                                        ) : (
+                                            getAvatarLetter()
+                                        )}
+                                    </div>
                                     Профиль
                                 </button>
                                 <button

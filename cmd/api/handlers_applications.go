@@ -70,6 +70,15 @@ func (s *Server) applyToVacancyHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// ====== АВТОМАТИЧЕСКОЕ СОЗДАНИЕ ЧАТА ======
+	conversationID, err := s.storage.CreateConversation(ctx, appID)
+	if err != nil {
+		log.Printf("⚠️ Failed to create conversation for application %d: %v", appID, err)
+		// Не прерываем - чат не критичен
+	} else {
+		log.Printf("✅ Conversation %d created for application %d", conversationID, appID)
+	}
+
 	// Уведомление автору вакансии
 	if vacancy.AuthorUserID > 0 && vacancy.AuthorUserID != claims.UserID {
 		s.storage.CreateNotification(ctx, CreateNotificationRequest{

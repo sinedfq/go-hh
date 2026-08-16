@@ -6,7 +6,8 @@ function VacancyDetail({
     onAddFavorite, 
     onRemoveFavorite, 
     onOpenVacancy, 
-    onOpenCompany 
+    onOpenCompany,
+    showToast
 }) {
     if (!vacancy) return null
 
