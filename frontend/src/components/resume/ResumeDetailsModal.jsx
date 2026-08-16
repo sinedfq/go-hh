@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import PhotoUpload from '../common/PhotoUpload'
 import ModalPortal from '../common/ModalPortal'
@@ -22,6 +22,24 @@ function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
     const { name, value } = e.target
     setWorkExpData(prev => ({ ...prev, [name]: value }))
   }
+
+  const viewLoggedRef = useRef(false)
+
+  useEffect(() => {
+    if (resume && resume.id && !viewLoggedRef.current) {
+      viewLoggedRef.current = true  // ← ставим флаг ДО запроса
+
+      axios.post(`/api/resumes/${resume.id}/view`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      }).catch(err => {
+        // Если ошибка — сбрасываем флаг чтобы попробовать ещё раз
+        viewLoggedRef.current = false
+        console.error('Ошибка инкремента просмотров:', err)
+      })
+    }
+  }, [resume?.id])  
 
   useEffect(() => {
     if (resume && resume.id) {

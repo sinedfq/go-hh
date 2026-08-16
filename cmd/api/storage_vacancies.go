@@ -45,17 +45,18 @@ func (s *PostgresStorage) GetAllVacancies(ctx context.Context) ([]Vacancy, error
 
 func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, error) {
 	query := `
-		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
-		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0)
-		FROM vacancies
-		WHERE id = $1
-	`
+        SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
+               COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0),
+               COALESCE(author_user_id, 0)
+        FROM vacancies
+        WHERE id = $1
+    `
 
 	var v Vacancy
 	err := s.pool.QueryRow(ctx, query, id).Scan(
 		&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location,
 		&v.Experience, &v.Remote, &v.Skills, &v.Description,
-		&v.Address, &v.Latitude, &v.Longitude,
+		&v.Address, &v.Latitude, &v.Longitude, &v.Views, &v.AuthorUserID,
 	)
 
 	if err != nil {
@@ -68,19 +69,20 @@ func (s *PostgresStorage) GetVacancyByID(ctx context.Context, id int) (Vacancy, 
 	return v, nil
 }
 
+// ✅ ПРАВИЛЬНЫЙ вариант
 func (s *PostgresStorage) CreateVacancy(ctx context.Context, v Vacancy) (int, error) {
 	query := `
-		INSERT INTO vacancies (title, company, location, experience, remote, skills, description)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING id
-	`
+        INSERT INTO vacancies (title, company, company_id, location, experience, remote, skills, description, address, latitude, longitude, views, author_user_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, $12)
+        RETURNING id
+    `
 
 	var id int
 	err := s.pool.QueryRow(ctx, query,
-		v.Title, v.Company, v.Location, v.Experience, v.Remote,
-		v.Skills, v.Description,
+		v.Title, v.Company, v.CompanyID, v.Location, v.Experience,
+		v.Remote, v.Skills, v.Description, v.Address,
+		v.Latitude, v.Longitude, v.AuthorUserID,
 	).Scan(&id)
-
 	if err != nil {
 		return 0, err
 	}

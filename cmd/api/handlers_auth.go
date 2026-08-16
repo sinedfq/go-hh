@@ -30,6 +30,17 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Валидация роли
+	role := req.Role
+	if role == "" {
+		role = "candidate"
+	}
+	if role != "candidate" && role != "employer" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "role must be 'candidate' or 'employer'"})
+		return
+	}
+
 	_, err := s.storage.GetUserByEmail(ctx, req.Email)
 	if err == nil {
 		w.WriteHeader(http.StatusConflict)
@@ -44,14 +55,14 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := s.storage.CreateUser(ctx, req.Email, string(passwordHash))
+	userID, err := s.storage.CreateUser(ctx, req.Email, string(passwordHash), role)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create user"})
 		return
 	}
 
-	token, err := GenerateToken(userID, req.Email)
+	token, err := GenerateToken(userID, req.Email, role)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to generate token"})
@@ -91,7 +102,7 @@ func (s *Server) loginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := GenerateToken(user.ID, user.Email)
+	token, err := GenerateToken(user.ID, user.Email, user.Role)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to generate token"})

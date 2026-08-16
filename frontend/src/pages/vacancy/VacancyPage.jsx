@@ -1,17 +1,57 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { useAuth } from '../../contexts/AuthContext'
 import './VacancyPage.css'
 import YandexMap from '../../components/common/YandexMap'
+import ApplicationModal from '../../components/common/ApplicationModal'
 
 function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
+    const { user } = useAuth()
     const [vacancy, setVacancy] = useState(null)
     const [company, setCompany] = useState(null)
     const [loading, setLoading] = useState(true)
     const [isFavorite, setIsFavorite] = useState(false)
+    const [showApplyModal, setShowApplyModal] = useState(false)
+    const [hasApplied, setHasApplied] = useState(false)
+    const [checkingApplication, setCheckingApplication] = useState(true)
 
     useEffect(() => {
         loadVacancy()
     }, [vacancyId])
+
+    // Проверка отклика и избранного
+    useEffect(() => {
+        if (!user || !vacancy?.id) {
+            setCheckingApplication(false)
+            return
+        }
+
+        const checkApplication = async () => {
+            try {
+                const res = await axios.get(`/api/vacancies/${vacancy.id}/application`)
+                if (res.data.applied) {
+                    setHasApplied(true)
+                }
+            } catch (err) {
+                console.error('Ошибка проверки отклика:', err)
+            } finally {
+                setCheckingApplication(false)
+            }
+        }
+
+        const checkFavorite = async () => {
+            try {
+                const res = await axios.get('/api/favorites')
+                const favorites = Array.isArray(res.data) ? res.data : []
+                setIsFavorite(favorites.some(fav => fav.id === vacancy.id))
+            } catch (err) {
+                console.error('Ошибка проверки избранного:', err)
+            }
+        }
+
+        checkApplication()
+        checkFavorite()
+    }, [user, vacancy?.id])
 
     const loadVacancy = async () => {
         try {
@@ -33,6 +73,49 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
             setLoading(false)
         }
     }
+
+    const handleToggleFavorite = async () => {
+        if (!user) return
+        try {
+            if (isFavorite) {
+                await axios.delete(`/api/favorites/${vacancy.id}`)
+                setIsFavorite(false)
+            } else {
+                await axios.post('/api/favorites', { vacancy_id: vacancy.id })
+                setIsFavorite(true)
+            }
+        } catch (err) {
+            console.error('Ошибка избранного:', err)
+        }
+    }
+
+    const handleApplySuccess = (data) => {
+        setHasApplied(true)
+        setShowApplyModal(false)
+        // Можно показать тост вместо alert
+        alert('✅ Отклик успешно отправлен! Работодатель получит уведомление.')
+    }
+
+    // ====== ИНКРЕМЕНТ ПРОСМОТРОВ ВАКАНСИИ ======
+    const viewLoggedRef = useRef(false)
+
+    useEffect(() => {
+        if (vacancy?.id && !viewLoggedRef.current) {
+            viewLoggedRef.current = true
+
+            axios.post(`/api/vacancies/${vacancy.id}/view`, {}, {
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            }).catch(err => {
+                viewLoggedRef.current = false
+                console.error('Ошибка инкремента просмотров вакансии:', err)
+            })
+        }
+    }, [vacancy?.id])
+
+    // Сбрасываем флаг при смене вакансии
+    useEffect(() => {
+        viewLoggedRef.current = false
+    }, [vacancyId])
 
     if (loading) {
         return (
@@ -56,9 +139,12 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
         )
     }
 
-    // ⬇️ ЭТО КЛЮЧЕВАЯ СТРОКА — должна быть перед основным return
     const hasCoordinates = vacancy.latitude && vacancy.longitude &&
-                           vacancy.latitude !== 0 && vacancy.longitude !== 0
+        vacancy.latitude !== 0 && vacancy.longitude !== 0
+
+    // ====== ЛОГИКА КНОПКИ ОТКЛИКА ======
+    const isOwnVacancy = user && vacancy.author_user_id === user.id
+    const isSameCompany = user && user.company_id && vacancy.company_id && user.company_id === vacancy.company_id
 
     return (
         <div className="vacancy-page">
@@ -165,21 +251,100 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
 
                     <div className="vacancy-stats-card">
                         <div className="stat-row">
-                            <span className="stat-label">Просмотры</span>
+                            <span className="stat-label">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                                Просмотры
+                            </span>
                             <span className="stat-value">{vacancy.views || 0}</span>
                         </div>
+
+                        {vacancy.author_user_id === user?.id && (
+                            <div className="stat-row">
+                                <span className="stat-label">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                    </svg>
+                                    Откликов
+                                </span>
+                                <span className="stat-value">—</span>
+                            </div>
+                        )}
                     </div>
 
+                    {/* ====== КНОПКИ ДЕЙСТВИЙ ====== */}
                     <div className="vacancy-actions-card">
-                        <button className="btn btn-primary btn-block">
-                            Откликнуться
-                        </button>
-                        <button className="btn btn-secondary btn-block">
-                            В избранное
-                        </button>
+                        {/* Кнопка отклика */}
+                        {user ? (
+                            checkingApplication ? (
+                                <button className="btn btn-secondary btn-block" disabled>
+                                    Проверка...
+                                </button>
+                            ) : hasApplied ? (
+                                <div className="applied-badge">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    Вы уже откликнулись
+                                </div>
+                            ) : isOwnVacancy ? (
+                                <div className="own-vacancy-badge">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                                    </svg>
+                                    Это ваша вакансия
+                                </div>
+                            ) : isSameCompany ? (
+                                <div className="own-company-badge">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                                    </svg>
+                                    Вакансия вашей компании
+                                </div>
+                            ) : (
+                                <button
+                                    className="btn btn-primary btn-block apply-btn"
+                                    onClick={() => setShowApplyModal(true)}
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" />
+                                    </svg>
+                                    Откликнуться
+                                </button>
+                            )
+                        ) : (
+                            <button className="btn btn-secondary btn-block" disabled>
+                                Войдите чтобы откликнуться
+                            </button>
+                        )}
+
+                        {/* Кнопка избранного */}
+                        {user && (
+                            <button
+                                className={`btn btn-block ${isFavorite ? 'btn-favorite-active' : 'btn-secondary'}`}
+                                onClick={handleToggleFavorite}
+                            >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill={isFavorite ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                                </svg>
+                                {isFavorite ? 'В избранном' : 'В избранное'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* ====== МОДАЛКА ОТКЛИКА ====== */}
+            {showApplyModal && (
+                <ApplicationModal
+                    vacancy={vacancy}
+                    onClose={() => setShowApplyModal(false)}
+                    onSuccess={handleApplySuccess}
+                />
+            )}
         </div>
     )
 }

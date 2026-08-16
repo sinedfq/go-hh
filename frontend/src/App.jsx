@@ -1,4 +1,5 @@
 import { useApp } from './hooks/useApp'
+import { useState, useEffect } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import SwipeableCard from './components/vacancy/SwipeableCard'
 import VacancyList from './components/vacancy/VacancyList'
@@ -14,10 +15,36 @@ import SearchBar from './components/vacancy/SearchBar'
 import FilterPanel from './components/vacancy/FilterPanel'
 import SearchResultsPage from './pages/search/SearchResultsPage'
 import VacancyMap from './components/vacancy/VacancyMap'
-
+import MyVacanciesPage from './pages/employer/MyVacanciesPage'
+import MyCompanyPage from './pages/employer/MyCompanyPage'
+import CreateVacancyPage from './pages/employer/CreateVacancyPage'
+import NotificationBell from './components/common/NotificationBell'
+import EmployerApplicationsPage from './pages/employer/EmployerApplicationsPage'
+import ResumeViewModal from './components/resume/ResumeViewModal'
+import MyApplicationsPage from './pages/candidate/MyApplicationsPage'
+import EmployerStatsPage from './pages/employer/EmployerStatsPage'
 
 function App() {
     const app = useApp()
+
+
+    const [toast, setToast] = useState(null)
+    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+    const [viewResumeId, setViewResumeId] = useState(null)
+
+    // Применяем тему
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme)
+        localStorage.setItem('theme', theme)
+    }, [theme])
+
+    // ====== ВЫХОД: сброс вкладки + уведомление ======
+    const handleLogout = async () => {
+        await app.logout()
+        app.handleModeChange('browse')   // уходим с профиля на Просмотр
+        setToast('Вы вышли из аккаунта')
+        setTimeout(() => setToast(null), 3000)
+    }
 
     // ====== ОБЁРТКА ДЛЯ ОТКРЫТИЯ ВАКАНСИИ (сохраняет скролл) ======
     const handleOpenVacancy = (id) => {
@@ -46,40 +73,70 @@ function App() {
                 mode={app.mode}
                 onModeChange={app.handleModeChange}
                 user={app.user}
-                onLogout={app.logout}
+                onLogout={handleLogout}
                 onLogin={() => app.setShowLoginModal(true)}
             />
 
             <div className="main-area">
                 <header className="top-header">
                     <h2 className="page-title">
-                        {app.companyPageId && 'Компания'}
-                        {!app.companyPageId && app.vacancyPageId && 'Вакансия'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'browse' && 'Карта'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'search' && 'Поиск вакансий'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'swipe' && 'Свайпай вакансии'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'favorites' && 'Избранные вакансии'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'profile' && 'Профиль'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'recommendations' && 'AI-рекомендации'}
-                        {!app.companyPageId && !app.vacancyPageId && app.mode === 'companies' && 'Компании'}
+                        {app.mode === 'browse' && 'Просмотр'}
+                        {app.mode === 'search' && 'Поиск'}
+                        {app.mode === 'swipe' && 'Свайпы'}
+                        {app.mode === 'favorites' && 'Избранное'}
+                        {app.mode === 'recommendations' && 'Рекомендации'}
+                        {app.mode === 'companies' && 'Компании'}
+                        {app.mode === 'profile' && 'Профиль'}
+                        {app.mode === 'my-vacancies' && 'Мои вакансии'}
+                        {app.mode === 'create-vacancy' && 'Создать вакансию'}
+                        {app.mode === 'my-company' && 'Моя компания'}
+                        {app.mode === 'applications' && 'Отклики'}
+                        {app.mode === 'my-applications' && 'Мои отклики'}
+                        {app.mode === 'stats' && 'Аналитика'}
                     </h2>
 
-                    {/* Профиль в шапке — виден только на мобильных */}
-                    <div className="header-profile">
-                        {app.user ? (
-                            <button
-                                className={`header-profile-btn ${app.mode === 'profile' ? 'active' : ''}`}
-                                onClick={() => app.handleModeChange('profile')}
-                            >
-                                <div className="header-avatar">
-                                    {(app.user.name || app.user.email || 'U').charAt(0).toUpperCase()}
-                                </div>
-                            </button>
-                        ) : (
-                            <button className="header-login-btn" onClick={() => app.setShowLoginModal(true)}>
-                                Войти
-                            </button>
-                        )}
+                    <div className="header-actions">
+                        <button
+                            className="theme-toggle"
+                            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                            title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
+                        >
+                            {theme === 'light' ? (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                                </svg>
+                            ) : (
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="5" />
+                                    <line x1="12" y1="1" x2="12" y2="3" />
+                                    <line x1="12" y1="21" x2="12" y2="23" />
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                                    <line x1="1" y1="12" x2="3" y2="12" />
+                                    <line x1="21" y1="12" x2="23" y2="12" />
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                                </svg>
+                            )}
+                        </button>
+                        {app.user && <NotificationBell />}
+                        {/* Профиль в шапке — виден только на мобильных */}
+                        <div className="header-profile">
+                            {app.user ? (
+                                <button
+                                    className={`header-profile-btn ${app.mode === 'profile' ? 'active' : ''}`}
+                                    onClick={() => app.handleModeChange('profile')}
+                                >
+                                    <div className="header-avatar">
+                                        {(app.user.name || app.user.email || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                </button>
+                            ) : (
+                                <button className="header-login-btn" onClick={() => app.setShowLoginModal(true)}>
+                                    Войти
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </header>
 
@@ -223,12 +280,21 @@ function App() {
                                 </div>
                             )}
 
+                            {app.mode === 'my-applications' && app.user && (app.user.role === 'candidate' || app.user.role === 'admin') && (
+                                <MyApplicationsPage
+                                    onOpenVacancy={(id) => app.openVacancyPage(id)}
+                                />
+                            )}
+
                             {/* ====== ПРОФИЛЬ ====== */}
                             {app.mode === 'profile' && app.user && (
-                                <ProfilePage onResumeUpdate={(r) => {
-                                    app.setResume(r)
-                                    app.setRecommendationsLoaded(false)
-                                }} />
+                                <ProfilePage
+                                    onResumeUpdate={(r) => {
+                                        app.setResume(r)
+                                        app.setRecommendationsLoaded(false)
+                                    }}
+                                    onLogout={handleLogout}
+                                />
                             )}
 
                             {/* ====== РЕКОМЕНДАЦИИ ====== */}
@@ -247,7 +313,72 @@ function App() {
                             {app.mode === 'companies' && (
                                 <CompaniesPage onSelectVacancy={handleOpenVacancy} />
                             )}
+
+                            {app.mode === 'my-vacancies' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
+                                <MyVacanciesPage
+                                    myCompany={app.myCompany}
+                                    myVacancies={app.myVacancies}
+                                    employerLoading={app.employerLoading}
+                                    employerError={app.employerError}
+                                    onOpenVacancy={app.openVacancyPage}
+                                    onCreateVacancy={() => app.handleModeChange('create-vacancy')}
+                                    onReload={app.loadMyVacancies}
+                                />
+                            )}
+
+                            {app.mode === 'my-company' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
+                                <MyCompanyPage
+                                    myCompany={app.myCompany}
+                                    onCreateCompany={async (data) => {
+                                        await app.createCompany(data)
+                                        app.handleModeChange('my-vacancies')
+                                    }}
+                                />
+                            )}
+
+                            {app.mode === 'stats' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
+                                <EmployerStatsPage />
+                            )}
+
+                            {app.mode === 'create-vacancy' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
+                                <CreateVacancyPage
+                                    cities={app.cities}
+                                    allSkills={app.allSkills}
+                                    allPositions={app.allPositions}
+                                    onCreate={async (data) => {
+                                        await app.createVacancy(data)
+                                        app.handleModeChange('my-vacancies')
+                                    }}
+                                    onCancel={() => app.handleModeChange('my-vacancies')}
+                                />
+                            )}
+
+
+
+                            {/* ====== УВЕДОМЛЕНИЕ ====== */}
+                            {toast && (
+                                <div className="toast">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <polyline points="20 6 9 17 4 12" />
+                                    </svg>
+                                    {toast}
+                                </div>
+                            )}
+
+                            {app.mode === 'applications' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
+                                <EmployerApplicationsPage
+                                    onOpenVacancy={(id) => app.openVacancyPage(id)}
+                                    onOpenResume={(resumeId) => setViewResumeId(resumeId)}
+                                />
+                            )}
                         </>
+                    )}
+
+                    {viewResumeId && (
+                        <ResumeViewModal
+                            resumeId={viewResumeId}
+                            onClose={() => setViewResumeId(null)}
+                        />
                     )}
                 </div>
             </div>

@@ -7,17 +7,15 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// ============ ПОЛЬЗОВАТЕЛИ ============
-
-func (s *PostgresStorage) CreateUser(ctx context.Context, email, passwordHash string) (int, error) {
+func (s *PostgresStorage) CreateUser(ctx context.Context, email, passwordHash, role string) (int, error) {
 	query := `
-		INSERT INTO users (email, password_hash)
-		VALUES ($1, $2)
+		INSERT INTO users (email, password_hash, role)
+		VALUES ($1, $2, $3)
 		RETURNING id
 	`
 
 	var id int
-	err := s.pool.QueryRow(ctx, query, email, passwordHash).Scan(&id)
+	err := s.pool.QueryRow(ctx, query, email, passwordHash, role).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
@@ -27,14 +25,14 @@ func (s *PostgresStorage) CreateUser(ctx context.Context, email, passwordHash st
 
 func (s *PostgresStorage) GetUserByEmail(ctx context.Context, email string) (User, error) {
 	query := `
-		SELECT id, email, password_hash, COALESCE(photo_url, ''), created_at
+		SELECT id, email, password_hash, COALESCE(photo_url, ''), role, company_id, created_at
 		FROM users
 		WHERE email = $1
 	`
 
 	var u User
 	err := s.pool.QueryRow(ctx, query, email).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.PhotoURL, &u.CreatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.PhotoURL, &u.Role, &u.CompanyID, &u.CreatedAt,
 	)
 
 	if err != nil {
@@ -49,14 +47,14 @@ func (s *PostgresStorage) GetUserByEmail(ctx context.Context, email string) (Use
 
 func (s *PostgresStorage) GetUserByID(ctx context.Context, id int) (User, error) {
 	query := `
-		SELECT id, email, password_hash, COALESCE(photo_url, ''), created_at
+		SELECT id, email, password_hash, COALESCE(photo_url, ''), role, company_id, created_at
 		FROM users
 		WHERE id = $1
 	`
 
 	var u User
 	err := s.pool.QueryRow(ctx, query, id).Scan(
-		&u.ID, &u.Email, &u.PasswordHash, &u.PhotoURL, &u.CreatedAt,
+		&u.ID, &u.Email, &u.PasswordHash, &u.PhotoURL, &u.Role, &u.CompanyID, &u.CreatedAt,
 	)
 
 	if err != nil {

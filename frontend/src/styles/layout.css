@@ -67,8 +67,7 @@ body:has(.login-overlay) {
 }
 
 body:has(.resume-modal-overlay) .sidebar,
-body:has(.details-modal-overlay) .sidebar,
-body:has(.login-overlay) .sidebar {
+body:has(.details-modal-overlay) .sidebar {
     display: none;
 }
 
@@ -115,4 +114,33 @@ body:has(.login-overlay) .sidebar {
     .remote-toggle-subtitle {
         font-size: 0.7rem !important;
     }
+}
+
+/* ====== ДЕЙСТВИЯ В ШАПКЕ ====== */
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-light);
 }
