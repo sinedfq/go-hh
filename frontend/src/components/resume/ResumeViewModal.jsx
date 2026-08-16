@@ -1,15 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import ModalPortal from '../common/ModalPortal'
-import PhotoUpload from '../common/PhotoUpload'
 import './ResumeViewModal.css'
 
 function ResumeViewModal({ resumeId, onClose }) {
     const [resume, setResume] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState('')
-
-    // ====== ЗАЩИТА ОТ STRICTMODE ======
     const hasLoadedRef = useRef(false)
 
     useEffect(() => {
@@ -38,7 +35,6 @@ function ResumeViewModal({ resumeId, onClose }) {
                 }
             } catch (err) {
                 if (axios.isCancel(err)) {
-                    // Запрос отменён — сбрасываем флаг чтобы можно было снова попробовать
                     hasLoadedRef.current = false
                     return
                 }
@@ -46,6 +42,8 @@ function ResumeViewModal({ resumeId, onClose }) {
 
                 if (err.response?.status === 404) {
                     setError('Резюме было удалено или больше не доступно')
+                } else if (err.response?.status === 401) {
+                    setError('Требуется авторизация для просмотра резюме')
                 } else {
                     setError('Не удалось загрузить резюме')
                 }
@@ -62,51 +60,7 @@ function ResumeViewModal({ resumeId, onClose }) {
         return () => {
             isMounted = false
             controller.abort()
-        }
-    }, [resumeId])
-
-    useEffect(() => {
-        if (!resumeId) {
-            setError('Резюме не указано')
-            setLoading(false)
-            return
-        }
-
-        let isMounted = true
-        const controller = new AbortController()  // ← abort для отмены дублей
-
-        const loadResume = async () => {
-            try {
-                setLoading(true)
-                setError('')
-                const res = await axios.get(`/api/resumes/${resumeId}`, {
-                    signal: controller.signal  // ← передаём signal
-                })
-                if (isMounted) {
-                    setResume(res.data)
-                }
-            } catch (err) {
-                if (axios.isCancel(err)) return  // ← игнорируем отменённые
-                if (!isMounted) return
-
-                if (err.response?.status === 404) {
-                    setError('Резюме было удалено или больше не доступно')
-                } else {
-                    setError('Не удалось загрузить резюме')
-                }
-                console.error('Ошибка загрузки резюме:', err)
-            } finally {
-                if (isMounted) {
-                    setLoading(false)
-                }
-            }
-        }
-
-        loadResume()
-
-        return () => {
-            isMounted = false
-            controller.abort()  // ← отменяем запрос при размонтировании
+            hasLoadedRef.current = false
         }
     }, [resumeId])
 
@@ -132,7 +86,13 @@ function ResumeViewModal({ resumeId, onClose }) {
                     <div className="resume-view-modal">
                         <button className="modal-close-btn" onClick={onClose}>×</button>
                         <div className="resume-view-error">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                <circle cx="12" cy="12" r="10" />
+                                <line x1="12" y1="8" x2="12" y2="12" />
+                                <line x1="12" y1="16" x2="12.01" y2="16" />
+                            </svg>
                             <p>{error || 'Резюме не найдено'}</p>
+                            <button className="btn btn-primary" onClick={onClose}>Закрыть</button>
                         </div>
                     </div>
                 </div>

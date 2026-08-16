@@ -5,7 +5,7 @@ import './VacancyPage.css'
 import YandexMap from '../../components/common/YandexMap'
 import ApplicationModal from '../../components/common/ApplicationModal'
 
-function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
+function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
     const { user } = useAuth()
     const [vacancy, setVacancy] = useState(null)
     const [company, setCompany] = useState(null)
@@ -14,6 +14,7 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
     const [showApplyModal, setShowApplyModal] = useState(false)
     const [hasApplied, setHasApplied] = useState(false)
     const [checkingApplication, setCheckingApplication] = useState(true)
+    const viewLoggedRef = useRef(false)
 
     useEffect(() => {
         loadVacancy()
@@ -80,9 +81,11 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
             if (isFavorite) {
                 await axios.delete(`/api/favorites/${vacancy.id}`)
                 setIsFavorite(false)
+                if (showToast) showToast('Удалено из избранного')
             } else {
                 await axios.post('/api/favorites', { vacancy_id: vacancy.id })
                 setIsFavorite(true)
+                if (showToast) showToast('✨ Добавлено в избранное')
             }
         } catch (err) {
             console.error('Ошибка избранного:', err)
@@ -92,24 +95,26 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
     const handleApplySuccess = (data) => {
         setHasApplied(true)
         setShowApplyModal(false)
-        // Можно показать тост вместо alert
-        alert('✅ Отклик успешно отправлен! Работодатель получит уведомление.')
+        // Красивое уведомление вместо alert
+        if (showToast) {
+            showToast(`✨ Отклик отправлен! Компания "${vacancy.company}" скоро свяжется с вами`)
+        }
     }
 
     // ====== ИНКРЕМЕНТ ПРОСМОТРОВ ВАКАНСИИ ======
-    const viewLoggedRef = useRef(false)
-
     useEffect(() => {
-        if (vacancy?.id && !viewLoggedRef.current) {
-            viewLoggedRef.current = true
+        if (!vacancy?.id || viewLoggedRef.current) return
 
-            axios.post(`/api/vacancies/${vacancy.id}/view`, {}, {
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            }).catch(err => {
-                viewLoggedRef.current = false
-                console.error('Ошибка инкремента просмотров вакансии:', err)
+        viewLoggedRef.current = true
+
+        axios.post(`/api/vacancies/${vacancy.id}/view`)
+            .then(() => {
+                console.log(`✅ Vacancy ${vacancy.id} view incremented`)
             })
-        }
+            .catch(err => {
+                viewLoggedRef.current = false
+                console.warn('⚠️ Ошибка инкремента просмотров:', err.message)
+            })
     }, [vacancy?.id])
 
     // Сбрасываем флаг при смене вакансии
@@ -142,7 +147,6 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
     const hasCoordinates = vacancy.latitude && vacancy.longitude &&
         vacancy.latitude !== 0 && vacancy.longitude !== 0
 
-    // ====== ЛОГИКА КНОПКИ ОТКЛИКА ======
     const isOwnVacancy = user && vacancy.author_user_id === user.id
     const isSameCompany = user && user.company_id && vacancy.company_id && user.company_id === vacancy.company_id
 
@@ -276,7 +280,6 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
 
                     {/* ====== КНОПКИ ДЕЙСТВИЙ ====== */}
                     <div className="vacancy-actions-card">
-                        {/* Кнопка отклика */}
                         {user ? (
                             checkingApplication ? (
                                 <button className="btn btn-secondary btn-block" disabled>
@@ -321,7 +324,6 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
                             </button>
                         )}
 
-                        {/* Кнопка избранного */}
                         {user && (
                             <button
                                 className={`btn btn-block ${isFavorite ? 'btn-favorite-active' : 'btn-secondary'}`}
@@ -337,7 +339,6 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany }) {
                 </div>
             </div>
 
-            {/* ====== МОДАЛКА ОТКЛИКА ====== */}
             {showApplyModal && (
                 <ApplicationModal
                     vacancy={vacancy}

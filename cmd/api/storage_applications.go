@@ -155,16 +155,20 @@ func (s *PostgresStorage) GetApplicationsForEmployer(ctx context.Context, compan
 
 func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]Application, error) {
 	query := `
-        SELECT 
-            a.id, a.vacancy_id, a.candidate_user_id, a.resume_id,
-            COALESCE(a.cover_letter, ''), a.status, a.created_at, a.viewed_at,
-            v.title AS vacancy_title,
-            v.company AS company_name
-        FROM applications a
-        JOIN vacancies v ON v.id = a.vacancy_id
-        WHERE a.candidate_user_id = $1
-        ORDER BY a.created_at DESC
-    `
+		SELECT 
+			a.id, a.vacancy_id, a.candidate_user_id, a.resume_id, 
+			a.cover_letter, a.status, a.created_at, a.viewed_at,
+			v.title as vacancy_title,
+			COALESCE(comp.name, '') as company_name,
+			v.company_id as vacancy_company_id,
+			COALESCE(c.id, 0) as conversation_id
+		FROM applications a
+		JOIN vacancies v ON v.id = a.vacancy_id
+		LEFT JOIN companies comp ON comp.id = v.company_id
+		LEFT JOIN conversations c ON c.application_id = a.id
+		WHERE a.candidate_user_id = $1
+		ORDER BY a.created_at DESC
+	`
 
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
@@ -174,16 +178,21 @@ func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]
 
 	var apps []Application
 	for rows.Next() {
-		var a Application
+		var app Application
+		var convID int
 		err := rows.Scan(
-			&a.ID, &a.VacancyID, &a.CandidateUserID, &a.ResumeID,
-			&a.CoverLetter, &a.Status, &a.CreatedAt, &a.ViewedAt,
-			&a.VacancyTitle, &a.CompanyName,
+			&app.ID, &app.VacancyID, &app.CandidateUserID, &app.ResumeID,
+			&app.CoverLetter, &app.Status, &app.CreatedAt, &app.ViewedAt,
+			&app.VacancyTitle, &app.CompanyName, &app.VacancyCompanyID,
+			&convID,
 		)
 		if err != nil {
 			return nil, err
 		}
-		apps = append(apps, a)
+		if convID > 0 {
+			app.ConversationID = &convID
+		}
+		apps = append(apps, app)
 	}
 
 	if apps == nil {

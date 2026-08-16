@@ -23,12 +23,13 @@ import EmployerApplicationsPage from './pages/employer/EmployerApplicationsPage'
 import ResumeViewModal from './components/resume/ResumeViewModal'
 import MyApplicationsPage from './pages/candidate/MyApplicationsPage'
 import EmployerStatsPage from './pages/employer/EmployerStatsPage'
+import ChatApp from './components/chat/ChatApp'
+import ChatButton from './components/chat/ChatButton'
 
 function App() {
     const app = useApp()
 
 
-    const [toast, setToast] = useState(null)
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
     const [viewResumeId, setViewResumeId] = useState(null)
 
@@ -42,7 +43,7 @@ function App() {
     const handleLogout = async () => {
         await app.logout()
         app.handleModeChange('browse')   // уходим с профиля на Просмотр
-        setToast('Вы вышли из аккаунта')
+        app.showToast('Вы вышли из аккаунта')  // ← ИЗМЕНЕНО
         setTimeout(() => setToast(null), 3000)
     }
 
@@ -152,6 +153,7 @@ function App() {
                             vacancyId={app.vacancyPageId}
                             onClose={app.closeVacancyPage}
                             onOpenCompany={app.openCompanyPage}
+                            showToast={app.showToast}
                         />
                     ) : (
                         <>
@@ -283,6 +285,7 @@ function App() {
                             {app.mode === 'my-applications' && app.user && (app.user.role === 'candidate' || app.user.role === 'admin') && (
                                 <MyApplicationsPage
                                     onOpenVacancy={(id) => app.openVacancyPage(id)}
+                                    onOpenChatWith={app.openChatWith}
                                 />
                             )}
 
@@ -294,6 +297,7 @@ function App() {
                                         app.setRecommendationsLoaded(false)
                                     }}
                                     onLogout={handleLogout}
+                                    showToast={app.showToast}   // ← ДОБАВЬ
                                 />
                             )}
 
@@ -356,12 +360,12 @@ function App() {
 
 
                             {/* ====== УВЕДОМЛЕНИЕ ====== */}
-                            {toast && (
+                            {app.toast && (
                                 <div className="toast">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                         <polyline points="20 6 9 17 4 12" />
                                     </svg>
-                                    {toast}
+                                    {app.toast}
                                 </div>
                             )}
 
@@ -369,8 +373,11 @@ function App() {
                                 <EmployerApplicationsPage
                                     onOpenVacancy={(id) => app.openVacancyPage(id)}
                                     onOpenResume={(resumeId) => setViewResumeId(resumeId)}
+                                    onOpenChatApp={app.openChatApp}
                                 />
                             )}
+
+
                         </>
                     )}
 
@@ -382,6 +389,40 @@ function App() {
                     )}
                 </div>
             </div>
+
+            {/* ====== ПЛАВАЮЩАЯ КНОПКА ЧАТА ====== */}
+            {app.user && (
+                <div className="chat-fab-container">
+                    <ChatButton
+                        currentUser={app.user}
+                        onOpenChatApp={app.openChatApp}
+                        onCloseChatApp={app.closeChatApp}   // ← ДОБАВЬ ЭТУ СТРОКУ
+                        isChatOpen={app.showChatApp}
+                    />
+                </div>
+            )}
+
+            {/* ====== ПРИЛОЖЕНИЕ ЧАТА (двухпанельное) ====== */}
+            {app.showChatApp && app.user && (
+                <ChatApp
+                    currentUser={app.user}
+                    onClose={app.closeChatApp}
+                    initialChat={app.initialChat}
+                    onOpenVacancy={(id) => {
+                        app.closeChatApp()
+                        app.openVacancyPage(id)
+                    }}
+                    onCancelApplication={async (applicationId) => {
+                        try {
+                            await axios.delete(`/api/applications/${applicationId}`)
+                            app.closeChatApp()
+                        } catch (err) {
+                            console.error('Ошибка:', err)
+                            alert('Не удалось отменить отклик')
+                        }
+                    }}
+                />
+            )}
         </div>
     )
 }

@@ -79,6 +79,15 @@ type Storage interface {
 	GetResumeStats(ctx context.Context, resumeID int) (*ResumeStats, error)
 
 	HasRecentResumeViewNotification(ctx context.Context, resumeOwnerUserID, viewerUserID int, hours int) (bool, error)
+
+	// Чат
+	CreateConversation(ctx context.Context, applicationID int) (int, error)
+	GetConversationByApplicationID(ctx context.Context, applicationID int) (*Conversation, error)
+	CreateMessage(ctx context.Context, conversationID, senderID int, content string) (int, error)
+	GetMessages(ctx context.Context, conversationID int) ([]Message, error)
+	MarkMessagesRead(ctx context.Context, conversationID, userID int) error
+	GetUserConversations(ctx context.Context, userID int) ([]ChatInfo, error)
+	GetUnreadMessagesCount(ctx context.Context, userID int) (int, error)
 }
 
 type PostgresStorage struct {

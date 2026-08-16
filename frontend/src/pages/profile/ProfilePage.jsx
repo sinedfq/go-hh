@@ -6,7 +6,7 @@ import ResumeDetailsModal from '../../components/resume/ResumeDetailsModal'
 import PhotoUpload from '../../components/common/PhotoUpload'
 import './ProfilePage.css'
 
-function ProfilePage({ onResumeUpdate, onLogout }) {
+function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
     const { user, logout, updateUserPhoto } = useAuth()
     const [resume, setResume] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -166,9 +166,11 @@ function ProfilePage({ onResumeUpdate, onLogout }) {
             {showResumeDetails && resume && resume.id && (
                 <ResumeDetailsModal
                     resume={resume}
+                    currentUser={user}
                     onClose={() => setShowResumeDetails(false)}
                     onUpdate={handleResumeUpdated}
                     onDelete={handleDeleteResume}
+                    showToast={showToast}   // ← ДОБАВЬ
                 />
             )}
 

@@ -114,6 +114,14 @@ func main() {
 	mux.HandleFunc("GET /api/notifications/unread-count", server.authMiddleware(server.getUnreadCountHandler))
 	mux.HandleFunc("POST /api/notifications/mark-read", server.authMiddleware(server.markNotificationsReadHandler))
 
+	// ====== ЧАТ ======
+	mux.HandleFunc("GET /api/conversations", server.authMiddleware(server.getUserConversationsHandler))
+	mux.HandleFunc("GET /api/conversations/unread-count", server.authMiddleware(server.getUnreadMessagesCountHandler))
+	mux.HandleFunc("GET /api/conversations/{id}/messages", server.authMiddleware(server.getChatMessagesHandler))
+	mux.HandleFunc("POST /api/conversations/{id}/messages", server.authMiddleware(server.sendMessageHandler))
+	mux.HandleFunc("POST /api/conversations/{id}/typing", server.authMiddleware(server.markTypingHandler))    // ← НОВОЕ
+	mux.HandleFunc("GET /api/conversations/{id}/typing", server.authMiddleware(server.getTypingUsersHandler)) // ← НОВОЕ
+
 	// Статика
 	uploadsFS := http.FileServer(http.Dir("uploads"))
 	mux.Handle("/uploads/", http.StripPrefix("/uploads/", uploadsFS))

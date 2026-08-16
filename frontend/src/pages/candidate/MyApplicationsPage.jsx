@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import './CandidatePages.css'
 
-function MyApplicationsPage({ onOpenVacancy }) {
+function MyApplicationsPage({ onOpenVacancy, onOpenChatWith }) {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
     const [cancelling, setCancelling] = useState(null)
+    const [confirmCancel, setConfirmCancel] = useState(null) // ID отклика для подтверждения
 
     const loadApplications = async () => {
         try {
@@ -25,8 +27,6 @@ function MyApplicationsPage({ onOpenVacancy }) {
     }, [])
 
     const cancelApplication = async (applicationId) => {
-        if (!window.confirm('Отменить отклик? Вы сможете откликнуться снова позже.')) return
-
         setCancelling(applicationId)
         try {
             await axios.delete(`/api/applications/${applicationId}`)
@@ -36,21 +36,22 @@ function MyApplicationsPage({ onOpenVacancy }) {
             alert('Не удалось отменить отклик')
         } finally {
             setCancelling(null)
+            setConfirmCancel(null)
         }
     }
 
     const getStatusInfo = (status) => {
         switch (status) {
             case 'new':
-                return { label: 'На рассмотрении', className: 'status-new', color: '#0066cc' }
+                return { label: 'На рассмотрении', className: 'status-new' }
             case 'viewed':
-                return { label: 'Просмотрен', className: 'status-viewed', color: '#d97706' }
+                return { label: 'Просмотрен', className: 'status-viewed' }
             case 'accepted':
-                return { label: 'Принят', className: 'status-accepted', color: '#2ea043' }
+                return { label: 'Принят', className: 'status-accepted' }
             case 'rejected':
-                return { label: 'Отклонён', className: 'status-rejected', color: '#dc3545' }
+                return { label: 'Отклонён', className: 'status-rejected' }
             default:
-                return { label: status, className: '', icon: '', color: '#666' }
+                return { label: status, className: '' }
         }
     }
 
@@ -89,6 +90,19 @@ function MyApplicationsPage({ onOpenVacancy }) {
 
     return (
         <div className="candidate-page">
+            {/* Кастомная модалка подтверждения */}
+            {confirmCancel && (
+                <ConfirmModal
+                    title="Отменить отклик?"
+                    message="Вы сможете откликнуться на эту вакансию снова позже. Чат с работодателем будет удалён."
+                    confirmText="Отменить отклик"
+                    cancelText="Оставить"
+                    danger={true}
+                    onConfirm={() => cancelApplication(confirmCancel)}
+                    onCancel={() => setConfirmCancel(null)}
+                />
+            )}
+
             <div className="candidate-header">
                 <div>
                     <h1>Мои отклики</h1>
@@ -99,7 +113,6 @@ function MyApplicationsPage({ onOpenVacancy }) {
                 </div>
             </div>
 
-            {/* Фильтры */}
             <div className="my-apps-filters">
                 <button
                     className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
@@ -137,7 +150,7 @@ function MyApplicationsPage({ onOpenVacancy }) {
                 <div className="my-apps-empty">
                     <div className="my-apps-empty-icon">📝</div>
                     <h3>
-                        {filter === 'all' ? 'Вы ещё не откликались на вакансии' : `Нет ${filter === 'new' ? 'откликов на рассмотрении' : 'откликов'}`}
+                        {filter === 'all' ? 'Вы ещё не откликались на вакансии' : `Нет откликов`}
                     </h3>
                     <p>
                         {filter === 'all'
@@ -150,7 +163,6 @@ function MyApplicationsPage({ onOpenVacancy }) {
                     {filteredApps.map(app => {
                         const statusInfo = getStatusInfo(app.status)
                         const isCancelling = cancelling === app.id
-                        const canCancel = app.status === 'new' || app.status === 'viewed'
 
                         return (
                             <div key={app.id} className={`my-app-card ${statusInfo.className}`}>
@@ -160,7 +172,6 @@ function MyApplicationsPage({ onOpenVacancy }) {
                                         <p className="my-app-company-name">{app.company_name}</p>
                                     </div>
                                     <div className={`my-app-status-badge ${statusInfo.className}`}>
-                                        <span className="status-icon">{statusInfo.icon}</span>
                                         {statusInfo.label}
                                     </div>
                                 </div>
@@ -183,11 +194,10 @@ function MyApplicationsPage({ onOpenVacancy }) {
                                         Открыть вакансию
                                     </button>
 
-                                    {/* ====== КНОПКА ОТМЕНЫ ОТКЛИКА ====== */}
                                     {(app.status === 'new' || app.status === 'viewed') && (
                                         <button
                                             className="btn btn-danger-outline btn-small cancel-btn"
-                                            onClick={() => cancelApplication(app.id)}
+                                            onClick={() => setConfirmCancel(app.id)}
                                             disabled={isCancelling}
                                         >
                                             {isCancelling ? (
@@ -207,22 +217,33 @@ function MyApplicationsPage({ onOpenVacancy }) {
                                         </button>
                                     )}
 
+                                    {app.conversation_id && (
+                                        <button
+                                            className="btn btn-primary btn-small"
+                                            onClick={() => onOpenChatWith && onOpenChatWith({
+                                                conversation_id: app.conversation_id,
+                                                application_id: app.id,
+                                                vacancy_id: app.vacancy_id,
+                                                vacancy_title: app.vacancy_title,
+                                                company_name: app.company_name,
+                                                candidate_name: app.resume_full_name,
+                                                candidate_id: app.candidate_user_id,
+                                                candidate_photo: app.candidate_photo,
+                                            })}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                            </svg>
+                                            Чат
+                                        </button>
+                                    )}
+
                                     {app.status === 'accepted' && (
                                         <div className="btn btn-success btn-small" style={{ cursor: 'default' }}>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                 <polyline points="20 6 9 17 4 12" />
                                             </svg>
                                             Отклик принят 🎉
-                                        </div>
-                                    )}
-
-                                    {app.status === 'rejected' && (
-                                        <div className="btn btn-danger btn-small" style={{ cursor: 'default', opacity: 0.8 }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <line x1="18" y1="6" x2="6" y2="18" />
-                                                <line x1="6" y1="6" x2="18" y2="18" />
-                                            </svg>
-                                            Отклик отклонён
                                         </div>
                                     )}
                                 </div>

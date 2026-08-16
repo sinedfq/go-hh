@@ -4,9 +4,8 @@ import PhotoUpload from '../common/PhotoUpload'
 import ModalPortal from '../common/ModalPortal'
 import ResumeModal from './ResumeModal'
 import './ResumeDetailsModal.css'
-import { displayUrl } from '../../utils/format'
 
-function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
+function ResumeDetailsModal({ resume, currentUser, onClose, onUpdate, onDelete, showToast }) {
   const [showWorkExpForm, setShowWorkExpForm] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [workExpData, setWorkExpData] = useState({
@@ -23,33 +22,25 @@ function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
     setWorkExpData(prev => ({ ...prev, [name]: value }))
   }
 
-  const viewLoggedRef = useRef(false)
-
+  // ====== ИНКРЕМЕНТ ПРОСМОТРОВ — ТОЛЬКО ДЛЯ ЧУЖИХ РЕЗЮМЕ ======
   useEffect(() => {
-    if (resume && resume.id && !viewLoggedRef.current) {
-      viewLoggedRef.current = true  // ← ставим флаг ДО запроса
+    if (!resume?.id) return
 
-      axios.post(`/api/resumes/${resume.id}/view`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      }).catch(err => {
-        // Если ошибка — сбрасываем флаг чтобы попробовать ещё раз
-        viewLoggedRef.current = false
-        console.error('Ошибка инкремента просмотров:', err)
+    // Не инкрементируем своё резюме
+    if (currentUser && resume.user_id === currentUser.id) {
+      console.log(`⏭️ Пропускаем инкремент: пользователь ${currentUser.id} смотрит своё резюме ${resume.id}`)
+      return
+    }
+
+    // Отправляем запрос (токен добавляется автоматически через interceptor)
+    axios.post(`/api/resumes/${resume.id}/view`)
+      .then(() => {
+        console.log(`✅ Resume ${resume.id} view incremented`)
       })
-    }
-  }, [resume?.id])  
-
-  useEffect(() => {
-    if (resume && resume.id) {
-      axios.post(`/api/resumes/${resume.id}/view`, {}, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      }).catch(err => console.error('Ошибка инкремента просмотров:', err))
-    }
-  }, [resume?.id])
+      .catch(err => {
+        console.warn('⚠️ Не удалось инкрементировать просмотр:', err.message)
+      })
+  }, [resume?.id, currentUser?.id])
 
   const handleAddWorkExp = async (e) => {
     e.preventDefault()
@@ -92,6 +83,11 @@ function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
   const handleEditSuccess = (updatedResume) => {
     onUpdate(updatedResume)
     setShowEditModal(false)
+
+    // Используем showToast из пропсов, а не app
+    if (showToast) {
+      showToast('✨ Резюме успешно обновлено!')
+    }
   }
 
   return (
@@ -100,7 +96,7 @@ function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
         <ResumeModal
           onClose={() => setShowEditModal(false)}
           onSuccess={handleEditSuccess}
-          resume={resume}
+          resume={resume}  // ← передаётся объект resume
         />
       )}
 
@@ -117,11 +113,10 @@ function ResumeDetailsModal({ resume, onClose, onUpdate, onDelete }) {
           <div className="details-modal">
             <div className="details-modal-content">
               {/* Шапка */}
-              {/* Шапка */}
               <div className="details-header">
                 <PhotoUpload
                   currentPhoto={resume.photo_url}
-                  onUpload={() => Promise.resolve()} // В модалке не позволяем менять фото
+                  onUpload={() => Promise.resolve()}
                   label="Фото профиля"
                   size="medium"
                   fallback={resume.full_name}

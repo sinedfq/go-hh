@@ -13,6 +13,13 @@ export function useApp() {
 
     const [allPositions, setAllPositions] = useState([])
 
+    const [toast, setToast] = useState(null)
+
+    const showToast = (message, duration = 3000) => {
+        setToast(message)
+        setTimeout(() => setToast(null), duration)
+    }
+
     const [selectedVacancyId, setSelectedVacancyId] = useState(() => {
         const saved = sessionStorage.getItem('selectedVacancyId')
         return saved ? parseInt(saved) : null
@@ -59,6 +66,12 @@ export function useApp() {
     const [searchTotal, setSearchTotal] = useState(0)
     const [searchLoading, setSearchLoading] = useState(false)
 
+    // ====== ЧАТ ======
+    const [showChatApp, setShowChatApp] = useState(false)
+
+    const openChatApp = () => setShowChatApp(true)
+
+
     // ====== РАБОТОДАТЕЛЬ (НОВОЕ) ======
     const [myCompany, setMyCompany] = useState(null)
     const [myVacancies, setMyVacancies] = useState([])
@@ -67,6 +80,24 @@ export function useApp() {
 
     // ====== СКРОЛЛ ======
     const scrollPositionsRef = useRef({})
+
+    // Добавь к другим useState
+    const [activeChat, setActiveChat] = useState(null)
+
+    const [initialChat, setInitialChat] = useState(null)
+
+
+    // Добавь функции
+    const openChatWith = (chatInfo) => {
+        setInitialChat(chatInfo)
+        setShowChatApp(true)
+    }
+
+    // Обнови closeChatApp чтобы сбрасывать initialChat
+    const closeChatApp = () => {
+        setShowChatApp(false)
+        setInitialChat(null)
+    }
 
     useEffect(() => {
         const saved = sessionStorage.getItem('scrollPositions')
@@ -326,6 +357,10 @@ export function useApp() {
     }
 
     const handleModeChange = (newMode) => {
+        if (showChatApp) {
+            setShowChatApp(false)
+        }
+
         if (vacancyPageId || companyPageId) {
             setVacancyPageId(null)
             setCompanyPageId(null)
@@ -662,5 +697,16 @@ export function useApp() {
 
         // Свайпы
         handleSwipe,
+
+        // Чат
+        showChatApp,
+        openChatApp,
+        closeChatApp,
+
+        initialChat,
+        openChatWith,
+
+        toast,
+        showToast,
     }
 }

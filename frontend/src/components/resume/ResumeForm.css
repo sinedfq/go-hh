@@ -1,870 +1,1137 @@
-/* ====== GLASS FORM WRAPPER ====== */
+/* ============================================
+   ФОРМА РЕЗЮМЕ
+   ============================================ */
+
 .resume-form-wrapper {
-  padding: 0;
+    padding: 2rem;
 }
 
 .resume-form h3 {
-  font-size: 1.5rem;
-  color: #1a1a1a;
-  margin-bottom: 1.5rem;
-  padding-right: 2.5rem;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--text-primary, #1a1a1a);
+    margin: 0 0 1.5rem 0;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-light, #e5e7eb);
 }
 
-/* ====== GRID ROWS ====== */
+/* ====== СТРОКИ ФОРМЫ ====== */
 .form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
-/* ====== FORM GROUPS ====== */
+/* ====== ГРУППЫ ФОРМЫ ====== */
 .form-group {
-  margin-bottom: 1rem;
+    margin-bottom: 1.25rem;
 }
 
 .form-group label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary, #374151);
+    margin-bottom: 0.5rem;
 }
 
-/* ====== GLASS INPUTS ====== */
 .form-group input,
 .form-group textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  font-size: 0.9rem;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  transition: all 0.2s ease;
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-  color: #1a1a1a;
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  border-color: #0066cc;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 
-    0 0 0 3px rgba(0, 102, 204, 0.15),
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    background: var(--surface, #ffffff);
+    color: var(--text-primary, #1a1a1a);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
 }
 
 .form-group input::placeholder,
 .form-group textarea::placeholder {
-  color: #999;
+    color: var(--text-muted, #9ca3af);
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .form-group textarea {
-  resize: vertical;
-  min-height: 80px;
-  font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
 }
 
-/* ====== CUSTOM DROPDOWN ====== */
+/* ====== DROPDOWN ОПЫТА ====== */
 .custom-dropdown {
-  position: relative;
+    position: relative;
 }
 
 .dropdown-trigger {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.2s ease;
-  outline: none;
-  font-family: inherit;
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  color: #1a1a1a;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.625rem 0.875rem;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--text-primary, #1a1a1a);
+    transition: all 0.2s ease;
 }
 
-.dropdown-trigger:hover {
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.dropdown-trigger:focus,
 .dropdown-trigger.open {
-  border-color: #0066cc;
-  background: rgba(255, 255, 255, 0.7);
-  box-shadow: 
-    0 0 0 3px rgba(0, 102, 204, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .dropdown-value {
-  font-weight: 500;
+    font-weight: 500;
 }
 
 .dropdown-arrow {
-  color: #666;
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  flex-shrink: 0;
+    transition: transform 0.2s ease;
+    color: var(--text-muted, #9ca3af);
 }
 
 .dropdown-arrow.rotated {
-  transform: rotate(180deg);
+    transform: rotate(180deg);
 }
 
 .dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 0.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.15),
-    0 4px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  z-index: 100;
-  overflow: hidden;
-  animation: dropdownOpen 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.2s ease;
 }
 
-@keyframes dropdownOpen {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+@keyframes dropdownFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .dropdown-option {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  transition: all 0.15s ease;
-  text-align: left;
-  color: #1a1a1a;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0.875rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--text-primary, #1a1a1a);
+    transition: background 0.15s ease;
+    text-align: left;
 }
 
 .dropdown-option:hover {
-  background: rgba(0, 102, 204, 0.1);
+    background: var(--bg, #f3f4f6);
 }
 
 .dropdown-option.selected {
-  background: rgba(0, 102, 204, 0.08);
-}
-
-.dropdown-option.selected:hover {
-  background: rgba(0, 102, 204, 0.15);
+    background: rgba(0, 102, 204, 0.08);
+    color: var(--accent, #0066cc);
 }
 
 .option-content {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
 }
 
 .option-label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1a1a1a;
-}
-
-.dropdown-option.selected .option-label {
-  color: #0066cc;
+    font-weight: 600;
 }
 
 .option-description {
-  font-size: 0.75rem;
-  color: #999;
+    font-size: 0.75rem;
+    color: var(--text-muted, #9ca3af);
 }
 
 .option-check {
-  color: #0066cc;
-  flex-shrink: 0;
+    color: var(--accent, #0066cc);
 }
 
-/* ====== SKILLS INPUT ====== */
+/* ====== НАВЫКИ ====== */
+.skills-input-wrapper {
+    position: relative;
+}
+
 .skills-input {
-  display: flex;
-  gap: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
 }
 
 .skills-input input {
-  flex: 1;
+    flex: 1;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    background: var(--surface, #ffffff);
+    color: var(--text-primary, #1a1a1a);
+    transition: all 0.2s ease;
+}
+
+.skills-input input:focus {
+    outline: none;
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .add-skill-btn {
-  width: 42px;
-  height: 42px;
-  border: 0.5px solid rgba(0, 102, 204, 0.3);
-  background: rgba(0, 102, 204, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #0066cc;
-  border-radius: 10px;
-  font-size: 1.25rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 
-    0 2px 6px rgba(0, 102, 204, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    width: 42px;
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid var(--border, #d1d5db);
+    background: var(--bg, #f3f4f6);
+    color: var(--accent, #0066cc);
+    font-size: 1.25rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
 }
 
 .add-skill-btn:hover {
-  background: rgba(0, 102, 204, 0.2);
-  transform: scale(1.05);
-  box-shadow: 
-    0 4px 12px rgba(0, 102, 204, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.skills-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.skill-tag-form {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: rgba(0, 102, 204, 0.15);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #0066cc;
-  padding: 0.4rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  border: 0.5px solid rgba(0, 102, 204, 0.2);
-  animation: skillTagIn 0.3s ease;
-  box-shadow: 
-    0 2px 4px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-@keyframes skillTagIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.remove-skill {
-  background: none;
-  border: none;
-  color: #0066cc;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0;
-  line-height: 1;
-  opacity: 0.6;
-  transition: opacity 0.2s;
-}
-
-.remove-skill:hover {
-  opacity: 1;
-}
-
-
-
-/* ====== WORK EXPERIENCE SECTION ====== */
-.work-experience-section {
-  margin-top: 0.5rem;
-  padding-top: 1rem;
-  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
-}
-
-.section-header-form {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.section-header-form label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #333;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin: 0;
-}
-
-.add-experience-btn {
-  padding: 0.5rem 1rem;
-  background: rgba(0, 102, 204, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #0066cc;
-  border: 0.5px solid rgba(0, 102, 204, 0.3);
-  border-radius: 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 
-    0 2px 6px rgba(0, 102, 204, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.add-experience-btn:hover {
-  background: rgba(0, 102, 204, 0.2);
-  transform: translateY(-1px);
-  box-shadow: 
-    0 4px 12px rgba(0, 102, 204, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-.empty-work-exp {
-  color: #999;
-  font-size: 0.85rem;
-  text-align: center;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 12px;
-  margin: 0;
-  border: 0.5px solid rgba(0, 0, 0, 0.05);
-}
-
-.work-experience-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.work-experience-item {
-  background: rgba(255, 255, 255, 0.4);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 12px;
-  padding: 1rem;
-  animation: expItemIn 0.3s ease;
-  box-shadow: 
-    0 2px 6px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-@keyframes expItemIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.work-exp-item-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.75rem;
-}
-
-.work-exp-index {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: #0066cc;
-  background: rgba(0, 102, 204, 0.1);
-  padding: 0.25rem 0.6rem;
-  border-radius: 6px;
-  border: 0.5px solid rgba(0, 102, 204, 0.2);
-}
-
-.remove-exp-btn {
-  background: rgba(220, 53, 69, 0.1);
-  border: 0.5px solid rgba(220, 53, 69, 0.2);
-  cursor: pointer;
-  font-size: 1.2rem;
-  color: #dc3545;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.6;
-  transition: all 0.2s ease;
-}
-
-.remove-exp-btn:hover {
-  opacity: 1;
-  background: rgba(220, 53, 69, 0.2);
-  transform: scale(1.1);
-}
-
-.work-exp-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.work-experience-item input,
-.work-experience-item textarea {
-  width: 100%;
-  padding: 0.6rem 0.75rem;
-  border: 0.5px solid rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  font-size: 0.85rem;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-  transition: all 0.2s ease;
-  box-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.work-experience-item input:focus,
-.work-experience-item textarea:focus {
-  border-color: #0066cc;
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 
-    0 0 0 3px rgba(0, 102, 204, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-.work-experience-item textarea {
-  resize: vertical;
-  min-height: 60px;
-}
-
-.date-input-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.date-input-wrapper label {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* ====== FORM ERROR ====== */
-.form-error {
-  background: rgba(220, 53, 69, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: #c53030;
-  padding: 0.75rem 1rem;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  border: 0.5px solid rgba(220, 53, 69, 0.2);
-  margin-bottom: 1rem;
-  animation: shake 0.4s ease;
-  box-shadow: 
-    0 2px 6px rgba(220, 53, 69, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.3);
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-6px); }
-  75% { transform: translateX(6px); }
-}
-
-/* ====== FORM ACTIONS ====== */
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: flex-end;
-  margin-top: 1.5rem;
-  padding-top: 1.5rem;
-  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
-}
-
-/* ====== RESPONSIVE ====== */
-@media (max-width: 600px) {
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .form-actions {
-    flex-direction: column-reverse;
-  }
-
-  .form-actions .btn {
-    width: 100%;
-  }
-
-  .work-exp-row {
-    grid-template-columns: 1fr;
-  }
-
-  .section-header-form {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
-  }
-
-  .add-experience-btn {
-    width: 100%;
-  }
-}
-
-/* ====== АВТОДОПОЛНЕНИЕ НАВЫКОВ ====== */
-.skills-input-wrapper {
-  position: relative;
+    background: var(--accent, #0066cc);
+    color: white;
+    border-color: var(--accent, #0066cc);
 }
 
 .skills-suggestions {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 0.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.15),
-    0 4px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  z-index: 100;
-  overflow: hidden;
-  max-height: 240px;
-  overflow-y: auto;
-  animation: dropdownOpen 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+    overflow: hidden;
+    max-height: 240px;
+    overflow-y: auto;
 }
 
 .skill-suggestion-item {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-size: 0.85rem;
-  color: #1a1a1a;
-  transition: background 0.15s ease;
-  font-family: inherit;
-  display: block;
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--text-primary, #1a1a1a);
+    transition: background 0.15s ease;
+    text-align: left;
 }
 
 .skill-suggestion-item:hover {
-  background: rgba(0, 102, 204, 0.1);
+    background: var(--bg, #f3f4f6);
 }
 
-.skill-suggestion-item:not(:last-child) {
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
+.skills-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
 
-/* ====== АВТОДОПОЛНЕНИЕ ДОЛЖНОСТЕЙ ====== */
-.position-input-wrapper {
-  position: relative;
+.skill-tag-form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    background: rgba(0, 102, 204, 0.1);
+    border: 1px solid rgba(0, 102, 204, 0.2);
+    border-radius: 20px;
+    color: var(--accent, #0066cc);
+    font-size: 0.8125rem;
+    font-weight: 500;
 }
 
-.position-suggestions {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 0.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.15),
-    0 4px 8px rgba(0, 0, 0, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  z-index: 100;
-  overflow: hidden;
-  max-height: 240px;
-  overflow-y: auto;
-  animation: dropdownOpen 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+.remove-skill {
+    background: transparent;
+    border: none;
+    color: var(--accent, #0066cc);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    padding: 0;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
 }
 
-.position-suggestion-item {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-size: 0.85rem;
-  color: #1a1a1a;
-  transition: background 0.15s ease;
-  font-family: inherit;
-  display: block;
+.remove-skill:hover {
+    opacity: 1;
+    color: #dc3545;
 }
 
-.position-suggestion-item:hover {
-  background: rgba(0, 102, 204, 0.1);
-}
-
-.position-suggestion-item:not(:last-child) {
-  border-bottom: 0.5px solid rgba(0, 0, 0, 0.05);
-}
-
-/* ====== СЕКЦИЯ КОНТАКТОВ В ФОРМЕ ====== */
+/* ====== КОНТАКТЫ ====== */
 .contacts-section {
-    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-light, #e5e7eb);
+    padding-top: 1.25rem;
 }
 
 .contacts-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr 1fr;
     gap: 0.75rem;
 }
 
 .contact-input-wrapper {
-    position: relative;
     display: flex;
     align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg, #f3f4f6);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.contact-input-wrapper:focus-within {
+    border-color: var(--accent, #0066cc);
+    background: var(--surface, #ffffff);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
 }
 
 .contact-icon {
-    position: absolute;
-    left: 0.875rem;
-    color: #999;
-    pointer-events: none;
-    transition: color 0.2s ease;
+    color: var(--text-muted, #9ca3af);
     flex-shrink: 0;
 }
 
 .contact-input-wrapper input {
-    width: 100%;
-    padding: 0.75rem 0.875rem 0.75rem 2.5rem;
-    border: 0.5px solid rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(10px);
-    font-size: 0.875rem;
-    transition: all 0.2s ease;
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-size: 0.9375rem;
+    color: var(--text-primary, #1a1a1a);
     outline: none;
-}
-
-.contact-input-wrapper input:focus {
-    border-color: #0066cc;
-    background: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
-}
-
-.contact-input-wrapper input:focus + .contact-icon,
-.contact-input-wrapper:focus-within .contact-icon {
-    color: #0066cc;
+    padding: 0;
 }
 
 .contact-input-wrapper input::placeholder {
-    color: #aaa;
-}
-
-@media (max-width: 600px) {
-    .contacts-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ====== КУРСОР В ПОЛЯХ ВВОДА ====== */
-.form-group input,
-.form-group textarea,
-.skills-input input,
-.contact-input-wrapper input,
-.work-experience-item input,
-.work-experience-item textarea,
-.work-exp-form input,
-.work-exp-form textarea {
-    cursor: text !important;
-}
-
-.form-group input:focus,
-.form-group textarea:focus,
-.skills-input input:focus,
-.contact-input-wrapper input:focus {
-    cursor: text !important;
-}
-
-/* Кнопки-подсказки — используем cursor pointer */
-.position-suggestion-item,
-.skill-suggestion-item {
-    cursor: pointer !important;
+    color: var(--text-muted, #9ca3af);
 }
 
 /* ============================================
-   REMOTE TOGGLE — ЧИСТЫЙ ВАРИАНТ
+   TOGGLE С ВИЗУАЛЬНЫМ СОСТОЯНИЕМ
    ============================================ */
 
+.toggle-with-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.toggle-status {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-muted, #9ca3af);
+    min-width: 36px;
+    text-align: right;
+    transition: color 0.3s ease;
+    animation: statusFadeIn 0.3s ease;
+}
+
+.toggle-status.active {
+    color: #0066cc;
+}
+
+@keyframes statusFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ============================================
+   TOGGLE SWITCH — ПОЛНЫЙ СБРОС И КАСТОМИЗАЦИЯ
+   ============================================ */
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 52px;
+    height: 28px;
+    flex-shrink: 0;
+    cursor: pointer;
+    /* Сброс всех стилей label */
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+}
+
+/* ====== ПОЛНОЕ СКРЫТИЕ ЧЕКБОКСА ====== */
+.toggle-switch input[type="checkbox"] {
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    pointer-events: none !important;
+    z-index: -1 !important;
+}
+
+/* ====== СЛАЙДЕР (ФОН TOGGLE) ====== */
+.toggle-switch .toggle-slider {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background-color: #d1d5db !important;
+    border-radius: 28px !important;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease !important;
+    cursor: pointer;
+    display: block;
+    z-index: 1;
+}
+
+/* Убираем ВСЕ псевдоэлеы кроме ::before */
+.toggle-switch .toggle-slider::after {
+    content: none !important;
+    display: none !important;
+}
+
+/* ====== ТОЧКА (КРУГ) ====== */
+.toggle-switch .toggle-slider::before {
+    content: '' !important;
+    position: absolute !important;
+    width: 22px !important;
+    height: 22px !important;
+    left: 3px !important;
+    top: 3px !important;
+    background-color: white !important;
+    border-radius: 50% !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+    z-index: 2;
+}
+
+/* ====== СОСТОЯНИЕ ВКЛЮЧЕНО ====== */
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+    background-color: #0066cc !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+    animation: togglePulse 0.4s ease;
+}
+
+.toggle-switch input[type="checkbox"]:checked + .toggle-slider::before {
+    transform: translateX(24px) !important;
+    background-color: white !important;
+}
+
+/* Альтернативный селектор */
+.toggle-switch input[type="checkbox"]:checked ~ .toggle-slider {
+    background-color: #0066cc !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+}
+
+.toggle-switch input[type="checkbox"]:checked ~ .toggle-slider::before {
+    transform: translateX(24px) !important;
+}
+
+/* Фокус для доступности */
+.toggle-switch input[type="checkbox"]:focus-visible + .toggle-slider {
+    outline: 2px solid #0066cc;
+    outline-offset: 2px;
+}
+
+/* Анимация пульсации при включении */
+@keyframes togglePulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(0, 102, 204, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+    }
+}
+
+/* ====== REMOTE TOGGLE КОНТЕЙНЕР ====== */
 .remote-toggle {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+    padding: 1rem 1.25rem;
+    background: var(--bg, #f3f4f6);
+    border: 1px solid var(--border, #d1d5db);
     border-radius: 12px;
-    border: 0.5px solid rgba(0, 0, 0, 0.1);
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.3s ease;
 }
 
 .remote-toggle:hover {
-    background: rgba(255, 255, 255, 0.5);
-}
-
-.remote-toggle:has(input:checked) {
-    border-color: rgba(0, 102, 204, 0.3);
-    background: rgba(0, 102, 204, 0.08);
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
 }
 
 .remote-toggle-info {
     display: flex;
     flex-direction: column;
-    gap: 0.125rem;
-    flex: 1;
-    min-width: 0;
+    gap: 0.25rem;
 }
 
 .remote-toggle-title {
-    font-size: 0.9rem;
+    font-size: 0.9375rem;
     font-weight: 600;
-    color: #1a1a1a;
+    color: var(--text-primary, #1a1a1a);
 }
 
 .remote-toggle-subtitle {
-    font-size: 0.75rem;
-    color: #666;
+    font-size: 0.8125rem;
+    color: var(--text-muted, #9ca3af);
+    transition: color 0.3s ease;
 }
 
-/* Toggle — простой и надёжный */
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 48px;
-    height: 28px;
-    flex-shrink: 0;
+/* Подсветка subtitle при включении */
+.remote-toggle:has(input:checked) .remote-toggle-subtitle {
+    color: #0066cc;
+    font-weight: 500;
+}
+
+/* ====== ОПЫТ РАБОТЫ ====== */
+.work-experience-section {
+    border-top: 1px solid var(--border-light, #e5e7eb);
+    padding-top: 1.25rem;
+}
+
+.section-header-form {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.section-header-form label {
+    margin: 0;
+}
+
+.add-experience-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg, #f3f4f6);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    color: var(--accent, #0066cc);
+    font-size: 0.875rem;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.toggle-switch input {
-    position: absolute;
-    opacity: 0;
-    width: 0;
-    height: 0;
-    pointer-events: none;
+.add-experience-btn:hover {
+    background: var(--accent, #0066cc);
+    color: white;
+    border-color: var(--accent, #0066cc);
 }
 
-.toggle-slider {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 28px;
-    transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+.empty-work-exp {
+    color: var(--text-muted, #9ca3af);
+    font-size: 0.875rem;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+    background: var(--bg, #f9fafb);
+    border-radius: 8px;
+    border: 1px dashed var(--border, #d1d5db);
 }
 
-.toggle-slider::before {
-    content: '';
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 22px;
-    height: 22px;
-    background: white;
+.work-experience-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ====== ЭЛЕМЕНТ ОПЫТА РАБОТЫ ====== */
+.work-experience-item {
+    background: var(--bg, #f9fafb);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 12px;
+    padding: 1rem;
+    transition: all 0.2s ease;
+}
+
+.work-experience-item:hover {
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+}
+
+.work-exp-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-light, #e5e7eb);
+}
+
+.work-exp-index {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted, #9ca3af);
+    background: var(--surface, #ffffff);
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    border: 1px solid var(--border, #d1d5db);
+}
+
+.remove-exp-btn {
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: none;
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 
-.toggle-switch input:checked + .toggle-slider {
-    background: #0066cc;
+.remove-exp-btn:hover {
+    background: #dc3545;
+    color: white;
+    transform: scale(1.1);
 }
 
-.toggle-switch input:checked + .toggle-slider::before {
-    transform: translateX(20px);
+.work-exp-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
-/* Мобильная версия */
-@media (max-width: 600px) {
-    .remote-toggle {
-        padding: 0.875rem;
-        gap: 0.75rem;
+.work-exp-row input,
+.work-exp-row textarea {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    background: var(--surface, #ffffff);
+    color: var(--text-primary, #1a1a1a);
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.work-exp-row input::placeholder,
+.work-exp-row textarea::placeholder {
+    color: var(--text-muted, #9ca3af);
+}
+
+.work-exp-row input:focus,
+.work-exp-row textarea:focus {
+    outline: none;
+    border-color: var(--accent, #0066cc);
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.work-exp-row textarea {
+    grid-column: 1 / -1;
+    resize: vertical;
+    min-height: 60px;
+}
+
+/* ====== ОШИБКА ФОРМЫ ====== */
+.form-error {
+    padding: 0.75rem 1rem;
+    background: rgba(220, 53, 69, 0.1);
+    border: 1px solid rgba(220, 53, 69, 0.3);
+    border-radius: 8px;
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
+/* ====== КНОПКИ ДЕЙСТВИЙ ====== */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-light, #e5e7eb);
+}
+
+.form-actions .btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+}
+
+.form-actions .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ====== POSITION SUGGESTIONS ====== */
+.position-input-wrapper {
+    position: relative;
+}
+
+.position-suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface, #ffffff);
+    border: 1px solid var(--border, #d1d5db);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 20;
+    overflow: hidden;
+    max-height: 240px;
+    overflow-y: auto;
+}
+
+.position-suggestion-item {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--text-primary, #1a1a1a);
+    transition: background 0.15s ease;
+    text-align: left;
+}
+
+.position-suggestion-item:hover {
+    background: var(--bg, #f3f4f6);
+}
+
+/* ============================================
+   АДАПТИВНОСТЬ
+   ============================================ */
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
     }
 
-    .remote-toggle-title {
-        font-size: 0.875rem;
+    .contacts-grid {
+        grid-template-columns: 1fr;
     }
 
-    .remote-toggle-subtitle {
-        font-size: 0.7rem;
+    .work-exp-row {
+        grid-template-columns: 1fr;
     }
 
-    .toggle-switch {
-        width: 44px;
-        height: 26px;
+    .form-actions {
+        flex-direction: column;
     }
 
-    .toggle-slider::before {
-        width: 20px;
-        height: 20px;
-        top: 3px;
-        left: 3px;
-    }
-
-    .toggle-switch input:checked + .toggle-slider::before {
-        transform: translateX(18px);
+    .resume-form-wrapper {
+        padding: 1.5rem;
     }
 }
 
-@media (max-width: 400px) {
-    .remote-toggle {
-        padding: 0.75rem;
-    }
+/* ============================================
+   ТЁМНАЯ ТЕМА
+   ============================================ */
+
+[data-theme="dark"] .resume-form-wrapper {
+    background: #161b22;
+}
+
+[data-theme="dark"] .resume-form h3 {
+    color: #e6edf3;
+    border-bottom-color: #30363d;
+}
+
+/* ====== ГРУППЫ ФОРМЫ ====== */
+[data-theme="dark"] .form-group label {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .form-group input::placeholder,
+[data-theme="dark"] .form-group textarea::placeholder {
+    color: #6e7681;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group textarea:focus {
+    border-color: #4493f8;
+    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+}
+
+/* ====== DROPDOWN ====== */
+[data-theme="dark"] .dropdown-trigger {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .dropdown-trigger.open {
+    border-color: #4493f8;
+}
+
+[data-theme="dark"] .dropdown-arrow {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .dropdown-option {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .dropdown-option:hover {
+    background: #0d1117;
+}
+
+[data-theme="dark"] .dropdown-option.selected {
+    background: rgba(68, 147, 248, 0.15);
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .option-description {
+    color: #8b949e;
+}
+
+/* ====== НАВЫКИ ====== */
+[data-theme="dark"] .skills-input input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .skills-input input:focus {
+    border-color: #4493f8;
+    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+}
+
+[data-theme="dark"] .add-skill-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .add-skill-btn:hover {
+    background: #58a6ff;
+    color: #0d1117;
+}
+
+[data-theme="dark"] .skills-suggestions {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .skill-suggestion-item {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .skill-suggestion-item:hover {
+    background: #0d1117;
+}
+
+[data-theme="dark"] .skill-tag-form {
+    background: rgba(68, 147, 248, 0.15);
+    border-color: rgba(68, 147, 248, 0.3);
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .remove-skill {
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .remove-skill:hover {
+    color: #f85149;
+}
+
+/* ====== КОНТАКТЫ ====== */
+[data-theme="dark"] .contact-input-wrapper {
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .contact-input-wrapper:focus-within {
+    border-color: #4493f8;
+    background: #161b22;
+    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+}
+
+[data-theme="dark"] .contact-icon {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .contact-input-wrapper input {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .contact-input-wrapper input::placeholder {
+    color: #6e7681;
+}
+
+/* ====== TOGGLE — ТЁМНАЯ ТЕМА ====== */
+[data-theme="dark"] .toggle-status {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .toggle-status.active {
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .toggle-switch .toggle-slider {
+    background-color: #30363d !important;
+}
+
+[data-theme="dark"] .toggle-switch .toggle-slider::before {
+    background-color: #e6edf3 !important;
+}
+
+/* ВКЛЮЧЕНО в тёмной теме — зелёный */
+[data-theme="dark"] .toggle-switch input[type="checkbox"]:checked + .toggle-slider {
+    background-color: #238636 !important;
+    box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.2) !important;
+}
+
+[data-theme="dark"] .toggle-switch input[type="checkbox"]:checked ~ .toggle-slider {
+    background-color: #238636 !important;
+    box-shadow: 0 0 0 3px rgba(35, 134, 54, 0.2) !important;
+}
+
+[data-theme="dark"] .toggle-switch input[type="checkbox"]:checked + .toggle-slider::before,
+[data-theme="dark"] .toggle-switch input[type="checkbox"]:checked ~ .toggle-slider::before {
+    background-color: white !important;
+}
+
+/* ====== REMOTE TOGGLE — ТЁМНАЯ ТЕМА ====== */
+[data-theme="dark"] .remote-toggle {
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .remote-toggle:hover {
+    border-color: #4493f8;
+    box-shadow: 0 2px 8px rgba(68, 147, 248, 0.15);
+}
+
+[data-theme="dark"] .remote-toggle-title {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .remote-toggle-subtitle {
+    color: #8b949e;
+}
+
+[data-theme="dark"] .remote-toggle:has(input:checked) .remote-toggle-subtitle {
+    color: #3fb950;
+    font-weight: 500;
+}
+
+/* ====== ОПЫТ РАБОТЫ — ТЁМНАЯ ТЕМА ====== */
+[data-theme="dark"] .work-experience-section {
+    border-top-color: #30363d;
+}
+
+[data-theme="dark"] .section-header-form label {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .add-experience-btn {
+    background: #21262d;
+    border-color: #30363d;
+    color: #58a6ff;
+}
+
+[data-theme="dark"] .add-experience-btn:hover {
+    background: #58a6ff;
+    color: #0d1117;
+}
+
+[data-theme="dark"] .empty-work-exp {
+    color: #8b949e;
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .work-experience-item {
+    background: #0d1117;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .work-experience-item:hover {
+    border-color: #4493f8;
+    box-shadow: 0 4px 12px rgba(68, 147, 248, 0.15);
+}
+
+[data-theme="dark"] .work-exp-item-header {
+    border-bottom-color: #30363d;
+}
+
+[data-theme="dark"] .work-exp-index {
+    color: #8b949e;
+    background: #21262d;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .remove-exp-btn {
+    background: rgba(248, 81, 73, 0.15);
+    color: #f85149;
+}
+
+[data-theme="dark"] .remove-exp-btn:hover {
+    background: #da3633;
+    color: white;
+}
+
+[data-theme="dark"] .work-exp-row input,
+[data-theme="dark"] .work-exp-row textarea {
+    background: #161b22;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .work-exp-row input::placeholder,
+[data-theme="dark"] .work-exp-row textarea::placeholder {
+    color: #6e7681;
+}
+
+[data-theme="dark"] .work-exp-row input:focus,
+[data-theme="dark"] .work-exp-row textarea:focus {
+    border-color: #4493f8;
+    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+}
+
+/* ====== ОШИБКА ФОРМЫ ====== */
+[data-theme="dark"] .form-error {
+    background: rgba(248, 81, 73, 0.1);
+    border-color: rgba(248, 81, 73, 0.3);
+    color: #f85149;
+}
+
+/* ====== КНОПКИ ДЕЙСТВИЙ ====== */
+[data-theme="dark"] .form-actions {
+    border-top-color: #30363d;
+}
+
+[data-theme="dark"] .form-actions .btn-secondary {
+    background: #21262d;
+    color: #e6edf3;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .form-actions .btn-secondary:hover {
+    background: #30363d;
+}
+
+[data-theme="dark"] .form-actions .btn-primary {
+    background: #238636;
+    color: white;
+}
+
+[data-theme="dark"] .form-actions .btn-primary:hover {
+    background: #2ea043;
+}
+
+[data-theme="dark"] .form-actions .btn-primary:disabled {
+    background: #21262d;
+    color: #6e7681;
+}
+
+/* ====== POSITION SUGGESTIONS ====== */
+[data-theme="dark"] .position-suggestions {
+    background: #161b22;
+    border-color: #30363d;
+}
+
+[data-theme="dark"] .position-suggestion-item {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .position-suggestion-item:hover {
+    background: #0d1117;
+}
+
+/* ====== POSITION INPUT ====== */
+[data-theme="dark"] .position-input-wrapper input {
+    background: #0d1117;
+    border-color: #30363d;
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .position-input-wrapper input::placeholder {
+    color: #6e7681;
+}
+
+[data-theme="dark"] .position-input-wrapper input:focus {
+    border-color: #4493f8;
+    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+}
+
+/* ============================================
+   ГЛОБАЛЬНЫЙ СБРОС ДЛЯ TOGGLE
+   ============================================ */
+
+/* Принудительно скрываем стандартный чекбокс */
+.resume-form .toggle-switch input[type="checkbox"] {
+    display: none !important;
+    visibility: hidden !important;
+    position: absolute !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    pointer-events: none !important;
+}
+
+/* Убираем все псевдоэлеы toggle-slider кроме ::before */
+.resume-form .toggle-switch .toggle-slider::after {
+    content: none !important;
+    display: none !important;
+}
+
+.resume-form .toggle-switch * {
+    box-sizing: border-box;
 }

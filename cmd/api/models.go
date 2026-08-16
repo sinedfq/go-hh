@@ -223,6 +223,9 @@ type Application struct {
 	CreatedAt       time.Time  `json:"created_at"`
 	ViewedAt        *time.Time `json:"viewed_at,omitempty"`
 
+	// ====== НОВОЕ: ID чата ======
+	ConversationID *int `json:"conversation_id,omitempty"`
+
 	// Заполняется через JOIN
 	CandidateEmail   string `json:"candidate_email,omitempty"`
 	CandidatePhoto   string `json:"candidate_photo,omitempty"`
@@ -231,7 +234,7 @@ type Application struct {
 	ResumeExperience string `json:"resume_experience,omitempty"`
 	VacancyTitle     string `json:"vacancy_title,omitempty"`
 	CompanyName      string `json:"company_name,omitempty"`
-	VacancyCompanyID int    `json:"vacancy_company_id,omitempty"` // ← НОВОЕ (для проверок)
+	VacancyCompanyID int    `json:"vacancy_company_id,omitempty"`
 }
 
 type CreateApplicationRequest struct {
@@ -256,4 +259,45 @@ type CreateNotificationRequest struct {
 	Title   string
 	Message string
 	Data    map[string]interface{}
+}
+
+// ====== ЧАТ ======
+type Conversation struct {
+	ID            int       `json:"id"`
+	ApplicationID int       `json:"application_id"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type Message struct {
+	ID             int        `json:"id"`
+	ConversationID int        `json:"conversation_id"`
+	SenderID       int        `json:"sender_id"`
+	Content        string     `json:"content"`
+	IsRead         bool       `json:"is_read"`
+	ReadAt         *time.Time `json:"read_at,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+
+	// Заполняется через JOIN
+	SenderName  string `json:"sender_name,omitempty"`
+	SenderPhoto string `json:"sender_photo,omitempty"`
+	SenderRole  string `json:"sender_role,omitempty"`
+}
+
+type ChatInfo struct {
+	ConversationID int        `json:"conversation_id"`
+	ApplicationID  int        `json:"application_id"`
+	CompanyName    string     `json:"company_name"`
+	VacancyTitle   string     `json:"vacancy_title"`
+	VacancyID      int        `json:"vacancy_id"`
+	CandidateName  string     `json:"candidate_name"`
+	CandidateID    int        `json:"candidate_id"`
+	CandidatePhoto string     `json:"candidate_photo,omitempty"`
+	CandidateEmail string     `json:"candidate_email,omitempty"`
+	LastMessage    string     `json:"last_message,omitempty"`
+	LastMessageAt  *time.Time `json:"last_message_at,omitempty"`
+	UnreadCount    int        `json:"unread_count"`
+}
+
+type CreateMessageRequest struct {
+	Content string `json:"content"`
 }
