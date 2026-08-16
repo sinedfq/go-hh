@@ -11,13 +11,13 @@ export function useApp() {
     const [currentIndex, setCurrentIndex] = useState(-1)
     const [loading, setLoading] = useState(true)
 
-    // Выбранная вакансия через ID (сохраняется в sessionStorage)
+    const [allPositions, setAllPositions] = useState([])
+
     const [selectedVacancyId, setSelectedVacancyId] = useState(() => {
         const saved = sessionStorage.getItem('selectedVacancyId')
         return saved ? parseInt(saved) : null
     })
 
-    // Вычисляемая выбранная вакансия
     const selectedVacancy = vacancies.find(v => v.id === selectedVacancyId) || vacancies[0] || null
 
     // ====== РЕЖИМЫ И МОДАЛКИ ======
@@ -59,7 +59,13 @@ export function useApp() {
     const [searchTotal, setSearchTotal] = useState(0)
     const [searchLoading, setSearchLoading] = useState(false)
 
-    // ====== СКРОЛЛ (через ref для корректного чтения) ======
+    // ====== РАБОТОДАТЕЛЬ (НОВОЕ) ======
+    const [myCompany, setMyCompany] = useState(null)
+    const [myVacancies, setMyVacancies] = useState([])
+    const [employerLoading, setEmployerLoading] = useState(false)
+    const [employerError, setEmployerError] = useState(null)
+
+    // ====== СКРОЛЛ ======
     const scrollPositionsRef = useRef({})
 
     useEffect(() => {
@@ -99,6 +105,9 @@ export function useApp() {
             const skillsRes = await axios.get('/api/skills')
             const skills = Array.isArray(skillsRes.data) ? skillsRes.data : []
             setAllSkills(skills.map(s => s.name).sort())
+            const positionsRes = await axios.get('/api/positions')
+            const positions = Array.isArray(positionsRes.data) ? positionsRes.data : []
+            setAllPositions(positions.map(p => p.name).sort())
         } catch (err) {
             console.error('Ошибка загрузки опций фильтров:', err)
         }
@@ -137,6 +146,57 @@ export function useApp() {
         } finally {
             setRecommendationsLoading(false)
         }
+    }
+
+    // ====== РАБОТОДАТЕЛЬ: загрузка данных ======
+
+    const isEmployer = user && (user.role === 'employer' || user.role === 'admin')
+
+    const loadMyCompany = async () => {
+        if (!isEmployer) return
+        try {
+            const res = await axios.get('/api/my-company')
+            setMyCompany(res.data)
+            setEmployerError(null)
+        } catch (err) {
+            if (err.response?.status === 404) {
+                setMyCompany(null)
+                setEmployerError(null)
+            } else {
+                console.error('Ошибка загрузки компании:', err)
+                setEmployerError('Не удалось загрузить данные компании')
+            }
+        }
+    }
+
+    const loadMyVacancies = async () => {
+        if (!isEmployer) return
+        setEmployerLoading(true)
+        try {
+            const res = await axios.get('/api/my-vacancies')
+            setMyVacancies(res.data.vacancies || [])
+            if (res.data.company) {
+                setMyCompany(res.data.company)
+            }
+            setEmployerError(null)
+        } catch (err) {
+            console.error('Ошибка загрузки своих вакансий:', err)
+            setEmployerError('Не удалось загрузить вакансии')
+        } finally {
+            setEmployerLoading(false)
+        }
+    }
+
+    const createCompany = async (companyData) => {
+        const res = await axios.post('/api/companies', companyData)
+        setMyCompany(res.data)
+        return res.data
+    }
+
+    const createVacancy = async (vacancyData) => {
+        const res = await axios.post('/api/vacancies', vacancyData)
+        setMyVacancies(prev => [res.data, ...prev])
+        return res.data
     }
 
     // ====== ИЗБРАННОЕ ======
@@ -228,7 +288,6 @@ export function useApp() {
 
         const params = new URLSearchParams(window.location.search)
         params.set('vacancy', id)
-        // Убираем company из URL если есть
         params.delete('company')
         window.history.pushState({ vacancyId: id, companyId: null }, '', `?${params.toString()}`)
     }
@@ -244,7 +303,6 @@ export function useApp() {
 
         const params = new URLSearchParams(window.location.search)
         params.set('company', id)
-        // Сохраняем vacancy в URL если есть
         window.history.pushState({ vacancyId: vacancyPageId, companyId: id }, '', `?${params.toString()}`)
     }
 
@@ -274,11 +332,19 @@ export function useApp() {
             window.history.back()
         }
 
-        // Очищаем URL от фильтров поиска при смене режима
         clearSearchFromURL()
 
-        if ((newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations') && !user) {
+        // Для кандидатских режимов нужен логин
+        if ((newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations' || newMode === 'my-applications') && !user) {
             setShowLoginModal(true)
+            return
+        }
+
+        // Для режимов работодателя нужен employer/admin
+        if ((newMode === 'my-vacancies' || newMode === 'create-vacancy' || newMode === 'my-company' || newMode === 'applications' || newMode === 'stats') && !isEmployer) {
+            if (!user) {
+                setShowLoginModal(true)
+            }
             return
         }
 
@@ -333,7 +399,6 @@ export function useApp() {
 
     // ====== EFFECTS ======
 
-    // Парсим URL при первой загрузке (вакансии/компании/фильтры)
     useEffect(() => {
         const params = new URLSearchParams(window.location.search)
         const vacancyId = params.get('vacancy')
@@ -351,7 +416,6 @@ export function useApp() {
             setVacancyPageId(id)
         }
 
-        // Если в URL только фильтры поиска (без id) - открываем поиск
         const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
             .some(key => params.get(key))
         if (hasSearchFilters && !vacancyId && !companyId) {
@@ -366,12 +430,15 @@ export function useApp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
-    // Axios interceptor - авто-логаут при 401
     useEffect(() => {
         const interceptor = axios.interceptors.response.use(
             (response) => response,
             (error) => {
-                if (error.response?.status === 401) {
+                // Игнорируем 401 для "некритичных" запросов (просмотры)
+                const url = error.config?.url || ''
+                const isViewRequest = url.includes('/view')
+
+                if (error.response?.status === 401 && !isViewRequest) {
                     logout()
                 }
                 return Promise.reject(error)
@@ -389,9 +456,13 @@ export function useApp() {
 
         if (user) {
             loadFavorites()
+
+            // ====== НОВОЕ: если работодатель — загружаем его данные ======
+            if (isEmployer) {
+                loadMyVacancies()
+            }
         }
 
-        // Если есть фильтры в URL - применяем их
         const params = new URLSearchParams(window.location.search)
         const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
             .some(key => params.get(key))
@@ -401,14 +472,20 @@ export function useApp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user, authLoading])
 
-    // Закрытие логин-модалки при успешном логине
+    // Если работодатель — при смене режима my-vacancies обновляем данные
+    useEffect(() => {
+        if (mode === 'my-vacancies' && isEmployer && myVacancies.length === 0 && !employerLoading) {
+            loadMyVacancies()
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [mode])
+
     useEffect(() => {
         if (user) {
             setShowLoginModal(false)
         }
     }, [user])
 
-    // Загрузка рекомендаций при переходе в соответствующие режимы
     useEffect(() => {
         if ((mode === 'recommendations' || mode === 'swipe') && user && !recommendationsLoaded) {
             loadRecommendations()
@@ -416,7 +493,6 @@ export function useApp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, user])
 
-    // Обновление рекомендаций при изменении резюме
     useEffect(() => {
         if (user && recommendationsLoaded && resume) {
             setRecommendationsLoaded(false)
@@ -427,7 +503,6 @@ export function useApp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [resume])
 
-    // Popstate - обработка кнопки "Назад" в браузере
     useEffect(() => {
         const handlePopState = (event) => {
             const state = event.state
@@ -444,12 +519,10 @@ export function useApp() {
         return () => window.removeEventListener('popstate', handlePopState)
     }, [])
 
-    // Сохраняем режим в sessionStorage при смене
     useEffect(() => {
         sessionStorage.setItem('currentMode', mode)
     }, [mode])
 
-    // ====== СКРОЛЛ: сброс при смене вкладки, восстановление при возврате со страницы ======
     const prevPageRef = useRef({ vacancy: null, company: null })
 
     useEffect(() => {
@@ -458,10 +531,8 @@ export function useApp() {
 
         if (!isOnPage) {
             if (wasOnPage) {
-                // Вернулись с вакансии/компании — восстанавливаем позицию
                 restoreScrollPosition(mode)
             } else {
-                // Переключили вкладку — сбрасываем наверх
                 requestAnimationFrame(() => {
                     requestAnimationFrame(() => {
                         const content = document.querySelector('.content')
@@ -475,15 +546,12 @@ export function useApp() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode, vacancyPageId, companyPageId])
 
-    // Синхронизация URL с режимом и фильтрами
     useEffect(() => {
-        // Если мы на странице вакансии/компании — не трогаем URL
         if (vacancyPageId || companyPageId) return
 
         const params = new URLSearchParams(window.location.search)
 
         if (mode === 'search') {
-            // Для режима "search" — восстанавливаем фильтры в URL
             const newParams = new URLSearchParams()
             if (searchFilters.query) newParams.set('q', searchFilters.query)
             if (searchFilters.location) newParams.set('location', searchFilters.location)
@@ -497,13 +565,11 @@ export function useApp() {
                 ? `?${newParams.toString()}`
                 : window.location.pathname
 
-            // Обновляем только если URL действительно отличается
             const currentUrl = window.location.pathname + window.location.search
             if (newUrl !== currentUrl) {
                 window.history.replaceState({}, '', newUrl)
             }
         } else {
-            // Для других режимов — удаляем параметры поиска из URL
             const searchKeys = ['q', 'location', 'experience', 'remote', 'skills']
             const hasSearchParams = searchKeys.some(key => params.has(key))
 
@@ -526,6 +592,7 @@ export function useApp() {
         logout,
         showLoginModal,
         setShowLoginModal,
+        isEmployer,
 
         // Вакансии
         vacancies,
@@ -555,6 +622,17 @@ export function useApp() {
         resume,
         setResume,
         matchScores,
+
+        // Работодатель (НОВОЕ)
+        myCompany,
+        myVacancies,
+        employerLoading,
+        employerError,
+        loadMyCompany,
+        loadMyVacancies,
+        createCompany,
+        createVacancy,
+        allPositions,
 
         // Режим
         mode,

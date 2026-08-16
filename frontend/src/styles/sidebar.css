@@ -51,13 +51,15 @@
 } */
 
 .nav-item {
+    position: relative;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.875rem;
     padding: 0.625rem 0.5rem;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease;
     overflow: hidden;
 }
 
@@ -70,22 +72,26 @@
 }
 
 .nav-bar {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
     width: 4px;
-    height: 36px;
-    background: #e0e0e0;
+    height: 0;
+    background: transparent;
     border-radius: 4px;
-    flex-shrink: 0;
     transition: all 0.2s ease;
 }
 
+
 .nav-item:hover .nav-bar {
+    height: 32px;
     background: #0066cc;
-    height: 40px;
 }
 
 .nav-item.active .nav-bar {
+    height: 40px;
     background: #0066cc;
-    height: 44px;
     box-shadow: 0 0 12px rgba(0, 102, 204, 0.4);
 }
 
@@ -102,6 +108,10 @@
 .sidebar:hover .nav-label {
     opacity: 1;
     max-width: 180px;
+}
+
+.sidebar:hover .nav-item {
+    justify-content: flex-start;
 }
 
 .nav-title {
@@ -289,4 +299,183 @@
 
 .sidebar:not(:hover) .login-text {
     display: none;
+}
+
+/* Иконки */
+.nav-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    color: #868e96;
+    flex-shrink: 0;
+    transition: color 0.2s ease;
+}
+
+.nav-item:hover .nav-icon {
+    color: #0066cc;
+}
+
+.nav-item.active .nav-icon {
+    color: #0066cc;
+}
+
+/* ============================================
+   САЙДБАР — АДАПТИВНОСТЬ
+   ============================================ */
+
+/* Десктоп-пункты скрыты на мобильном */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* На десктопе кнопка "Ещё" скрыта если есть место */
+@media (min-width: 769px) {
+    .mobile-more-btn {
+        display: none !important;
+    }
+}
+
+/* ============================================
+   МОБИЛЬНОЕ МЕНЮ "ЕЩЁ" — УЛУЧШЕННОЕ
+   ============================================ */
+
+.mobile-more-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.mobile-more-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    padding: 0.75rem 0 1.5rem;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.mobile-more-handle {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 1rem;
+}
+
+.mobile-more-item {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    width: 100%;
+    padding: 0.875rem 1.25rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.15s ease;
+    font-family: inherit;
+    border-radius: 0;
+}
+
+.mobile-more-item:active {
+    background: var(--bg);
+}
+
+.mobile-more-item.active {
+    color: var(--accent);
+    background: var(--accent-light);
+    font-weight: 600;
+}
+
+.mobile-more-item svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.mobile-more-item.active svg {
+    opacity: 1;
+}
+
+.mobile-more-divider {
+    padding: 0.875rem 1.25rem 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-more-divider span {
+    display: block;
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.mobile-more-logout {
+    color: #dc3545 !important;
+    margin-top: 0.5rem;
+}
+
+.mobile-more-logout svg {
+    color: #dc3545;
+}
+
+/* Тёмная тема */
+[data-theme="dark"] .mobile-more-sheet {
+    background: #161b22;
+    box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="dark"] .mobile-more-handle {
+    background: #30363d;
+}
+
+[data-theme="dark"] .mobile-more-item {
+    color: #e6edf3;
+}
+
+[data-theme="dark"] .mobile-more-item:active {
+    background: #0d1117;
+}
+
+[data-theme="dark"] .mobile-more-item.active {
+    color: #4493f8;
+    background: rgba(68, 147, 248, 0.1);
+}
+
+[data-theme="dark"] .mobile-more-divider {
+    color: #768390;
+}
+
+[data-theme="dark"] .mobile-more-divider span {
+    border-color: #21262d;
+}
+
+[data-theme="dark"] .mobile-more-logout {
+    color: #f85149 !important;
 }

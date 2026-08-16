@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// ============ КОМПАНИИ ============
+// ============ ПУБЛИЧНЫЕ ЗАПРОСЫ ============
 
 func (s *PostgresStorage) GetAllCompanies(ctx context.Context) ([]CompanyWithStats, error) {
 	query := `
@@ -80,6 +80,68 @@ func (s *PostgresStorage) GetCompanyByID(ctx context.Context, id int) (CompanyWi
 }
 
 func (s *PostgresStorage) GetVacanciesByCompanyID(ctx context.Context, companyID int) ([]Vacancy, error) {
+	query := `
+		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
+		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0)
+		FROM vacancies
+		WHERE company_id = $1
+		ORDER BY created_at DESC
+	`
+
+	rows, err := s.pool.Query(ctx, query, companyID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var vacancies []Vacancy
+	for rows.Next() {
+		var v Vacancy
+		err := rows.Scan(
+			&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location,
+			&v.Experience, &v.Remote, &v.Skills, &v.Description,
+			&v.Address, &v.Latitude, &v.Longitude, &v.Views,
+		)
+		if err != nil {
+			return nil, err
+		}
+		vacancies = append(vacancies, v)
+	}
+
+	if vacancies == nil {
+		vacancies = []Vacancy{}
+	}
+
+	return vacancies, rows.Err()
+}
+
+// ============ УПРАВЛЕНИЕ КОМПАНИЕЙ РАБОТОДАТЕЛЯ ============
+
+func (s *PostgresStorage) CreateCompany(ctx context.Context, req CreateCompanyRequest, ownerUserID int) (int, error) {
+	query := `
+		INSERT INTO companies (name, description, industry, size, city, website)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id
+	`
+
+	var companyID int
+	err := s.pool.QueryRow(ctx, query,
+		req.Name, req.Description, req.Industry, req.Size, req.City, req.Website,
+	).Scan(&companyID)
+	if err != nil {
+		return 0, err
+	}
+
+	// Привязываем работодателя к созданной компании
+	_, err = s.pool.Exec(ctx, `UPDATE users SET company_id = $1 WHERE id = $2`, companyID, ownerUserID)
+	if err != nil {
+		return 0, err
+	}
+
+	return companyID, nil
+}
+
+func (s *PostgresStorage) GetMyVacancies(ctx context.Context, companyID int) ([]Vacancy, error) {
 	query := `
 		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
 		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0)

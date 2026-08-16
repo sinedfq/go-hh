@@ -50,17 +50,19 @@ func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 
 func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, error) {
 	query := `
-		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote,
-		       COALESCE(phone, ''), COALESCE(telegram, ''), COALESCE(github, ''), COALESCE(linkedin, ''),
-		       COALESCE(photo_url, ''), COALESCE(views, 0), created_at
-		FROM resumes
-		WHERE id = $1
-	`
+        SELECT id, user_id, full_name, desired_position, COALESCE(experience, ''), 
+               COALESCE(city, ''), remote, skills, COALESCE(about, ''), 
+               COALESCE(phone, ''), COALESCE(telegram, ''), COALESCE(github, ''), COALESCE(linkedin, ''), 
+               COALESCE(photo_url, ''),
+               COALESCE(views, 0), created_at
+        FROM resumes
+        WHERE id = $1
+    `
 
 	var r Resume
 	err := s.pool.QueryRow(ctx, query, id).Scan(
 		&r.ID, &r.UserID, &r.FullName, &r.DesiredPosition, &r.Experience,
-		&r.Skills, &r.About, &r.City, &r.Remote,
+		&r.City, &r.Remote, &r.Skills, &r.About,
 		&r.Phone, &r.Telegram, &r.GitHub, &r.LinkedIn,
 		&r.PhotoURL, &r.Views, &r.CreatedAt,
 	)
@@ -72,15 +74,18 @@ func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, er
 		return Resume{}, err
 	}
 
+	// ====== ИСПРАВЛЕНО: опыт работы — не критично если ошибка ======
 	workExp, err := s.GetWorkExperienceByResumeID(ctx, r.ID)
 	if err != nil {
-		return Resume{}, err
+		// Логируем, но не падаем
+		fmt.Printf("⚠️ Warning: failed to load work experience for resume %d: %v\n", r.ID, err)
+		r.WorkExperience = []WorkExperience{}
+	} else {
+		r.WorkExperience = workExp
 	}
-	r.WorkExperience = workExp
 
 	return r, nil
 }
-
 func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Resume, error) {
 	query := `
 		SELECT id, user_id, full_name, desired_position, experience, skills, about, city, remote,

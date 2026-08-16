@@ -46,53 +46,125 @@ func (s *Server) createVacancyHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	ctx := r.Context()
 
-	var v Vacancy
-	if err := json.NewDecoder(r.Body).Decode(&v); err != nil {
+	claims := getUserFromContext(ctx)
+	if claims == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	user, err := s.storage.GetUserByID(ctx, claims.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to get user"})
+		return
+	}
+
+	if user.CompanyID == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "you must create a company first"})
+		return
+	}
+
+	company, err := s.storage.GetCompanyByID(ctx, *user.CompanyID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to get company"})
+		return
+	}
+
+	var req CreateVacancyRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
 		return
 	}
 
-	id, err := s.storage.CreateVacancy(ctx, v)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create"})
+	if req.Title == "" || req.Location == "" || req.Experience == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "title, location and experience required"})
 		return
 	}
 
-	v.ID = id
-	s.recCache.InvalidateAll()
+	vacancy := Vacancy{
+		Title:        req.Title,
+		Company:      company.Name,
+		CompanyID:    company.ID,
+		Location:     req.Location,
+		Experience:   req.Experience,
+		Remote:       req.Remote,
+		Skills:       req.Skills,
+		Description:  req.Description,
+		Address:      req.Address,
+		Latitude:     req.Latitude,
+		Longitude:    req.Longitude,
+		AuthorUserID: claims.UserID,
+	}
+
+	id, err := s.storage.CreateVacancy(ctx, vacancy)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create vacancy"})
+		return
+	}
+
+	vacancy.ID = id
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(v)
+	json.NewEncoder(w).Encode(vacancy)
 }
 
+// POST /api/vacancies/{id}/view — инкремент просмотров вакансии
 func (s *Server) viewVacancyHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	ctx := r.Context()
 
-	vacancyID, err := strconv.Atoi(r.PathValue("id"))
+	claims := getUserFromContext(ctx)
+	if claims == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	parts := strings.Split(r.URL.Path, "/")
+	vacancyID, err := strconv.Atoi(parts[3])
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid id"})
 		return
 	}
 
-	claims := getUserFromContext(ctx)
-	if claims != nil {
-		vacancy, err := s.storage.GetVacancyByID(ctx, vacancyID)
-		if err == nil && vacancy.AuthorUserID == claims.UserID {
-			json.NewEncoder(w).Encode(map[string]string{"status": "skipped", "reason": "self-view"})
-			return
-		}
-	}
-
-	if err := s.storage.IncrementVacancyViews(ctx, vacancyID); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "failed to increment views"})
+	vacancy, err := s.storage.GetVacancyByID(ctx, vacancyID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "vacancy not found"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	// ====== НЕ ИНКРЕМЕНТИРУЕМ СВОЮ ВАКАНСИЮ ======
+	if vacancy.AuthorUserID == claims.UserID {
+		log.Printf("⏭️ Skip vacancy view: user %d viewing own vacancy %d", claims.UserID, vacancyID)
+		json.NewEncoder(w).Encode(map[string]string{"status": "skipped"})
+		return
+	}
+
+	// Проверяем что кандидат не из той же компании
+	user, _ := s.storage.GetUserByID(ctx, claims.UserID)
+	if user.CompanyID != nil && vacancy.CompanyID > 0 && *user.CompanyID == vacancy.CompanyID {
+		log.Printf("⏭️ Skip vacancy view: user %d from same company as vacancy %d", claims.UserID, vacancyID)
+		json.NewEncoder(w).Encode(map[string]string{"status": "skipped"})
+		return
+	}
+
+	err = s.storage.IncrementVacancyViews(ctx, vacancyID)
+	if err != nil {
+		log.Printf("⚠️ IncrementVacancyViews error: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed"})
+		return
+	}
+
+	log.Printf("✅ Vacancy %d viewed by user %d (author: %d)", vacancyID, claims.UserID, vacancy.AuthorUserID)
+	json.NewEncoder(w).Encode(map[string]string{"status": "viewed"})
 }
 
 func (s *Server) searchVacanciesHandler(w http.ResponseWriter, r *http.Request) {

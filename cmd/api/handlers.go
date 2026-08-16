@@ -3,19 +3,22 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Server struct {
 	storage  Storage
 	mlClient *MLClient
 	recCache *RecommendationsCache
+	pool     *pgxpool.Pool
 }
 
-func NewServer(storage Storage, mlClient *MLClient) *Server {
+func NewServer(storage *PostgresStorage, mlClient *MLClient) *Server {
 	return &Server{
 		storage:  storage,
 		mlClient: mlClient,
-		recCache: NewRecommendationsCache(),
+		pool:     storage.pool,
 	}
 }
 

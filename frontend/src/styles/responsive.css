@@ -127,15 +127,28 @@
         flex-direction: column;
         gap: 0.25rem;
         padding: 0.5rem 0.75rem;
+        justify-content: center;
     }
 
     .nav-bar {
-        width: 24px;
-        height: 3px;
+        display: none;
+    }
+
+    .nav-icon {
+        width: 22px;
+        height: 22px;
     }
 
     .nav-item.active .nav-bar {
         height: 3px;
+    }
+
+    .nav-item.active .nav-title {
+        color: #0066cc;
+    }
+
+    .nav-subtitle {
+        display: none;
     }
 
     .nav-label {
@@ -143,6 +156,7 @@
         max-width: 100%;
         text-align: center;
     }
+
 
     .nav-title {
         font-size: 0.625rem;
@@ -325,11 +339,16 @@
     }
 
     .nav-item {
-        padding: 0.375rem 0.5rem;
+        padding: 0.375rem 0.5rem !important;
     }
 
     .nav-title {
-        font-size: 0.5625rem;
+        font-size: 0.5625rem !important;
+    }
+
+    .nav-icon {
+        width: 20px !important;
+        height: 20px !important;
     }
 
     .nav-bar {

@@ -34,7 +34,7 @@ type Storage interface {
 	GetFavorites(ctx context.Context, userID int) ([]Vacancy, error)
 
 	// Пользователи
-	CreateUser(ctx context.Context, email, passwordHash string) (int, error)
+	CreateUser(ctx context.Context, email, passwordHash, role string) (int, error)
 	GetUserByEmail(ctx context.Context, email string) (User, error)
 	GetUserByID(ctx context.Context, id int) (User, error)
 	UpdateUserPhoto(ctx context.Context, userID int, photoURL string) error
@@ -45,14 +45,40 @@ type Storage interface {
 	GetAllPositions(ctx context.Context) ([]Position, error)
 	CreatePosition(ctx context.Context, name string) (Position, error)
 
-	// Компании
+	// Компании (публичные)
 	GetAllCompanies(ctx context.Context) ([]CompanyWithStats, error)
 	GetCompanyByID(ctx context.Context, id int) (CompanyWithStats, error)
 	GetVacanciesByCompanyID(ctx context.Context, companyID int) ([]Vacancy, error)
 
+	// Компании работодателя
+	CreateCompany(ctx context.Context, req CreateCompanyRequest, ownerUserID int) (int, error)
+	GetMyVacancies(ctx context.Context, companyID int) ([]Vacancy, error)
+
 	// Счётчики просмотров
 	IncrementResumeViews(ctx context.Context, resumeID int) error
 	UpdateResumePhoto(ctx context.Context, resumeID, userID int, photoURL string) error
+
+	// Отклики
+	CreateApplication(ctx context.Context, vacancyID, candidateUserID int, req CreateApplicationRequest) (int, error)
+	GetApplicationByUserAndVacancy(ctx context.Context, userID, vacancyID int) (*Application, error)
+	GetApplicationsByVacancyID(ctx context.Context, vacancyID int) ([]Application, error)
+	GetApplicationsForEmployer(ctx context.Context, companyID int) ([]Application, error)
+	GetMyApplications(ctx context.Context, userID int) ([]Application, error)
+	UpdateApplicationStatus(ctx context.Context, applicationID int, status string) error
+	MarkApplicationViewed(ctx context.Context, applicationID int) error
+
+	// Уведомления
+	CreateNotification(ctx context.Context, req CreateNotificationRequest) error
+	GetNotifications(ctx context.Context, userID int, limit int) ([]Notification, error)
+	MarkNotificationsRead(ctx context.Context, userID int) error
+	GetUnreadCount(ctx context.Context, userID int) (int, error)
+	GetApplicationByID(ctx context.Context, appID int) (*Application, error)
+
+	// Статистика
+	GetEmployerStats(ctx context.Context, companyID int) (*EmployerStats, error)
+	GetResumeStats(ctx context.Context, resumeID int) (*ResumeStats, error)
+
+	HasRecentResumeViewNotification(ctx context.Context, resumeOwnerUserID, viewerUserID int, hours int) (bool, error)
 }
 
 type PostgresStorage struct {
