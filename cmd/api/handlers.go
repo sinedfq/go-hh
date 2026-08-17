@@ -11,16 +11,12 @@ import (
 
 // ====== СТРУКТУРА СЕРВЕРА ======
 type Server struct {
-	storage  Storage
-	mlClient *MLClient
-	pool     *pgxpool.Pool
-
-	// Кэш рекомендаций (реализован в cache.go)
-	recCache *RecommendationsCache
-
-	// Индикатор "печатает" в чатах
+	storage     *PostgresStorage // ← КОНКРЕТНЫЙ ТИП, без интерфейса
+	mlClient    *MLClient
+	pool        *pgxpool.Pool
+	recCache    *RecommendationsCache
 	typingMu    sync.Mutex
-	typingUsers map[int]map[int]time.Time // conversation_id -> user_id -> время последней активности
+	typingUsers map[int]map[int]time.Time
 }
 
 func NewServer(storage *PostgresStorage, mlClient *MLClient) *Server {

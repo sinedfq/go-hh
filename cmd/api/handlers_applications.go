@@ -441,3 +441,72 @@ func (s *Server) cancelApplicationHandler(w http.ResponseWriter, r *http.Request
 
 	json.NewEncoder(w).Encode(map[string]string{"status": "cancelled"})
 }
+
+// POST /api/applications/{id}/start-chat — создать чат для существующего отклика
+func (s *Server) startChatHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	ctx := r.Context()
+
+	claims := getUserFromContext(ctx)
+	if claims == nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "unauthorized"})
+		return
+	}
+
+	// Получаем ID отклика из URL
+	appID, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid application id"})
+		return
+	}
+
+	// Получаем отклик
+	application, err := s.storage.GetApplicationByID(ctx, appID)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(map[string]string{"error": "application not found"})
+		return
+	}
+
+	// Проверяем что пользователь имеет право создавать чат для этого отклика
+	// Это может быть либо кандидат, либо работодатель компании
+	user, _ := s.storage.GetUserByID(ctx, claims.UserID)
+	isCandidate := application.CandidateUserID == claims.UserID
+	isEmployer := user.CompanyID != nil && application.VacancyCompanyID == *user.CompanyID
+
+	if !isCandidate && !isEmployer {
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(map[string]string{"error": "forbidden"})
+		return
+	}
+
+	// Проверяем, существует ли уже чат
+	if application.ConversationID != nil && *application.ConversationID > 0 {
+		// Чат уже существует
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"conversation_id": *application.ConversationID,
+			"message":         "Chat already exists",
+		})
+		return
+	}
+
+	// Создаем новый чат
+	conversationID, err := s.storage.CreateConversation(ctx, appID)
+	if err != nil {
+		log.Printf("⚠️ Failed to create conversation for application %d: %v", appID, err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create chat"})
+		return
+	}
+
+	log.Printf("✅ Conversation %d created for application %d by user %d", conversationID, appID, claims.UserID)
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"conversation_id": conversationID,
+		"message":         "Chat created successfully",
+	})
+}

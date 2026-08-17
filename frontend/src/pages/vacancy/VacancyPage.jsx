@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../contexts/AuthContext'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import './VacancyPage.css'
 import YandexMap from '../../components/common/YandexMap'
 import ApplicationModal from '../../components/common/ApplicationModal'
@@ -14,13 +15,15 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
     const [showApplyModal, setShowApplyModal] = useState(false)
     const [hasApplied, setHasApplied] = useState(false)
     const [checkingApplication, setCheckingApplication] = useState(true)
+    const [applicationId, setApplicationId] = useState(null)
+    const [confirmCancel, setConfirmCancel] = useState(false)
     const viewLoggedRef = useRef(false)
 
     useEffect(() => {
         loadVacancy()
     }, [vacancyId])
 
-    // Проверка отклика и избранного
+    // ====== ПРОВЕРКА ОТКЛИКА И ИЗБРАННОГО ======
     useEffect(() => {
         if (!user || !vacancy?.id) {
             setCheckingApplication(false)
@@ -32,6 +35,10 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                 const res = await axios.get(`/api/vacancies/${vacancy.id}/application`)
                 if (res.data.applied) {
                     setHasApplied(true)
+                    setApplicationId(res.data.application?.id || null)
+                } else {
+                    setHasApplied(false)
+                    setApplicationId(null)
                 }
             } catch (err) {
                 console.error('Ошибка проверки отклика:', err)
@@ -92,12 +99,66 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
         }
     }
 
+    // ====== УСПЕШНЫЙ ОТКЛИК — СОХРАНЯЕМ ID ======
     const handleApplySuccess = (data) => {
         setHasApplied(true)
         setShowApplyModal(false)
-        // Красивое уведомление вместо alert
+        
+        // ✅ СОХРАНЯЕМ ID отклика из ответа бэкенда
+        if (data?.id) {
+            setApplicationId(data.id)
+        }
+        
+        // Уведомление об отклике
         if (showToast) {
-            showToast(`✨ Отклик отправлен! Компания "${vacancy.company}" скоро свяжется с вами`)
+            showToast(`✨ Отклик отправлен! Компания "${vacancy?.company}" скоро свяжется с вами`)
+        }
+    }
+
+    // ====== ОТКРЫТИЕ МОДАЛКИ ПОДТВЕРЖДЕНИЯ ======
+    const handleCancelApplication = () => {
+        setConfirmCancel(true)
+    }
+
+    // ====== РЕАЛЬНАЯ ОТМЕНА ОТКЛИКА ======
+    const doCancelApplication = async () => {
+        // Если ID нет — попробуем получить его через API
+        let idToCancel = applicationId
+        
+        if (!idToCancel) {
+            try {
+                const res = await axios.get(`/api/vacancies/${vacancy.id}/application`)
+                if (res.data.applied && res.data.application?.id) {
+                    idToCancel = res.data.application.id
+                }
+            } catch (err) {
+                console.error('Не удалось получить ID отклика:', err)
+            }
+        }
+
+        if (!idToCancel) {
+            console.error('Нет ID отклика')
+            if (showToast) showToast('Ошибка: не удалось найти отклик')
+            setConfirmCancel(false)
+            return
+        }
+
+        try {
+            await axios.delete(`/api/applications/${idToCancel}`)
+            setHasApplied(false)
+            setApplicationId(null)
+            setConfirmCancel(false)
+            
+            // ✅ УВЕДОМЛЕНИЕ ОБ ОТМЕНЕ
+            if (showToast) {
+                showToast('🗑️ Отклик отменён')
+            }
+        } catch (err) {
+            console.error('Ошибка отмены:', err)
+            setConfirmCancel(false)
+            if (showToast) {
+                showToast('Не удалось отменить отклик')
+            }
         }
     }
 
@@ -117,7 +178,6 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
             })
     }, [vacancy?.id])
 
-    // Сбрасываем флаг при смене вакансии
     useEffect(() => {
         viewLoggedRef.current = false
     }, [vacancyId])
@@ -286,12 +346,29 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                                     Проверка...
                                 </button>
                             ) : hasApplied ? (
-                                <div className="applied-badge">
-                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    Вы уже откликнулись
-                                </div>
+                                <>
+                                    <div className="applied-badge-card">
+                                        <div className="applied-badge-icon">
+                                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="20 6 9 17 4 12" />
+                                            </svg>
+                                        </div>
+                                        <div className="applied-badge-text">
+                                            <h4>Отклик отправлен</h4>
+                                            <p>Компания скоро свяжется с вами</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        className="btn btn-danger-outline btn-block"
+                                        onClick={handleCancelApplication}
+                                    >
+                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <line x1="18" y1="6" x2="6" y2="18" />
+                                            <line x1="6" y1="6" x2="18" y2="18" />
+                                        </svg>
+                                        Отменить отклик
+                                    </button>
+                                </>
                             ) : isOwnVacancy ? (
                                 <div className="own-vacancy-badge">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -339,11 +416,25 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                 </div>
             </div>
 
+            {/* ====== МОДАЛКА ОТКЛИКА ====== */}
             {showApplyModal && (
                 <ApplicationModal
                     vacancy={vacancy}
                     onClose={() => setShowApplyModal(false)}
                     onSuccess={handleApplySuccess}
+                />
+            )}
+
+            {/* ====== КАСТОМНАЯ МОДАЛКА ОТМЕНЫ ОТКЛИКА ====== */}
+            {confirmCancel && (
+                <ConfirmModal
+                    title="Отменить отклик?"
+                    message="Вы сможете откликнуться на эту вакансию снова позже. Чат с работодателем будет удалён."
+                    confirmText="Отменить отклик"
+                    cancelText="Оставить"
+                    danger={true}
+                    onConfirm={doCancelApplication}
+                    onCancel={() => setConfirmCancel(false)}
                 />
             )}
         </div>

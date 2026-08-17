@@ -108,7 +108,7 @@ func main() {
 	mux.HandleFunc("GET /api/my-applications", server.authMiddleware(server.getMyApplicationsHandler))
 	mux.HandleFunc("DELETE /api/applications/{id}", server.authMiddleware(server.cancelApplicationHandler))
 	mux.HandleFunc("PATCH /api/applications/{id}/status", server.authMiddleware(server.RequireRole("employer", "admin")(server.updateApplicationStatusHandler)))
-
+	mux.HandleFunc("POST /api/applications/{id}/start-chat", server.authMiddleware(server.startChatHandler)) // ← ДОБАВЬ ЭТУ СТРОКУ
 	// ====== УВЕДОМЛЕНИЯ ======
 	mux.HandleFunc("GET /api/notifications", server.authMiddleware(server.getNotificationsHandler))
 	mux.HandleFunc("GET /api/notifications/unread-count", server.authMiddleware(server.getUnreadCountHandler))

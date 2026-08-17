@@ -3,7 +3,7 @@ import axios from 'axios'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import './CandidatePages.css'
 
-function MyApplicationsPage({ onOpenVacancy, onOpenChatWith }) {
+function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
@@ -31,9 +31,16 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith }) {
         try {
             await axios.delete(`/api/applications/${applicationId}`)
             setApplications(prev => prev.filter(app => app.id !== applicationId))
+
+            // ✅ ДОБАВЛЕНО: Toast-уведомление
+            if (showToast) {
+                showToast('🗑️ Отклик отменён')
+            }
         } catch (err) {
             console.error('Ошибка отмены:', err)
-            alert('Не удалось отменить отклик')
+            if (showToast) {
+                showToast('Не удалось отменить отклик')
+            }
         } finally {
             setCancelling(null)
             setConfirmCancel(null)

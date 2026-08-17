@@ -25,6 +25,7 @@ import MyApplicationsPage from './pages/candidate/MyApplicationsPage'
 import EmployerStatsPage from './pages/employer/EmployerStatsPage'
 import ChatApp from './components/chat/ChatApp'
 import ChatButton from './components/chat/ChatButton'
+import axios from 'axios'
 
 function App() {
     const app = useApp()
@@ -39,12 +40,19 @@ function App() {
         localStorage.setItem('theme', theme)
     }, [theme])
 
+    useEffect(() => {
+        const handleToast = (e) => {
+            app.showToast(e.detail)
+        }
+        window.addEventListener('show-toast', handleToast)
+        return () => window.removeEventListener('show-toast', handleToast)
+    }, [])
+
     // ====== ВЫХОД: сброс вкладки + уведомление ======
     const handleLogout = async () => {
         await app.logout()
         app.handleModeChange('browse')   // уходим с профиля на Просмотр
         app.showToast('Вы вышли из аккаунта')  // ← ИЗМЕНЕНО
-        setTimeout(() => setToast(null), 3000)
     }
 
     // ====== ОБЁРТКА ДЛЯ ОТКРЫТИЯ ВАКАНСИИ (сохраняет скролл) ======
@@ -234,6 +242,7 @@ function App() {
                                     onReset={app.resetFilters}
                                     onOpenVacancy={handleOpenVacancy}
                                     cities={app.cities}
+                                    showToast={app.showToast}
                                 />
                             )}
 
@@ -286,6 +295,7 @@ function App() {
                                 <MyApplicationsPage
                                     onOpenVacancy={(id) => app.openVacancyPage(id)}
                                     onOpenChatWith={app.openChatWith}
+                                    showToast={app.showToast}
                                 />
                             )}
 
@@ -360,20 +370,14 @@ function App() {
 
 
                             {/* ====== УВЕДОМЛЕНИЕ ====== */}
-                            {app.toast && (
-                                <div className="toast">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                    {app.toast}
-                                </div>
-                            )}
+
 
                             {app.mode === 'applications' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
                                 <EmployerApplicationsPage
                                     onOpenVacancy={(id) => app.openVacancyPage(id)}
                                     onOpenResume={(resumeId) => setViewResumeId(resumeId)}
-                                    onOpenChatApp={app.openChatApp}
+                                    onOpenChatWith={app.openChatWith}   // ← ИЗМЕНЕНО: теперь передаём openChatWith
+                                    showToast={app.showToast}            // ← ДОБАВЛЕНО
                                 />
                             )}
 
@@ -388,7 +392,18 @@ function App() {
                         />
                     )}
                 </div>
+
+                {app.toast && (
+                    <div className="toast">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        {app.toast}
+                    </div>
+                )}
             </div>
+
+        
 
             {/* ====== ПЛАВАЮЩАЯ КНОПКА ЧАТА ====== */}
             {app.user && (
@@ -416,9 +431,10 @@ function App() {
                         try {
                             await axios.delete(`/api/applications/${applicationId}`)
                             app.closeChatApp()
+                            app.showToast('🗑️ Отклик отменён')  // ← Toast вместо alert
                         } catch (err) {
                             console.error('Ошибка:', err)
-                            alert('Не удалось отменить отклик')
+                            app.showToast('Не удалось отменить отклик')  // ← Toast вместо alert
                         }
                     }}
                 />

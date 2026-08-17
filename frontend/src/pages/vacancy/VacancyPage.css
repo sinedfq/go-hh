@@ -510,3 +510,88 @@
     font-weight: 700;
     color: var(--text-primary);
 }
+
+/* ====== КРАСИВАЯ КАРТОЧКА "ОТКЛИК ОТПРАВЛЕН" ====== */
+.applied-badge-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.04) 100%);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    border-radius: 12px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.applied-badge-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.applied-badge-text h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #059669;
+    margin: 0 0 0.25rem 0;
+}
+
+.applied-badge-text p {
+    font-size: 0.8125rem;
+    color: #666;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Удали старый .applied-badge */
+.applied-badge {
+    display: none !important;
+}
+
+/* ====== ТЁМНАЯ ТЕМА ====== */
+[data-theme="dark"] .applied-badge-card {
+    background: linear-gradient(135deg, rgba(63, 185, 80, 0.12) 0%, rgba(46, 160, 67, 0.06) 100%);
+    border-color: rgba(63, 185, 80, 0.3);
+}
+
+[data-theme="dark"] .applied-badge-icon {
+    background: linear-gradient(135deg, #3fb950 0%, #2ea043 100%);
+}
+
+[data-theme="dark"] .applied-badge-text h4 {
+    color: #3fb950;
+}
+
+[data-theme="dark"] .applied-badge-text p {
+    color: #8b949e;
+}
+
+/* Кнопка отмены отклика */
+.btn-danger-outline {
+    background: transparent;
+    border: 1px solid #dc3545;
+    color: #dc3545;
+    transition: all 0.2s ease;
+}
+
+.btn-danger-outline:hover {
+    background: #dc3545;
+    color: white;
+}
+
+[data-theme="dark"] .btn-danger-outline {
+    border-color: #f85149;
+    color: #f85149;
+}
+
+[data-theme="dark"] .btn-danger-outline:hover {
+    background: #da3633;
+    color: white;
+}

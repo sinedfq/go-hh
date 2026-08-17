@@ -1,18 +1,43 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import ConfirmModal from '../../components/common/ConfirmModal'
 import './EmployerPages.css'
 
-function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }) {
+function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatWith, showToast }) {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
-    const [filter, setFilter] = useState('all') // all / new / viewed / accepted / rejected
+    const [filter, setFilter] = useState('all')
     const [updating, setUpdating] = useState(null)
+    const [confirmAction, setConfirmAction] = useState(null)
+    
+    const lastKnownIdsRef = useRef(new Set())
+    const isFirstLoadRef = useRef(true)
 
-    const loadApplications = async () => {
+    const loadApplications = async (silent = false) => {
         try {
-            setLoading(true)
+            if (!silent) setLoading(true)
             const res = await axios.get('/api/employer/applications')
-            setApplications(Array.isArray(res.data) ? res.data : [])
+            const apps = Array.isArray(res.data) ? res.data : []
+            
+            // На первом загрузке просто запоминаем ID
+            if (isFirstLoadRef.current) {
+                isFirstLoadRef.current = false
+                apps.forEach(a => lastKnownIdsRef.current.add(a.id))
+                setApplications(apps)
+                return
+            }
+            
+            // Проверяем новые отклики
+            const newApps = apps.filter(a => !lastKnownIdsRef.current.has(a.id))
+            if (newApps.length > 0 && showToast) {
+                newApps.forEach(app => {
+                    showToast(`🎉 Новый отклик от ${app.resume_full_name || app.candidate_email} на "${app.vacancy_title}"`)
+                })
+                // Обновляем известные ID
+                newApps.forEach(a => lastKnownIdsRef.current.add(a.id))
+            }
+            
+            setApplications(apps)
         } catch (err) {
             console.error('Ошибка загрузки откликов:', err)
         } finally {
@@ -24,33 +49,100 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
         loadApplications()
     }, [])
 
-    const updateStatus = async (applicationId, status) => {
+    // ====== POLLING КАЖДЫЕ 10 СЕКУНД ======
+    useEffect(() => {
+        const interval = setInterval(() => {
+            loadApplications(true)
+        }, 10000)
+        return () => clearInterval(interval)
+    }, [])
+
+    // ====== ОБНОВЛЕНИЕ СТАТУСА С TOAST ======
+    const updateStatus = async (applicationId, status, candidateName) => {
         setUpdating(applicationId)
         try {
             await axios.patch(`/api/applications/${applicationId}/status`, { status })
             setApplications(prev => prev.map(app =>
                 app.id === applicationId ? { ...app, status } : app
             ))
+            if (showToast) {
+                if (status === 'accepted') {
+                    showToast(`Кандидат ${candidateName} принят!`)
+                } else if (status === 'rejected') {
+                    showToast(`Отклик ${candidateName} отклонён`)
+                }
+            }
         } catch (err) {
             console.error('Ошибка обновления статуса:', err)
-            alert('Не удалось обновить статус')
+            if (showToast) showToast('Не удалось обновить статус')
         } finally {
             setUpdating(null)
+            setConfirmAction(null)
         }
+    }
+
+    // ====== СОЗДАТЬ ЧАТ ВРУЧНУЮ (если ещё не создан) ======
+    const handleOpenChat = async (app) => {
+        if (app.conversation_id) {
+            // Чат есть — открываем
+            if (onOpenChatWith) {
+                onOpenChatWith({
+                    conversation_id: app.conversation_id,
+                    application_id: app.id,
+                    vacancy_id: app.vacancy_id,
+                    vacancy_title: app.vacancy_title,
+                    company_name: app.company_name,
+                    candidate_name: app.resume_full_name || app.candidate_email,
+                    candidate_id: app.candidate_user_id,
+                    candidate_photo: app.candidate_photo,
+                })
+            }
+        } else {
+            // Чата нет — создаём
+            try {
+                const res = await axios.post(`/api/applications/${app.id}/start-chat`)
+                const newConvId = res.data.conversation_id
+                
+                // Обновляем локальное состояние
+                setApplications(prev => prev.map(a => 
+                    a.id === app.id ? { ...a, conversation_id: newConvId } : a
+                ))
+                
+                // Открываем чат
+                if (onOpenChatWith) {
+                    onOpenChatWith({
+                        conversation_id: newConvId,
+                        application_id: app.id,
+                        vacancy_id: app.vacancy_id,
+                        vacancy_title: app.vacancy_title,
+                        company_name: app.company_name,
+                        candidate_name: app.resume_full_name || app.candidate_email,
+                        candidate_id: app.candidate_user_id,
+                        candidate_photo: app.candidate_photo,
+                    })
+                }
+            } catch (err) {
+                console.error('Ошибка создания чата:', err)
+                if (showToast) showToast('Не удалось создать чат')
+            }
+        }
+    }
+
+    const handleConfirmAction = () => {
+        if (!confirmAction) return
+        const { app, action } = confirmAction
+        const status = action === 'accept' ? 'accepted' : 'rejected'
+        const name = app.resume_full_name || app.candidate_email
+        updateStatus(app.id, status, name)
     }
 
     const getStatusInfo = (status) => {
         switch (status) {
-            case 'new':
-                return { label: 'Новый', className: 'status-new' }
-            case 'viewed':
-                return { label: 'Просмотрен', className: 'status-viewed' }
-            case 'accepted':
-                return { label: 'Принят', className: 'status-accepted' }
-            case 'rejected':
-                return { label: 'Отклонён', className: 'status-rejected' }
-            default:
-                return { label: status, className: '', icon: '' }
+            case 'new': return { label: 'Новый', className: 'status-new' }
+            case 'viewed': return { label: 'Просмотрен', className: 'status-viewed' }
+            case 'accepted': return { label: 'Принят', className: 'status-accepted' }
+            case 'rejected': return { label: 'Отклонён', className: 'status-rejected' }
+            default: return { label: status, className: '' }
         }
     }
 
@@ -70,11 +162,8 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
     const formatDate = (dateString) => {
         const date = new Date(dateString)
         return date.toLocaleDateString('ru-RU', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            day: 'numeric', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
         })
     }
 
@@ -91,6 +180,22 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
 
     return (
         <div className="employer-page">
+            {confirmAction && (
+                <ConfirmModal
+                    title={confirmAction.action === 'accept' ? 'Принять кандидата?' : 'Отклонить отклик?'}
+                    message={
+                        confirmAction.action === 'accept'
+                            ? `Вы собираетесь принять кандидата "${confirmAction.app.resume_full_name || confirmAction.app.candidate_email}".`
+                            : `Отклонить отклик от "${confirmAction.app.resume_full_name || confirmAction.app.candidate_email}"?`
+                    }
+                    confirmText={confirmAction.action === 'accept' ? 'Принять' : 'Отклонить'}
+                    cancelText="Отмена"
+                    danger={confirmAction.action === 'reject'}
+                    onConfirm={handleConfirmAction}
+                    onCancel={() => setConfirmAction(null)}
+                />
+            )}
+
             <div className="employer-header">
                 <div>
                     <h1>Отклики на вакансии</h1>
@@ -101,52 +206,29 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
                 </div>
             </div>
 
-            {/* ====== ФИЛЬТРЫ ====== */}
             <div className="applications-filters">
-                <button
-                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
-                    onClick={() => setFilter('all')}
-                >
+                <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
                     Все <span className="filter-count">{stats.all}</span>
                 </button>
-                <button
-                    className={`filter-btn ${filter === 'new' ? 'active' : ''}`}
-                    onClick={() => setFilter('new')}
-                >
+                <button className={`filter-btn ${filter === 'new' ? 'active' : ''}`} onClick={() => setFilter('new')}>
                     Новые <span className="filter-count">{stats.new}</span>
                 </button>
-                <button
-                    className={`filter-btn ${filter === 'viewed' ? 'active' : ''}`}
-                    onClick={() => setFilter('viewed')}
-                >
+                <button className={`filter-btn ${filter === 'viewed' ? 'active' : ''}`} onClick={() => setFilter('viewed')}>
                     Просмотренные <span className="filter-count">{stats.viewed}</span>
                 </button>
-                <button
-                    className={`filter-btn ${filter === 'accepted' ? 'active' : ''}`}
-                    onClick={() => setFilter('accepted')}
-                >
+                <button className={`filter-btn ${filter === 'accepted' ? 'active' : ''}`} onClick={() => setFilter('accepted')}>
                     Принятые <span className="filter-count">{stats.accepted}</span>
                 </button>
-                <button
-                    className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`}
-                    onClick={() => setFilter('rejected')}
-                >
+                <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>
                     Отклонённые <span className="filter-count">{stats.rejected}</span>
                 </button>
             </div>
 
-            {/* ====== СПИСОК ОТКЛИКОВ ====== */}
             {filteredApps.length === 0 ? (
                 <div className="applications-empty">
                     <div className="applications-empty-icon">📭</div>
-                    <h3>
-                        {filter === 'all' ? 'Пока нет откликов' : `Нет ${filter === 'new' ? 'новых ' : ''}откликов`}
-                    </h3>
-                    <p>
-                        {filter === 'all'
-                            ? 'Когда кандидаты откликнутся на ваши вакансии, они появятся здесь'
-                            : 'Попробуйте выбрать другой фильтр'}
-                    </p>
+                    <h3>{filter === 'all' ? 'Пока нет откликов' : 'Нет откликов'}</h3>
+                    <p>Когда кандидаты откликнутся, они появятся здесь</p>
                 </div>
             ) : (
                 <div className="applications-list">
@@ -190,7 +272,6 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
                                     </div>
 
                                     <div className={`application-status-badge ${statusInfo.className}`}>
-                                        <span className="status-icon">{statusInfo.icon}</span>
                                         {statusInfo.label}
                                     </div>
                                 </div>
@@ -200,10 +281,7 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
                                         <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
                                         <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                                     </svg>
-                                    <button
-                                        className="application-vacancy-link"
-                                        onClick={() => onOpenVacancy && onOpenVacancy(app.vacancy_id)}
-                                    >
+                                    <button className="application-vacancy-link" onClick={() => onOpenVacancy?.(app.vacancy_id)}>
                                         {app.vacancy_title}
                                     </button>
                                 </div>
@@ -216,17 +294,12 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
                                 )}
 
                                 <div className="application-meta">
-                                    <span className="application-date">
-                                        {formatDate(app.created_at)}
-                                    </span>
+                                    <span className="application-date">{formatDate(app.created_at)}</span>
                                 </div>
 
                                 <div className="application-actions">
                                     {app.resume_id && app.resume_id > 0 ? (
-                                        <button
-                                            className="btn btn-secondary btn-small"
-                                            onClick={() => onOpenResume && onOpenResume(app.resume_id)}
-                                        >
+                                        <button className="btn btn-secondary btn-small" onClick={() => onOpenResume?.(app.resume_id)}>
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                                                 <polyline points="14 2 14 8 20 8" />
@@ -234,37 +307,22 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatApp }
                                             Посмотреть резюме
                                         </button>
                                     ) : (
-                                        <span className="no-resume-hint">
-                                            Резюме не прикреплено
-                                        </span>
+                                        <span className="no-resume-hint">Резюме не прикреплено</span>
                                     )}
 
                                     {app.status !== 'accepted' && (
-                                        <button
-                                            className="btn btn-success btn-small"
-                                            onClick={() => updateStatus(app.id, 'accepted')}
-                                            disabled={isUpdating}
-                                        >
+                                        <button className="btn btn-success btn-small" onClick={() => setConfirmAction({ app, action: 'accept' })} disabled={isUpdating}>
                                             {isUpdating ? '...' : '✓ Принять'}
                                         </button>
                                     )}
 
                                     {app.status !== 'rejected' && (
-                                        <button
-                                            className="btn btn-danger-outline btn-small"
-                                            onClick={() => updateStatus(app.id, 'rejected')}
-                                            disabled={isUpdating}
-                                        >
+                                        <button className="btn btn-danger-outline btn-small" onClick={() => setConfirmAction({ app, action: 'reject' })} disabled={isUpdating}>
                                             {isUpdating ? '...' : '✕ Отклонить'}
                                         </button>
                                     )}
 
-                                    {/* Кнопка чата */}
-                                    <button
-                                        className="btn btn-primary btn-small"
-                                        onClick={() => onOpenChatApp && onOpenChatApp()}
-                                        disabled={!app.conversation_id}
-                                    >
+                                    <button className="btn btn-primary btn-small" onClick={() => handleOpenChat(app)}>
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                                         </svg>
