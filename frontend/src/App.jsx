@@ -315,6 +315,7 @@ function App() {
                             {/* ====== ПРОФИЛЬ ====== */}
                             {app.mode === 'profile' && app.user && (
                                 <ProfilePage
+                                    onNavigate={app.handleModeChange}
                                     onResumeUpdate={(r) => {
                                         app.setResume(r)
                                         app.setRecommendationsLoaded(false)

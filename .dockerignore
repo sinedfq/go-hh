@@ -1,0 +1,13 @@
+**
+!go.mod
+!go.sum
+!cmd/
+!cmd/api/
+!cmd/api/**
+!internal/
+!internal/**
+!migrations/
+!migrations/**
+!uploads/
+!uploads/demo_*.png
+**/*_test.go

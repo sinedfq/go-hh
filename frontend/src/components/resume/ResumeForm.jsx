@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import axios from 'axios'
+import DatePicker from '../common/DatePicker'
 import './ResumeForm.css'
 
 const EXPERIENCE_LEVELS = [
@@ -607,15 +608,17 @@ function ResumeForm({ onSuccess, onCancel, initialData, isEditMode }) {
                 </div>
 
                 <div className="work-exp-row">
-                  <input
-                    type="date"
+                  <DatePicker
+                    label="Начало работы"
                     value={exp.start_date ? exp.start_date.split('T')[0] : ''}
-                    onChange={(e) => updateWorkExperience(exp.id, 'start_date', e.target.value)}
+                    onChange={value => updateWorkExperience(exp.id, 'start_date', value)}
                   />
-                  <input
-                    type="date"
+                  <DatePicker
+                    label="Окончание работы"
                     value={exp.end_date ? exp.end_date.split('T')[0] : ''}
-                    onChange={(e) => updateWorkExperience(exp.id, 'end_date', e.target.value)}
+                    min={exp.start_date?.split('T')[0]}
+                    placeholder="По настоящее время"
+                    onChange={value => updateWorkExperience(exp.id, 'end_date', value)}
                   />
                 </div>
 
