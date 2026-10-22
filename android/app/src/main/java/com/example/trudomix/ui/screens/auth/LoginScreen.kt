@@ -67,11 +67,14 @@ fun LoginContent(state: AuthUiState, onLogin: (String, String) -> Unit, onRegist
 internal fun AuthBackdrop(modifier: Modifier) {
     val colors = MaterialTheme.colorScheme
     val animation = rememberInfiniteTransition(label = "ambient")
-    val drift by animation.animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing), RepeatMode.Reverse), label = "ambient-drift")
+    val drift by animation.animateFloat(0f, 1f, infiniteRepeatable(tween(8000, easing = FastOutSlowInEasing), RepeatMode.Reverse), label = "ambient-drift")
     Canvas(modifier) {
-        drawRect(androidx.compose.ui.graphics.lerp(colors.background,colors.primary,.025f+drift*.035f))
-        drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha = .16f), colors.primary.copy(alpha = 0f)), center = Offset(size.width * (.08f + drift * .12f), size.height * .08f), radius = size.width * .85f), radius = size.width * .85f, center = Offset(size.width * (.08f + drift * .12f), size.height * .08f))
-        drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha = .11f), colors.primary.copy(alpha = 0f)), center = Offset(size.width * .95f, size.height * (.8f - drift * .1f)), radius = size.width * .7f), radius = size.width * .7f, center = Offset(size.width * .95f, size.height * (.8f - drift * .1f)))
+        drawRect(colors.background)
+        val first=Offset(size.width*(-.2f+drift*1.15f),size.height*(.05f+drift*.4f))
+        val second=Offset(size.width*(1.15f-drift*.9f),size.height*(.95f-drift*.35f))
+        drawRect(Brush.linearGradient(listOf(colors.primary.copy(alpha=.04f+drift*.06f),colors.background,colors.primary.copy(alpha=.08f)),start=first,end=second))
+        drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha=.32f),colors.primary.copy(alpha=0f)),center=first,radius=size.width*1.05f),radius=size.width*1.05f,center=first)
+        drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha=.22f),colors.primary.copy(alpha=0f)),center=second,radius=size.width*.9f),radius=size.width*.9f,center=second)
     }
 }
 

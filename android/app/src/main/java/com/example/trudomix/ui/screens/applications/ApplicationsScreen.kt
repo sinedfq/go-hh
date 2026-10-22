@@ -71,16 +71,16 @@ fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onR
                     }} }
                     items(filtered,key={it.id?:it.hashCode()}){app->
                         var letter by rememberSaveable(app.id){mutableStateOf(false)}
-                        OutlinedCard(modifier=Modifier.fillMaxWidth().animateItem(),shape=RoundedCornerShape(24.dp)){
+                        OutlinedCard(modifier=Modifier.fillMaxWidth().animateItem(),shape=RoundedCornerShape(24.dp),colors=CardDefaults.outlinedCardColors(containerColor=colors.surface)){
                             Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+                                Text(app.company_name.orEmpty(),style=MaterialTheme.typography.bodyMedium,fontWeight=FontWeight.Medium,color=colors.primary)
+                                Text(app.vacancy_title?:"Вакансия",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold,color=colors.onSurface)
                                 Row(verticalAlignment=Alignment.CenterVertically){
                                     val tone=when(app.status){"accepted"->colors.tertiary;"rejected"->colors.error;else->colors.primary}
                                     Surface(color=tone.copy(alpha=.1f),contentColor=tone,shape=CircleShape){Text(applicationLabel(app.status),Modifier.padding(horizontal=12.dp,vertical=6.dp),style=MaterialTheme.typography.labelMedium)}
                                     Spacer(Modifier.weight(1f))
                                     if(app.status=="new")IconButton(onClick={cancelling=app},enabled=app.id !in busy){Icon(Icons.Default.Close,"Отозвать отклик")}
                                 }
-                                Text(app.vacancy_title?:"Вакансия",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold,color=colors.onSurface)
-                                Text(app.company_name.orEmpty(),style=MaterialTheme.typography.bodyMedium,color=colors.onSurfaceVariant)
                                 if(app.vacancy_archived)Text("Вакансия в архиве",style=MaterialTheme.typography.labelMedium,color=colors.onSurfaceVariant)
                                 app.created_at?.let{Text("Отправлен ${applicationDate(it)}",style=MaterialTheme.typography.bodySmall,color=colors.onSurfaceVariant)}
                                 ApplicationDetailsSummary(app.feedback, app.interview_at)

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import MediaGallery from './MediaGallery'
 import ITAccreditationBadge from '../common/ITAccreditationBadge'
 import VacancyTerms from '../vacancy/VacancyTerms'
 import { WorkspaceMetric } from '../common/WorkspaceHeader'
@@ -66,7 +67,7 @@ export default function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
                 <div className="company-profile-story">
                     <section className="company-profile-panel"><h2>О компании</h2><p className="company-profile-copy">{company.description || 'Работодатель пока не добавил описание компании.'}</p></section>
                     {company.team_story && <section className="company-profile-panel"><h2>Наша команда</h2><p className="company-profile-copy">{company.team_story}</p></section>}
-                    {(company.photos?.length > 0||company.videos?.length>0) && <section className="company-profile-panel"><h2>Жизнь команды</h2><div className="company-profile-gallery">{company.photos?.map(photo => <img key={photo} src={photo} alt={`Команда ${company.name}`} loading="lazy"/>)}{company.videos?.map(video=><video key={video} src={video} controls playsInline preload="metadata" aria-label={`Видео команды ${company.name}`}/>)}</div></section>}
+                    {(company.photos?.length > 0||company.videos?.length>0) && <section className="company-profile-panel"><h2>Жизнь команды</h2><MediaGallery className="company-profile-gallery" photos={company.photos} videos={company.videos} title={`Жизнь команды ${company.name}`}/></section>}
                 </div>
                 <aside className="company-profile-sidebar">
                     {company.benefits?.length > 0 && <section className="company-profile-panel"><h2>Что мы предлагаем</h2><ul className="company-profile-benefits">{company.benefits.map((benefit, index) => <li key={index}>{benefit}</li>)}</ul></section>}
