@@ -1,13 +1,8 @@
 package com.example.trudomix.ui.screens.employer
 
-import com.example.trudomix.ui.components.AppScreenHeader
-
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -26,36 +21,7 @@ fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit,initialTab:Int=0,embedded:
     var form by remember{mutableStateOf(false)}
     var companyForm by remember{mutableStateOf(false)}
     var deleting by remember{mutableStateOf<Vacancy?>(null)}
-    Scaffold(topBar={AppScreenHeader(title={Text(if(embedded)if(tab==0)"Мои вакансии"else "Отклики"else "Кабинет работодателя")},navigationIcon={if(!embedded)IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}},actions={TextButton(onClick=model::load,enabled=!state.busy){Text("Обновить")}})}){padding->
-        Column(Modifier.fillMaxSize().padding(padding)){
-            if(state.loading||state.busy)LinearProgressIndicator(Modifier.fillMaxWidth())
-            state.error?.let{Text(it,Modifier.padding(16.dp),color=MaterialTheme.colorScheme.error)}
-            if(!state.loading && state.company.id==0) {
-                Column(Modifier.padding(24.dp)){Text("Создайте компанию для публикации вакансий");Button(onClick={companyForm=true},enabled=!state.busy){Text("Создать компанию")}}
-            }else{
-                if(!embedded)TabRow(tab){Tab(tab==0,{tab=0},text={Text("Вакансии")});Tab(tab==1,{tab=1},text={Text("Отклики")})}
-                LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(start=16.dp,end=16.dp,top=16.dp,bottom=if(embedded)148.dp else 16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
-                    if(tab==0){
-                        item{Text(state.company.name,style=MaterialTheme.typography.titleLarge);Button(onClick={editing=null;form=true},enabled=!state.busy){Text("Новая вакансия")}}
-                        items(state.vacancies,key={it.id}){v->Card(Modifier.fillMaxWidth()){Column(Modifier.padding(16.dp)){
-                            Text(v.title,style=MaterialTheme.typography.titleMedium);Text(if(v.is_archived)"В архиве" else "Опубликована");Text(v.location)
-                            Row{TextButton(onClick={editing=v;form=true},enabled=!state.busy){Text("Изменить")};TextButton(onClick={model.archive(v)},enabled=!state.busy){Text(if(v.is_archived)"Вернуть" else "В архив")}}
-                            TextButton(onClick={deleting=v},enabled=!state.busy){Text("Удалить",color=MaterialTheme.colorScheme.error)}
-                        }}}
-                    }else{
-                        if(state.applications.isEmpty())item{Text("Откликов пока нет")}
-                        items(state.applications,key={it.id?:0}){app->Card(Modifier.fillMaxWidth()){Column(Modifier.padding(16.dp)){
-                            Text(app.resume_full_name.ifBlank{app.candidate_email},style=MaterialTheme.typography.titleMedium)
-                            Text(app.vacancy_title.orEmpty());Text(applicationStatusLabel(app.status));if(!app.cover_letter.isNullOrBlank())Text(app.cover_letter)
-                            com.example.trudomix.ui.screens.applications.ApplicationDetailsSummary(app.feedback,app.interview_at)
-                            Row{TextButton(onClick={app.id?.let{model.status(it,"viewed")}},enabled=!state.busy){Text("Просмотрен")};TextButton(onClick={app.id?.let{model.chat(it,onChat)}},enabled=!state.busy){Text("Чат")}}
-                            Row{TextButton(onClick={app.id?.let{model.status(it,"accepted")}},enabled=!state.busy){Text("Принять")};TextButton(onClick={app.id?.let{model.status(it,"rejected")}},enabled=!state.busy){Text("Отказать")}}
-                        }}}
-                    }
-                }
-            }
-        }
-    }
+    EmployerWorkspace(state,tab,embedded,{tab=it},onBack,model::load,{companyForm=true},{editing=null;form=true},{editing=it;form=true},model::archive,{deleting=it},model::status,{model.chat(it,onChat)})
     if(companyForm)ModalBottomSheet(onDismissRequest={companyForm=false}){
         var name by remember{mutableStateOf("")};var city by remember{mutableStateOf("")};var about by remember{mutableStateOf("")}
         Column(Modifier.verticalScroll(rememberScrollState()).padding(24.dp).imePadding(),verticalArrangement=Arrangement.spacedBy(12.dp)){
@@ -69,7 +35,7 @@ fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit,initialTab:Int=0,embedded:
     if(form)VacancyEditor(editing,state.busy,model,{form=false}){request->model.save(editing?.id,request){form=false}}
     deleting?.let{v->AlertDialog(onDismissRequest={deleting=null},title={Text("Удалить вакансию?")},text={Text(v.title+". Связанные отклики и переписка могут быть удалены.")},confirmButton={TextButton(onClick={model.delete(v);deleting=null}){Text("Удалить")}},dismissButton={TextButton(onClick={deleting=null}){Text("Отмена")}})}
 }
-fun applicationStatusLabel(status:String?)=when(status){"new"->"Новый";"viewed"->"Просмотрен";"accepted"->"Принят";"rejected"->"Отклонён";else->status.orEmpty()}
+fun applicationStatusLabel(status:String?)=when(status){"new"->"Новый";"viewed"->"Просмотрен";"accepted"->"Приглашение";"rejected"->"Отказ";else->status.orEmpty()}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

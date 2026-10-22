@@ -25,16 +25,23 @@ class WebFrontendPreviewTest {
         val url=InstrumentationRegistry.getArguments().getString("webUrl")?:"http://10.0.2.2:5174/"
         val user="""{"id":9999,"email":"preview@example.test","role":"candidate","photo_url":"/brand-dark-waves.png","created_at":"2026-01-01T00:00:00Z"}"""
         val companyLogo=AtomicReference("")
-        fun company()="""{"id":99,"name":"Команда Trudomix","it_accredited":true,"description":"Создаём удобные продукты","city":"Новосибирск","logo_url":"${companyLogo.get()}","team_story":"Небольшая команда инженеров, дизайнеров и исследователей.","benefits":["Обучение и конференции","Гибкий график"],"hiring_process":"Знакомство с HR → разговор с командой → предложение","photos":["/brand-dark-waves.png"]}"""
+        fun company()="""{"id":99,"name":"Команда Trudomix","it_accredited":true,"description":"Создаём удобные продукты","city":"Новосибирск","logo_url":"${companyLogo.get()}","team_story":"Небольшая команда инженеров, дизайнеров и исследователей.","benefits":["Обучение и конференции","Гибкий график"],"hiring_process":"Знакомство с HR → разговор с командой → предложение","photos":["/brand-dark-waves.png"],"videos":["/preview-company-story.mp4"]}"""
         val vacancies=(1..16).joinToString(",",prefix="[",postfix="]"){"""{"id":$it,"title":"Android-разработчик $it","company":"Команда Trudomix","salary_from":120000,"salary_to":180000,"currency":"RUB","employment":"full_time","schedule":"flexible","location":"Новосибирск","experience":"Middle","remote":true,"skills":["Kotlin","Compose"],"description":"Создавай удобные продукты вместе с командой. Гибкий график и возможность работать удалённо.","latitude":55.03,"longitude":82.92}"""}
         val resume="""{"id":99,"user_id":9999,"full_name":"Александр Иванов","desired_position":"Android-разработчик","city":"Новосибирск","experience":"Middle","skills":["Kotlin","React","Go"],"about":"Создаю удобные продукты и люблю работать с сильными командами.","photo_url":"/brand-dark-waves.png","remote":true}"""
         val employerVacancies=org.json.JSONArray(vacancies).apply { getJSONObject(length()-1).put("is_archived",true) }.toString()
         val detailVacancy=org.json.JSONArray(vacancies).getJSONObject(0).apply {put("company_it_accredited",true);put("description","## Наша команда\n\n**Создаём** полезные продукты.\n\n- Поддержка\n- Обучение\n\n![Команда](/brand-dark-waves.png)\n\n<script>window.markdownInjected=true</script>")}.toString()
         val conversations="""[{"conversation_id":7,"id":7,"application_id":8,"vacancy_id":1,"vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","candidate_id":9999,"candidate_name":"Александр Иванов","last_message":"Давайте обсудим проект","last_message_at":"2026-10-21T10:00:00Z","unread_count":1,"cover_letter":"Здравствуйте! Хочу присоединиться к вашей команде."}]"""
         instrumentation.runOnMainSync { compose.activity.setContentView(WebView(compose.activity).apply {
-            web.set(this);settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
+            web.set(this);settings.javaScriptEnabled=true;settings.mediaPlaybackRequiresUserGesture=false;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
             webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse? {
                 val path=request.url.path.orEmpty()
+                if(path=="/preview-company-story.mp4"){
+                    val bytes=instrumentation.context.assets.open("company-story.mp4").use{it.readBytes()}
+                    val range=request.requestHeaders.entries.firstOrNull{it.key.equals("Range",true)}?.value?.removePrefix("bytes=")?.split('-')
+                    val start=range?.firstOrNull()?.toIntOrNull()?:0
+                    val end=(range?.getOrNull(1)?.toIntOrNull()?:bytes.lastIndex).coerceAtMost(bytes.lastIndex)
+                    return WebResourceResponse("video/mp4",null,if(range==null)200 else 206,if(range==null)"OK"else "Partial Content",mapOf("Accept-Ranges" to "bytes","Content-Range" to "bytes $start-$end/${bytes.size}"),bytes.copyOfRange(start,end+1).inputStream())
+                }
                 if(!path.startsWith("/api/")&&request.url.host=="10.0.2.2")return null
                 val json=when {
                     path=="/api/vacancies/search"->"""{"vacancies":$vacancies,"total_count":16}"""
@@ -119,6 +126,12 @@ class WebFrontendPreviewTest {
         capture("it-comment-dark")
         evaluate("document.querySelector('.vacancy-company-row .it-accreditation-badge').click()")
         capture("markdown-vacancy-dark")
+        evaluate("document.querySelector('.markdown-media-open').focus();document.querySelector('.markdown-media-open').click()")
+        waitFor("!!document.querySelector('.media-viewer-stage>img')")
+        assertEquals("Viewer covers viewport","true",evaluate("(()=>{const r=document.querySelector('.media-viewer').getBoundingClientRect();return r.left===0&&r.top===0&&Math.abs(r.height-innerHeight)<1&&Math.abs(r.width-innerWidth)<1})()"))
+        evaluate("document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))")
+        waitFor("!document.querySelector('.media-viewer')")
+        assertEquals("Viewer restores focus","true",evaluate("document.activeElement.matches('.markdown-media-open')&&document.body.style.overflow!=='hidden'"))
         evaluate("document.querySelector('.vacancy-page>.back-btn').click()")
         waitFor("document.querySelectorAll('.search-result-card').length===16")
         evaluate("document.querySelector('.user-profile-btn').click()")
@@ -176,6 +189,21 @@ class WebFrontendPreviewTest {
         assertEquals("Company IT badge", "true",evaluate("!!document.querySelector('.company-avatar-editor .it-accreditation-badge')"))
         assertEquals("Dark company surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-info-card')).backgroundColor").trim('"'))
         capture("company-logo")
+        assertEquals("Gallery button and image have equal width","true",evaluate("(()=>{const f=document.querySelector('.media-gallery figure');return Math.abs(f.querySelector('.media-tile').getBoundingClientRect().width-f.querySelector('.media-tile-remove').getBoundingClientRect().width)<1})()"))
+        evaluate("document.querySelector('.media-tile').click()")
+        waitFor("!!document.querySelector('.media-viewer-stage>img')")
+        capture("media-photo-dark")
+        evaluate("document.querySelector('[aria-label=\"Следующее медиа\"]').click()")
+        waitFor("!!document.querySelector('.styled-video-player video')")
+        evaluate("document.querySelector('[aria-label=\"Воспроизвести\"]').click()")
+        waitFor("document.querySelector('.styled-video-player video').currentTime>0&&!document.querySelector('.styled-video-player video').paused")
+        evaluate("document.querySelector('[aria-label=\"Пауза\"]').click()")
+        waitFor("document.querySelector('.styled-video-player video').paused")
+        evaluate("document.querySelector('[aria-label=\"Выключить звук\"]').click()")
+        waitFor("document.querySelector('.styled-video-player video').muted")
+        capture("media-video-dark")
+        evaluate("document.querySelector('[aria-label=\"Закрыть просмотр\"]').click()")
+        waitFor("!document.querySelector('.media-viewer')")
         evaluate("[...document.querySelectorAll('.company-info-card button')].find(node=>node.textContent.includes('Редактировать страницу')).click()")
         waitFor("!!document.querySelector('#company-team')")
         assertEquals("IT status is editable","true",evaluate("document.querySelector('.company-accreditation-option input').checked"))

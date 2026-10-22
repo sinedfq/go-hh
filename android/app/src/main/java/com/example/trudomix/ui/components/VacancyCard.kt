@@ -1,123 +1,41 @@
 package com.example.trudomix.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
 import com.example.trudomix.data.models.Vacancy
 
-@OptIn(ExperimentalLayoutApi::class)
+/** Main content shares one 20dp leading edge in search and employer cards. */
 @Composable
-fun VacancyCard(
-    vacancy: Vacancy,
-    onClick: () -> Unit,
-    onFavoriteToggle: (Boolean) -> Unit = {},
-    showFavorite: Boolean = true
-) {
-    val isFavorite = vacancy.is_favorite
-
-    Card(
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
-        ) {
-            // Header Row: Logo, Company & Title, Favorite Button
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Row(
-                    modifier = Modifier.weight(1f),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    CompanyAvatar(vacancy.company_logo, vacancy.company, 48.dp)
-
-
-                    Spacer(modifier = Modifier.width(12.dp))
-
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            text = vacancy.title,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(horizontalArrangement=Arrangement.spacedBy(6.dp),verticalAlignment=Alignment.CenterVertically) {
-                            Text(
-                                text = vacancy.company,
-                                modifier=Modifier.weight(1f,fill=false),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Medium
-                            )
-                            if(vacancy.company_it_accredited) ITAccreditationBadge()
-                        }
-                    }
+fun VacancyCard(vacancy:Vacancy,onClick:()->Unit,onFavoriteToggle:(Boolean)->Unit={},showFavorite:Boolean=true,footer:(@Composable ()->Unit)?=null) {
+    Card(onClick=onClick,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),border=BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.surface)) {
+        Column(Modifier.fillMaxWidth().padding(20.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+                CompanyAvatar(vacancy.company_logo,vacancy.company,44.dp)
+                Row(Modifier.weight(1f),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                    Text(vacancy.company,Modifier.weight(1f,fill=false),style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.primary,fontWeight=FontWeight.Medium,maxLines=2,overflow=TextOverflow.Ellipsis)
+                    if(vacancy.company_it_accredited)ITAccreditationBadge()
                 }
-
-                if(showFavorite) IconButton(
-                    onClick = {
-                        onFavoriteToggle(!isFavorite)
-                    }
-                ) {
-                    Icon(
-                        imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                        contentDescription = "Избранное",
-                        tint = if (isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
+                if(showFavorite)IconButton(onClick={onFavoriteToggle(!vacancy.is_favorite)}){Icon(if(vacancy.is_favorite)Icons.Default.Favorite else Icons.Default.FavoriteBorder,"Избранное",tint=if(vacancy.is_favorite)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}
             }
-
-            Spacer(Modifier.height(12.dp))
+            Text(vacancy.title,style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.SemiBold,color=MaterialTheme.colorScheme.onSurface,maxLines=3,overflow=TextOverflow.Ellipsis)
             VacancyTerms(vacancy)
-
-            // Skills Chips
-            if (vacancy.skills.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    items(vacancy.skills) { skill ->
-                        AssistChip(
-                            onClick = {},
-                            label = { Text(skill, style = MaterialTheme.typography.labelSmall) }
-                        )
-                    }
-                }
+            if(vacancy.skills.isNotEmpty())LazyRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
+                items(vacancy.skills){skill->Surface(shape=RoundedCornerShape(10.dp),color=MaterialTheme.colorScheme.surfaceContainerLow){Text(skill,Modifier.padding(horizontal=10.dp,vertical=7.dp),style=MaterialTheme.typography.labelSmall)}}
             }
+            footer?.invoke()
         }
     }
 }
