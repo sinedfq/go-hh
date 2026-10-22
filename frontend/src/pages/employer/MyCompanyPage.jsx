@@ -1,209 +1,70 @@
 import { useState } from 'react'
 import PhotoUpload from '../../components/common/PhotoUpload'
 import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
+import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
+import FormSelect from '../../components/common/FormSelect'
 import { userError } from '../../utils/userError'
 import './EmployerPages.css'
+import './MyCompanyPage.css'
 
-function MyCompanyPage({ myCompany, onCreateCompany, onUploadLogo, loadingCompany, onUpdateCompany, onUploadPhoto, onRemovePhoto }) {
+const empty = {name:'',description:'',industry:'',size:'',city:'',website:'',team_story:'',benefits:'',hiring_process:'',it_accredited:false}
+const sizes = ['1-10','11-50','51-200','201-500','500+'].map(value=>({value,label:`${value} человек`}))
+function Section({step,title,description,children}) { return <section className="editor-section"><div className="editor-section-heading"><span>{step}</span><div><h2>{title}</h2><p>{description}</p></div></div>{children}</section> }
+export default function MyCompanyPage({myCompany,onCreateCompany,onUploadLogo,loadingCompany,onUpdateCompany,onUploadPhoto,onRemovePhoto}) {
     const [editing,setEditing]=useState(false)
-    const [form, setForm] = useState({
-        name: '',
-        description: '',
-        industry: '',
-        size: '',
-        city: '',
-        website: '',
-        it_accredited: false
-    })
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState('')
-
-    const handleChange = (field, value) => {
-        setForm(prev => ({ ...prev, [field]: value }))
-    }
-
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        setError('')
-
-        if (!form.name.trim()) {
-            setError('Укажите название компании')
-            return
-        }
-
+    const [form,setForm]=useState(empty)
+    const [loading,setLoading]=useState(false)
+    const [error,setError]=useState('')
+    const [removing,setRemoving]=useState(null)
+    const company=myCompany?.id ? myCompany : null
+    const update=(field,value)=>setForm(previous=>({...previous,[field]:value}))
+    function edit() {setForm({...empty,...company,benefits:(company?.benefits||[]).join('\n')});setError('');setEditing(true)}
+    async function submit(event) {
+        event.preventDefault();setError('')
+        if(!form.name.trim()){setError('Укажите название компании');return}
         setLoading(true)
         try {
-            const data={...form,benefits:Array.isArray(form.benefits)?form.benefits:(form.benefits||'').split('\n').map(value=>value.trim()).filter(Boolean)}
-            if(myCompany?.id)await onUpdateCompany(data);else await onCreateCompany(data)
+            const data={...form,name:form.name.trim(),benefits:form.benefits.split('\n').map(value=>value.trim()).filter(Boolean)}
+            if(company)await onUpdateCompany(data);else await onCreateCompany(data)
             setEditing(false)
-        } catch (err) {
-            setError(userError(err))
-        } finally {
-            setLoading(false)
-        }
+        }catch(failure){setError(userError(failure))}finally{setLoading(false)}
     }
-
-    if (loadingCompany && !myCompany) return <div className="loading"><div className="spinner" /></div>
-
-    // Если компания уже есть — показываем информацию
-    if (myCompany && myCompany.id && !editing) {
-        return (
-            <div className="employer-page">
-                <div className="employer-header">
-                    <div>
-                        <h1>Моя компания</h1>
-                        <p className="employer-subtitle">Информация о вашей компании</p>
-                    </div>
-                </div>
-
-                <div className="company-info-card">
-                    <button className="btn btn-secondary" onClick={()=>{setForm({...myCompany,benefits:(myCompany.benefits||[]).join('\n')});setEditing(true)}}>Редактировать страницу компании</button>
-                    <div className="company-avatar-editor">
-                        <PhotoUpload currentPhoto={myCompany.logo_url} onUpload={onUploadLogo} label="Изменить аватарку компании" size="large" fallback={myCompany.name} />
-                        <div><h2 className="company-name-with-badge">{myCompany.name} <ITAccreditationBadge accredited={myCompany.it_accredited}/></h2><p>Нажми на аватарку, чтобы загрузить логотип.</p><p>JPG, PNG или WebP · до 4 МБ</p></div>
-                    </div>
-                    {myCompany.team_story&&<section><h3>Наша команда</h3><p className="preserve-text">{myCompany.team_story}</p></section>}
-                    {myCompany.benefits?.length>0&&<section><h3>Преимущества</h3><ul>{myCompany.benefits.map((benefit,index)=><li key={index}>{benefit}</li>)}</ul></section>}
-                    {myCompany.hiring_process&&<section><h3>Как проходит найм</h3><p className="preserve-text">{myCompany.hiring_process}</p></section>}
-                    <section><h3>Фотографии компании</h3><p>До 6 фотографий · JPG, PNG, WebP до 4 МБ</p><div className="company-gallery">{myCompany.photos?.map(photo=><figure key={photo}><img src={photo} alt="Фотография компании"/><button className="btn btn-secondary" onClick={async()=>{try{await onRemovePhoto(photo)}catch(failure){setError(userError(failure))}}}>Убрать</button></figure>)}{(myCompany.photos?.length||0)<6&&<PhotoUpload onUpload={onUploadPhoto} label="Добавить фотографию компании" fallback="+" size="large"/>}</div></section>
-                    {error&&<p role="alert">{error}</p>}
-                    <div className="company-info-row">
-                        <span className="company-info-label">Название</span>
-                        <span className="company-info-value">{myCompany.name}</span>
-                    </div>
-                    {myCompany.description && (
-                        <div className="company-info-row">
-                            <span className="company-info-label">Описание</span>
-                            <span className="company-info-value">{myCompany.description}</span>
-                        </div>
-                    )}
-                    {myCompany.industry && (
-                        <div className="company-info-row">
-                            <span className="company-info-label">Сфера</span>
-                            <span className="company-info-value">{myCompany.industry}</span>
-                        </div>
-                    )}
-                    {myCompany.size && (
-                        <div className="company-info-row">
-                            <span className="company-info-label">Размер</span>
-                            <span className="company-info-value">{myCompany.size}</span>
-                        </div>
-                    )}
-                    {myCompany.city && (
-                        <div className="company-info-row">
-                            <span className="company-info-label">Город</span>
-                            <span className="company-info-value">{myCompany.city}</span>
-                        </div>
-                    )}
-                    {myCompany.website && (
-                        <div className="company-info-row">
-                            <span className="company-info-label">Сайт</span>
-                            <a href={myCompany.website} target="_blank" rel="noreferrer" className="company-info-link">
-                                {myCompany.website}
-                            </a>
-                        </div>
-                    )}
-                </div>
-            </div>
-        )
+    async function remove(photo) {
+        if(removing)return
+        setRemoving(photo);setError('')
+        try{await onRemovePhoto(photo)}catch(failure){setError(userError(failure))}finally{setRemoving(null)}
     }
-
-    // Форма создания компании
-    return (
-        <div className="employer-page">
-            <div className="employer-header">
-                <div>
-                    <h1>{editing?'Редактировать компанию':'Создать компанию'}</h1>
-                    <p className="employer-subtitle">Заполните информацию о вашей компании, чтобы начать публиковать вакансии</p>
-                </div>
+    const filled=company?[company.description,company.logo_url,company.team_story,company.benefits?.length,company.hiring_process,company.photos?.length].filter(Boolean).length:0
+    if(loadingCompany&&!company)return <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем компанию…</p></div>
+    return <div className="employer-page workspace-screen company-workspace">
+        <WorkspaceHeader eyebrow="ЛИЦО ВАШЕЙ КОМАНДЫ" title={editing?'Редактировать компанию':company?'Моя компания':'Создать компанию'} description="Покажите кандидатам, кто вы, как работаете и почему к вам стоит присоединиться."/>
+        {error&&<div className="employer-error" role="alert">{error}</div>}
+        {company&&!editing ? <>
+            <section className="company-info-card company-management-hero">
+                <div className="company-avatar-editor"><PhotoUpload currentPhoto={company.logo_url} onUpload={onUploadLogo} label="Изменить аватарку компании" size="large" fallback={company.name}/><div><span className="eyebrow">СТРАНИЦА КОМПАНИИ</span><h2 className="company-name-with-badge">{company.name}<ITAccreditationBadge accredited={company.it_accredited}/></h2><p>{[company.industry,company.city,company.size&&`${company.size} человек`].filter(Boolean).join(' · ')||'Добавьте город и сферу деятельности'}</p><small>Нажмите на логотип, чтобы изменить его · до 4 МБ</small></div></div>
+                <button className="btn btn-secondary" onClick={edit}>Редактировать страницу компании<WorkspaceIcon name="arrow" size={16}/></button>
+            </section>
+            <div className="workspace-metrics"><WorkspaceMetric icon="check" value={`${Math.round(filled/6*100)}%`} label="Оформление страницы" hint="Описание, логотип и история команды"/><WorkspaceMetric icon="eye" value={company.photos?.length||0} label="Фотографии" hint="Покажите офис и людей"/><WorkspaceMetric icon="briefcase" value={company.benefits?.length||0} label="Преимущества" hint="Что вы предлагаете команде"/></div>
+            <div className="company-content-grid">
+                <section className="company-content-card"><h2>О компании</h2><p className="preserve-text">{company.description||'Расскажите, чем занимается ваша команда и какие задачи решает.'}</p><dl>{[['Сфера',company.industry],['Размер команды',company.size&&`${company.size} человек`],['Город',company.city]].filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>{/^https?:\/\//i.test(company.website||'')&&<a className="company-website-link" href={company.website} target="_blank" rel="noreferrer">Сайт компании<WorkspaceIcon name="arrow" size={16}/></a>}</section>
+                <section className="company-content-card"><h2>Наша команда</h2><p className="preserve-text">{company.team_story||'Добавьте историю команды, её ценности и подход к работе.'}</p><h3>Как проходит найм</h3><p className="preserve-text">{company.hiring_process||'Расскажите об этапах знакомства с кандидатами.'}</p></section>
+                <section className="company-content-card company-wide-card"><h2>Преимущества работы</h2>{company.benefits?.length?<ul className="company-benefit-list">{company.benefits.map((benefit,index)=><li key={index}><WorkspaceIcon name="check" size={18}/>{benefit}</li>)}</ul>:<p>Укажите условия, обучение и другие преимущества работы у вас.</p>}</section>
+                <section className="company-content-card company-wide-card"><div className="company-section-title"><div><h2>Жизнь команды</h2><p>До 6 фотографий · JPG, PNG или WebP · до 4 МБ</p></div></div><div className="company-gallery">{company.photos?.map(photo=><figure key={photo}><img src={photo} alt="Жизнь команды"/><button className="btn btn-secondary" disabled={!!removing} onClick={()=>remove(photo)}>{removing===photo?'Удаляем…':'Убрать'}</button></figure>)}{(company.photos?.length||0)<6&&<PhotoUpload onUpload={onUploadPhoto} label="Добавить фотографию компании" fallback="+" size="large"/>}</div></section>
             </div>
-
-            <form className="company-form" onSubmit={handleSubmit}>
-                <label className="company-accreditation-option"><input type="checkbox" checked={Boolean(form.it_accredited)} onChange={event=>handleChange('it_accredited',event.target.checked)}/><span><strong>IT-аккредитация</strong><small>У компании есть действующая IT-аккредитация. Статус указывается компанией.</small></span><ITAccreditationBadge accredited/></label>
-                <div className="form-field"><label htmlFor="company-team">Наша команда</label><textarea id="company-team" maxLength={10000} value={form.team_story||''} onChange={event=>handleChange('team_story',event.target.value)} rows={4}/></div>
-                <div className="form-field"><label htmlFor="company-benefits">Преимущества — по одному на строке</label><textarea id="company-benefits" value={form.benefits||''} onChange={event=>handleChange('benefits',event.target.value)} rows={4}/></div>
-                <div className="form-field"><label htmlFor="company-hiring">Как проходит найм</label><textarea id="company-hiring" maxLength={10000} value={form.hiring_process||''} onChange={event=>handleChange('hiring_process',event.target.value)} rows={4}/></div>
-                {error && <div className="employer-error">{error}</div>}
-
-                <div className="form-field">
-                    <label>Название компании *</label>
-                    <input
-                        type="text"
-                        value={form.name}
-                        onChange={(e) => handleChange('name', e.target.value)}
-                        placeholder="ООО 'Ромашка'"
-                        required
-                    />
-                </div>
-
-                <div className="form-field">
-                    <label>Описание</label>
-                    <textarea
-                        value={form.description}
-                        onChange={(e) => handleChange('description', e.target.value)}
-                        placeholder="Расскажите о компании..."
-                        rows={3}
-                    />
-                </div>
-
-                <div className="form-row-2">
-                    <div className="form-field">
-                        <label>Сфера деятельности</label>
-                        <input
-                            type="text"
-                            value={form.industry}
-                            onChange={(e) => handleChange('industry', e.target.value)}
-                            placeholder="IT, производство..."
-                        />
-                    </div>
-
-                    <div className="form-field">
-                        <label>Размер компании</label>
-                        <select
-                            value={form.size}
-                            onChange={(e) => handleChange('size', e.target.value)}
-                        >
-                            <option value="">Не указано</option>
-                            <option value="1-10">1-10 человек</option>
-                            <option value="11-50">11-50 человек</option>
-                            <option value="51-200">51-200 человек</option>
-                            <option value="201-500">201-500 человек</option>
-                            <option value="500+">500+ человек</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="form-row-2">
-                    <div className="form-field">
-                        <label>Город</label>
-                        <input
-                            type="text"
-                            value={form.city}
-                            onChange={(e) => handleChange('city', e.target.value)}
-                            placeholder="Москва"
-                        />
-                    </div>
-
-                    <div className="form-field">
-                        <label>Сайт</label>
-                        <input
-                            type="url"
-                            value={form.website}
-                            onChange={(e) => handleChange('website', e.target.value)}
-                            placeholder="https://company.com"
-                        />
-                    </div>
-                </div>
-
-                <div className="form-actions">
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                        {loading ? 'Сохранение…' : editing?'Сохранить изменения':'Создать компанию'}
-                    </button>
-                    {editing&&<button type="button" className="btn btn-secondary" disabled={loading} onClick={()=>setEditing(false)}>Отмена</button>}
-                </div>
-            </form>
-        </div>
-    )
+        </> : <form className="company-form company-editor-form" onSubmit={submit}>
+            <Section step="01" title="Основная информация" description="Название, направление работы и контакты компании.">
+                <div className="form-field"><label htmlFor="company-name">Название компании *</label><input id="company-name" value={form.name} onChange={e=>update('name',e.target.value)} placeholder="Название команды или организации" required maxLength={255}/></div>
+                <div className="form-field"><label htmlFor="company-description">О компании</label><textarea id="company-description" value={form.description} onChange={e=>update('description',e.target.value)} rows={4} placeholder="Чем занимаетесь и какие продукты создаёте"/></div>
+                <div className="form-row-2"><div className="form-field"><label htmlFor="company-industry">Сфера деятельности</label><input id="company-industry" value={form.industry} onChange={e=>update('industry',e.target.value)} placeholder="Например, информационные технологии"/></div><div className="form-field"><label htmlFor="company-size">Размер команды</label><FormSelect id="company-size" label="Размер команды" value={form.size} onChange={value=>update('size',value)} options={[{value:'',label:'Не указан'},...sizes]}/></div></div>
+                <div className="form-row-2"><div className="form-field"><label htmlFor="company-city">Город</label><input id="company-city" value={form.city} onChange={e=>update('city',e.target.value)} placeholder="Где находится ваша команда"/></div><div className="form-field"><label htmlFor="company-website">Сайт</label><input id="company-website" type="url" value={form.website} onChange={e=>update('website',e.target.value)} placeholder="https://company.ru"/></div></div>
+            </Section>
+            <Section step="02" title="Команда и условия" description="Помогите кандидатам представить работу у вас.">
+                <div className="form-field"><label htmlFor="company-team">Наша команда</label><textarea id="company-team" maxLength={10000} value={form.team_story} onChange={e=>update('team_story',e.target.value)} rows={4}/></div>
+                <div className="form-field"><label htmlFor="company-benefits">Преимущества — по одному на строке</label><textarea id="company-benefits" value={form.benefits} onChange={e=>update('benefits',e.target.value)} rows={4}/></div>
+                <div className="form-field"><label htmlFor="company-hiring">Как проходит найм</label><textarea id="company-hiring" maxLength={10000} value={form.hiring_process} onChange={e=>update('hiring_process',e.target.value)} rows={4}/></div>
+            </Section>
+            <Section step="03" title="Статус компании" description="Информация, которая отображается рядом с названием."><label className="company-accreditation-option"><input type="checkbox" checked={Boolean(form.it_accredited)} onChange={e=>update('it_accredited',e.target.checked)}/><span><strong>IT-аккредитация</strong><small>У компании есть действующая IT-аккредитация. Статус указывается компанией.</small></span><ITAccreditationBadge accredited/></label></Section>
+            <div className="form-actions"><button type="submit" className="btn btn-primary" disabled={loading}>{loading?'Сохраняем…':company?'Сохранить изменения':'Создать компанию'}</button>{editing&&company&&<button type="button" className="btn btn-secondary" disabled={loading} onClick={()=>{setEditing(false);setError('')}}>Отмена</button>}</div>
+        </form>}
+    </div>
 }
-
-export default MyCompanyPage

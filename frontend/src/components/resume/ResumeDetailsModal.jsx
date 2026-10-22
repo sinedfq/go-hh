@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import PhotoUpload from '../common/PhotoUpload'
+import DatePicker from '../common/DatePicker'
 import ModalPortal from '../common/ModalPortal'
 import ResumeModal from './ResumeModal'
 import './ResumeDetailsModal.css'
@@ -235,18 +236,19 @@ function ResumeDetailsModal({ resume, currentUser, onClose, onUpdate, onDelete, 
                       />
                     </div>
                     <div className="work-exp-form-row">
-                      <input
-                        type="date"
+                      <DatePicker
+                        label="Начало работы"
                         name="start_date"
                         value={workExpData.start_date}
-                        onChange={handleWorkExpChange}
+                        onChange={value=>setWorkExpData(previous=>({...previous,start_date:value}))}
                         required
                       />
-                      <input
-                        type="date"
+                      <DatePicker
+                        label="Окончание работы"
                         name="end_date"
                         value={workExpData.end_date}
-                        onChange={handleWorkExpChange}
+                        min={workExpData.start_date}
+                        onChange={value=>setWorkExpData(previous=>({...previous,end_date:value}))}
                         placeholder="По настоящее время"
                       />
                     </div>

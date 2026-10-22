@@ -1,0 +1,13 @@
+# Optional local FCM configuration; the credential never enters an image.
+services:
+  api:
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-trudomix-dev-0117961b93}
+      GOOGLE_APPLICATION_CREDENTIALS: /run/secrets/firebase.json
+    secrets:
+      - source: firebase_credentials
+        target: firebase.json
+
+secrets:
+  firebase_credentials:
+    file: ./.cache/firebase-service-account.json

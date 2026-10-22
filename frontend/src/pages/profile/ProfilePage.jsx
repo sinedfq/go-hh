@@ -6,8 +6,9 @@ import ResumeDetailsModal from '../../components/resume/ResumeDetailsModal'
 import PhotoUpload from '../../components/common/PhotoUpload'
 import { userError } from '../../utils/userError'
 import './ProfilePage.css'
+import EmployerProfile from './EmployerProfile'
 
-function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
+function ProfilePage({ onResumeUpdate, onLogout, showToast, onNavigate }) {
     const { user, updateUserPhoto } = useAuth()
     const [resume, setResume] = useState(null)
     const [loading, setLoading] = useState(true)
@@ -114,11 +115,11 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
     const loadStats = async () => {
         try {
             if (isEmployer) {
-                const res = await axios.get('/api/employer/applications')
-                const apps = Array.isArray(res.data) ? res.data : []
-                const newCount = apps.filter(a => a.status === 'new').length
-                setStats({ applications: apps.length, new_applications: newCount })
-                console.log('📊 Employer stats:', { applications: apps.length, new_applications: newCount })
+                const [applications,vacancies,company]=await Promise.allSettled([axios.get('/api/employer/applications'),axios.get('/api/my-vacancies'),axios.get('/api/my-company',{validateStatus:status=>status===404||(status>=200&&status<300)})])
+                const apps=applications.status==='fulfilled'&&Array.isArray(applications.value.data)?applications.value.data:null
+                const jobs=vacancies.status==='fulfilled'&&Array.isArray(vacancies.value.data?.vacancies)?vacancies.value.data.vacancies:null
+                setStats({applications:apps?.length??null,new_applications:apps?.filter(app=>app.status==='new').length??null,active_vacancies:jobs?.filter(job=>!job.is_archived).length??null,views:jobs?.reduce((sum,job)=>sum+(Number(job.views)||0),0)??null,company:company.status==='fulfilled'&&company.value.status===200?company.value.data:null})
+                if([applications,vacancies,company].some(result=>result.status==='rejected'))setDataError(true)
             } else {
                 const [favorites,applications]=await Promise.allSettled([axios.get('/api/favorites'),axios.get('/api/my-applications')])
                 setStats({favorites:favorites.status==='fulfilled'?favorites.value.data?.length??0:null,applications:applications.status==='fulfilled'?applications.value.data?.length??0:null})
@@ -163,6 +164,8 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             </div>
         )
     }
+
+    if (isEmployer) return <EmployerProfile user={user} stats={stats} loading={loading} dataError={dataError} onRetry={loadData} onUpload={handleUserPhotoUpload} onNavigate={onNavigate} onLogout={onLogout}/>
 
     if (loading) {
         return (

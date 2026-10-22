@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import { userError } from '../../utils/userError'
 import FormSelect from './FormSelect'
+import DatePicker from './DatePicker'
 import './ApplicationHistory.css'
 
 const labels={new:'Отклик отправлен',viewed:'Отклик просмотрен',accepted:'Приглашение',rejected:'Отказ'}
@@ -48,7 +49,7 @@ export default function ApplicationHistory({application,employer=false,onUpdated
                 <div className="application-stage-heading"><h3>Следующий шаг</h3><p>Комментарий и время встречи будут видны кандидату на сайте и в приложении.</p></div>
                 <div><label htmlFor={`application-${application.id}-stage`}>Этап рассмотрения</label><FormSelect id={`application-${application.id}-stage`} label="Этап рассмотрения" value={status} onChange={setStatus} options={stages}/></div>
                 <label>Комментарий кандидату<textarea value={feedback} maxLength={4000} onChange={event=>setFeedback(event.target.value)} rows={3} placeholder="Расскажите о следующем этапе или оставьте обратную связь"/></label>
-                <label>Время собеседования<input type="datetime-local" value={interview} onChange={event=>setInterview(event.target.value)}/><small>Время вашего устройства. Кандидат увидит его в своём часовом поясе.</small></label>
+                <div><label htmlFor={`application-${application.id}-date`}>Время собеседования</label><DatePicker id={`application-${application.id}-date`} label="Время собеседования" includeTime value={interview} onChange={setInterview}/><small>Время вашего устройства. Кандидат увидит его в своём часовом поясе.</small></div>
                 <button className="btn btn-primary" disabled={saving}>{saving?'Сохраняем…':'Сохранить этап и детали'}</button>
             </form>}
         </div>}
