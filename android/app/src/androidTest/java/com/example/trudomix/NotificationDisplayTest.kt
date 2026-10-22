@@ -30,6 +30,8 @@ class NotificationDisplayTest {
             val style = androidx.core.app.NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(message)!!
             assertEquals("Давайте познакомимся", style.messages.last().text.toString())
             assertEquals("Команда Trudomix", style.messages.last().person!!.name.toString())
+            assertNotNull("The message sender must display the application logo", style.messages.last().person!!.icon)
+            assertEquals(R.drawable.ic_notification, message.smallIcon.resId)
             assertEquals(Notification.VISIBILITY_PRIVATE, message.visibility)
             assertEquals("Новое сообщение", message.publicVersion.extras.getString(Notification.EXTRA_TEXT))
             assertTrue(AppNotifications.show(context, "Ваше резюме просмотрели", "Компания посмотрела резюме", view))

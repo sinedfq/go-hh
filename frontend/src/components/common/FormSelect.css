@@ -1,0 +1,18 @@
+.form-select { position:relative;min-width:0;width:100%;font:inherit; }
+.form-select .form-select-trigger { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg);color:var(--text-primary);font:inherit;font-size:.9rem;text-align:left;cursor:pointer; }
+.form-select.is-open .form-select-trigger,.form-select .form-select-trigger:focus-visible,.form-select .form-select-trigger:focus-within { border-color:var(--accent);box-shadow:var(--focus-ring);outline:none; }
+.form-select .form-select-placeholder { color:var(--text-muted); }
+.form-select .form-select-chevron { flex-shrink:0;color:var(--text-secondary);transition:transform .16s; }
+.form-select.is-open .form-select-chevron { transform:rotate(180deg); }
+.form-select .form-select-input,.workspace-screen .form-select .form-select-input { width:100%;min-width:0;margin:0;padding:0;border:0!important;border-radius:0;background:transparent!important;color:var(--text-primary);font:inherit;outline:0!important;box-shadow:none!important; }
+.form-select .form-select-arrow { display:grid;place-items:center;flex-shrink:0;min-width:28px;min-height:28px;margin:-4px;padding:0;background:none;border:0;color:var(--text-secondary);cursor:pointer; }
+.form-select .form-select-menu { position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:60;max-height:min(320px,45dvh);overflow-y:auto;overscroll-behavior:contain;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 32px #0002; }
+.form-select .form-select-option { display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:12px;border:0;border-radius:10px;background:transparent;color:var(--text-primary);text-align:left;cursor:pointer;font:inherit;font-size:.88rem; }
+.form-select .form-select-option>span { display:flex;flex-direction:column;gap:3px;min-width:0;overflow-wrap:anywhere; }
+.form-select .form-select-option strong { font-weight:550; }
+.form-select .form-select-option small { color:var(--text-muted);font-size:.76rem; }
+.form-select .form-select-option:is(.is-highlighted,[aria-selected=true]) { background:var(--accent-light);color:var(--accent); }
+.form-select .form-select-option svg { flex-shrink:0; }
+.form-select .form-select-empty { color:var(--text-muted);font-size:.85rem;padding:12px; }
+.form-select [disabled] { opacity:.6;cursor:not-allowed; }
+@media(prefers-reduced-motion:reduce) { .form-select .form-select-chevron { transition:none; } }

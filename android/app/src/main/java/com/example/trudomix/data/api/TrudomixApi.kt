@@ -60,6 +60,8 @@ interface TrudomixApi {
 
     @GET("api/my-applications")
     suspend fun getMyApplications(): Response<List<JobApplication>>
+    @GET("api/applications/{id}/history")
+    suspend fun applicationHistory(@Path("id") id: Int): Response<List<ApplicationEvent>>
 
     @DELETE("api/applications/{id}")
     suspend fun cancelApplication(@Path("id") id: Int): Response<Unit>

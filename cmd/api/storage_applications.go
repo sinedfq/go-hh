@@ -117,7 +117,8 @@ func (s *PostgresStorage) GetApplicationsForEmployer(ctx context.Context, compan
             v.title AS vacancy_title,
             v.company AS company_name,
             COALESCE(v.is_archived, FALSE) AS vacancy_archived,
-            COALESCE(c.id, 0) AS conversation_id
+            COALESCE(c.id, 0) AS conversation_id,
+            COALESCE(a.feedback, ''), a.interview_at
         FROM applications a
         JOIN users u ON u.id = a.candidate_user_id
         JOIN vacancies v ON v.id = a.vacancy_id
@@ -143,6 +144,7 @@ func (s *PostgresStorage) GetApplicationsForEmployer(ctx context.Context, compan
 			&a.ResumeFullName, &a.ResumePosition, &a.ResumeExperience,
 			&a.VacancyTitle, &a.CompanyName,
 			&isArchived, &convID,
+			&a.Feedback, &a.InterviewAt,
 		)
 		if err != nil {
 			return nil, err
@@ -171,7 +173,8 @@ func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]
 			a.viewed_at,
 			v.title as vacancy_title,
 			COALESCE(v.company, '') as company_name, -- Берем название компании прямо из вакансии, если там оно хранится
-			COALESCE(c.id, 0) as conversation_id
+			COALESCE(c.id, 0) as conversation_id,
+			COALESCE(a.feedback, ''), a.interview_at, COALESCE(v.is_archived, FALSE)
 		FROM applications a
 		JOIN vacancies v ON v.id = a.vacancy_id
 		LEFT JOIN conversations c ON c.application_id = a.id
@@ -189,7 +192,6 @@ func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]
 	for rows.Next() {
 		var app Application
 		var convID int
-		// Важно: количество аргументов должно строго совпадать с SELECT (11 штук)
 		err := rows.Scan(
 			&app.ID,
 			&app.VacancyID,
@@ -202,6 +204,7 @@ func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]
 			&app.VacancyTitle,
 			&app.CompanyName,
 			&convID,
+			&app.Feedback, &app.InterviewAt, &app.VacancyArchived,
 		)
 		if err != nil {
 			log.Printf("❌ Scan error in GetMyApplications: %v", err) // Лог для отладки
