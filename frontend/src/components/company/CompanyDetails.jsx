@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import ITAccreditationBadge from '../common/ITAccreditationBadge'
 import VacancyTerms from '../vacancy/VacancyTerms'
+import { WorkspaceMetric } from '../common/WorkspaceHeader'
 import { userError } from '../../utils/userError'
 import './CompanyDetails.css'
 
@@ -58,7 +59,7 @@ export default function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
                         {website && <a className="company-profile-website" href={website} target="_blank" rel="noopener noreferrer">Сайт компании <span aria-hidden="true">↗</span></a>}
                     </div>
                 </div>
-                <div className="company-profile-stats"><div><strong>{vacancies.length}</strong><span>Активные вакансии</span></div><div><strong>{company.total_views || 0}</strong><span>Просмотры вакансий</span></div></div>
+                <div className="company-profile-stats"><WorkspaceMetric icon="briefcase" value={vacancies.length} label="Открытые вакансии" hint="Присоединяйтесь к команде"/><WorkspaceMetric icon="eye" value={Number(company.total_views || 0).toLocaleString('ru-RU')} label="Просмотры вакансий" hint="Интерес к предложениям компании"/></div>
                 {vacancies.length > 0 && <a className="btn btn-primary company-profile-jobs-link" href="#company-open-jobs">Смотреть вакансии <span aria-hidden="true">↓</span></a>}
             </header>
             <div className="company-profile-layout">

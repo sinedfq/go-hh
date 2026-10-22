@@ -1,31 +1,36 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import ApplicationHistory from '../../components/common/ApplicationHistory'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
+import { userError } from '../../utils/userError'
 import './CandidatePages.css'
 
 function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
     const [applications, setApplications] = useState([])
     const [loading, setLoading] = useState(true)
     const [filter, setFilter] = useState('all')
+    const [query, setQuery] = useState('')
+    const [error, setError] = useState('')
     const [cancelling, setCancelling] = useState(null)
     const [confirmCancel, setConfirmCancel] = useState(null) // ID отклика для подтверждения
 
-    const loadApplications = async () => {
+    const loadApplications = useCallback(async () => {
         try {
             setLoading(true)
+            setError('')
             const res = await axios.get('/api/my-applications')
             setApplications(Array.isArray(res.data) ? res.data : [])
         } catch (err) {
-            console.error('Ошибка загрузки откликов:', err)
+            setError(userError(err))
         } finally {
             setLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         loadApplications()
-    }, [])
+    }, [loadApplications])
 
     const cancelApplication = async (applicationId) => {
         setCancelling(applicationId)
@@ -35,7 +40,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
 
             // ✅ ДОБАВЛЕНО: Toast-уведомление
             if (showToast) {
-                showToast('🗑️ Отклик отменён')
+                showToast('Отклик отменён')
             }
         } catch (err) {
             console.error('Ошибка отмены:', err)
@@ -55,17 +60,16 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
             case 'viewed':
                 return { label: 'Просмотрен', className: 'status-viewed' }
             case 'accepted':
-                return { label: 'Принят', className: 'status-accepted' }
+                return { label: 'Приглашение', className: 'status-accepted' }
             case 'rejected':
-                return { label: 'Отклонён', className: 'status-rejected' }
+                return { label: 'Отказ', className: 'status-rejected' }
             default:
                 return { label: status, className: '' }
         }
     }
 
     const filteredApps = applications.filter(app => {
-        if (filter === 'all') return true
-        return app.status === filter
+        return (filter === 'all' || app.status === filter) && `${app.vacancy_title} ${app.company_name}`.toLowerCase().includes(query.trim().toLowerCase())
     })
 
     const stats = {
@@ -97,7 +101,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
     }
 
     return (
-        <div className="candidate-page">
+        <div className="candidate-page workspace-screen applications-workspace">
             {/* Кастомная модалка подтверждения */}
             {confirmCancel && (
                 <ConfirmModal
@@ -111,60 +115,56 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                 />
             )}
 
-            <div className="candidate-header">
-                <div>
-                    <h1>Мои отклики</h1>
-                    <p className="candidate-subtitle">
-                        Всего откликов: {applications.length}
-                        {stats.accepted > 0 && <span className="accepted-count"> • {stats.accepted} принято</span>}
-                    </p>
-                </div>
-            </div>
+            <WorkspaceHeader eyebrow="ВАШ СЛЕДУЮЩИЙ ШАГ" title="Мои отклики" description="Следите за ответами компаний, общайтесь с командами и готовьтесь к знакомству."/>
+            {error && <div className="employer-error" role="alert">{error}<button className="btn btn-secondary" onClick={loadApplications}>Повторить загрузку</button></div>}
+            <div className="workspace-metrics"><WorkspaceMetric icon="briefcase" value={stats.all} label="Всего откликов" hint="Ваши шаги к новой работе"/><WorkspaceMetric icon="eye" value={stats.new + stats.viewed} label="В процессе" hint="Ожидают ответа компании"/><WorkspaceMetric icon="check" value={stats.accepted} label="Приглашения" hint="Компании готовы познакомиться"/></div>
 
-            <div className="my-apps-filters">
+            <div className="workspace-toolbar"><label className="workspace-search"><WorkspaceIcon name="search" size={18}/><input aria-label="Поиск по откликам" placeholder="Должность или компания" value={query} onChange={event => setQuery(event.target.value)}/></label></div>
+            <div className="workspace-tabs applications-tabs" aria-label="Статус откликов">
                 <button
-                    className={`filter-btn ${filter === 'all' ? 'active' : ''}`}
+                    aria-pressed={filter === 'all'}
                     onClick={() => setFilter('all')}
                 >
                     Все <span className="filter-count">{stats.all}</span>
                 </button>
                 <button
-                    className={`filter-btn ${filter === 'new' ? 'active' : ''}`}
+                    aria-pressed={filter === 'new'}
                     onClick={() => setFilter('new')}
                 >
                     На рассмотрении <span className="filter-count">{stats.new}</span>
                 </button>
                 <button
-                    className={`filter-btn ${filter === 'viewed' ? 'active' : ''}`}
+                    aria-pressed={filter === 'viewed'}
                     onClick={() => setFilter('viewed')}
                 >
                     Просмотренные <span className="filter-count">{stats.viewed}</span>
                 </button>
                 <button
-                    className={`filter-btn ${filter === 'accepted' ? 'active' : ''}`}
+                    aria-pressed={filter === 'accepted'}
                     onClick={() => setFilter('accepted')}
                 >
-                    Принятые <span className="filter-count">{stats.accepted}</span>
+                    Приглашения <span className="filter-count">{stats.accepted}</span>
                 </button>
                 <button
-                    className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`}
+                    aria-pressed={filter === 'rejected'}
                     onClick={() => setFilter('rejected')}
                 >
-                    Отклонённые <span className="filter-count">{stats.rejected}</span>
+                    Отказы <span className="filter-count">{stats.rejected}</span>
                 </button>
             </div>
 
             {filteredApps.length === 0 ? (
-                <div className="my-apps-empty">
-                    <div className="my-apps-empty-icon">📝</div>
+                <div className="workspace-state">
+                    <span className="workspace-state-icon"><WorkspaceIcon name="briefcase" size={28}/></span>
                     <h3>
-                        {filter === 'all' ? 'Вы ещё не откликались на вакансии' : `Нет откликов`}
+                        {query ? 'Ничего не найдено' : filter === 'all' ? 'Здесь начнётся ваша история' : 'Пока нет откликов с таким статусом'}
                     </h3>
                     <p>
-                        {filter === 'all'
+                        {filter === 'all' && !query
                             ? 'Найдите интересную вакансию и нажмите "Откликнуться"'
                             : 'Попробуйте выбрать другой фильтр'}
                     </p>
+                    {(query || filter !== 'all') && <button className="btn btn-secondary" onClick={() => { setQuery(''); setFilter('all') }}>Показать все отклики</button>}
                 </div>
             ) : (
                 <div className="my-apps-list">
@@ -173,7 +173,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                         const isCancelling = cancelling === app.id
 
                         return (
-                            <div key={app.id} className={`my-app-card ${statusInfo.className} ${app.vacancy_archived ? 'vacancy-archived' : ''}`}>
+                            <div key={app.id} className={`my-app-card ${app.vacancy_archived ? 'vacancy-archived' : ''}`}>
                                 {app.vacancy_archived && (
                                     <div className="archived-badge-top">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -188,7 +188,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                                         <h3 className="my-app-vacancy-title">{app.vacancy_title}</h3>
                                         <p className="my-app-company-name">{app.company_name}</p>
                                     </div>
-                                    <div className={`my-app-status-badge ${statusInfo.className}`}>
+                                    <div className={`workspace-status ${app.status === 'accepted' ? 'success' : app.status === 'rejected' ? 'declined' : app.status === 'new' ? 'muted' : ''}`}>
                                         {statusInfo.label}
                                     </div>
                                 </div>
@@ -256,14 +256,6 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                                         </button>
                                     )}
 
-                                    {app.status === 'accepted' && (
-                                        <div className="btn btn-success btn-small" style={{ cursor: 'default' }}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="20 6 9 17 4 12" />
-                                            </svg>
-                                            Отклик принят 🎉
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         )

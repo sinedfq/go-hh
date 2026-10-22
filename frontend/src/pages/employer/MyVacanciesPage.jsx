@@ -1,286 +1,54 @@
 import { useState } from 'react'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
+import VacancyTerms from '../../components/vacancy/VacancyTerms'
+import { userError } from '../../utils/userError'
 import './EmployerPages.css'
 
-function MyVacanciesPage({
-    myCompany, myVacancies, employerLoading, employerError,
-    onOpenVacancy, onCreateVacancy, onEditVacancy, onReload,
-    onDeleteVacancy, onArchiveVacancy, showToast
-}) {
-    const [confirmDelete, setConfirmDelete] = useState(null)
-    const [confirmArchive, setConfirmArchive] = useState(null)
-    const [deleting, setDeleting] = useState(null)
-    const [archiving, setArchiving] = useState(null)
-    const [showArchived, setShowArchived] = useState(false)
+export default function MyVacanciesPage({ myCompany, myVacancies = [], employerLoading, employerError, onOpenVacancy, onCreateVacancy, onCreateCompany, onEditVacancy, onReload, onDeleteVacancy, onArchiveVacancy, showToast }) {
+    const [confirmation, setConfirmation] = useState(null)
+    const [busy, setBusy] = useState(null)
+    const [actionError, setActionError] = useState('')
+    const [tab, setTab] = useState('active')
+    const [query, setQuery] = useState('')
+    const active = myVacancies.filter(job => !job.is_archived)
+    const archived = myVacancies.filter(job => job.is_archived)
+    const selected = tab === 'active' ? active : archived
+    const visible = selected.filter(job => `${job.title} ${job.location}`.toLowerCase().includes(query.trim().toLowerCase()))
+    const views = myVacancies.reduce((sum, job) => sum + (Number(job.views) || 0), 0)
 
-    const handleDelete = async () => {
-        if (!confirmDelete) return
-        setDeleting(confirmDelete.id)
+    async function changeVacancy(job, action) {
+        if (busy) return
+        setBusy(job.id)
+        setActionError('')
         try {
-            await onDeleteVacancy(confirmDelete.id)
-            if (showToast) showToast(`🗑️ Вакансия "${confirmDelete.title}" удалена`)
-            setConfirmDelete(null)
-        } catch (err) {
-            console.error('Ошибка удаления:', err)
-            if (showToast) showToast('Не удалось удалить вакансию')
-        } finally {
-            setDeleting(null)
-        }
+            if (action === 'delete') await onDeleteVacancy(job.id)
+            else await onArchiveVacancy(job.id, action === 'archive')
+            showToast?.(action === 'delete' ? 'Вакансия удалена' : action === 'archive' ? 'Вакансия перемещена в архив' : 'Вакансия снова опубликована')
+            setConfirmation(null)
+        } catch (err) { setActionError(userError(err)) }
+        finally { setBusy(null) }
     }
 
-    const handleArchive = async () => {
-        if (!confirmArchive) return
-        setArchiving(confirmArchive.id)
-        try {
-            await onArchiveVacancy(confirmArchive.id, true)
-            if (showToast) showToast(`📦 Вакансия перемещена в архив`)
-            setConfirmArchive(null)
-        } catch (err) {
-            console.error('Ошибка архивации:', err)
-            if (showToast) showToast('Не удалось архивировать')
-        } finally {
-            setArchiving(null)
-        }
-    }
-
-    const handleRestore = async (vacancy) => {
-        try {
-            await onArchiveVacancy(vacancy.id, false)
-            if (showToast) showToast(`✨ Вакансия "${vacancy.title}" восстановлена`)
-        } catch (err) {
-            console.error('Ошибка восстановления:', err)
-            if (showToast) showToast('Не удалось восстановить')
-        }
-    }
-
-    if (employerLoading) {
-        return (
-            <div className="employer-page">
-                <div className="loading"><div className="spinner"></div><p>Загрузка...</p></div>
-            </div>
-        )
-    }
-
-    if (!myCompany) {
-        return (
-            <div className="employer-page">
-                <div className="employer-empty">
-                    <h2>Сначала создайте компанию</h2>
-                    <button className="btn btn-primary" onClick={onCreateVacancy}>Создать компанию</button>
-                </div>
-            </div>
-        )
-    }
-
-    const activeVacancies = myVacancies.filter(v => !v.is_archived)
-    const archivedVacancies = myVacancies.filter(v => v.is_archived)
-
-    return (
-        <div className="employer-page">
-            {/* ====== МОДАЛКА УДАЛЕНИЯ ====== */}
-            {confirmDelete && (
-                <ConfirmModal
-                    title="Удалить вакансию?"
-                    message={`Вакансия "${confirmDelete.title}" будет удалена навсегда вместе со всеми откликами и чатами. Это действие нельзя отменить.`}
-                    confirmText={deleting ? 'Удаление...' : 'Удалить'}
-                    cancelText="Отмена"
-                    danger={true}
-                    onConfirm={handleDelete}
-                    onCancel={() => setConfirmDelete(null)}
-                />
-            )}
-
-            {/* ====== МОДАЛКА АРХИВАЦИИ ====== */}
-            {confirmArchive && (
-                <ConfirmModal
-                    title="Архивировать вакансию?"
-                    message={`Вакансия "${confirmArchive.title}" будет скрыта из поиска и списков кандидатов. Вы сможете восстановить её в любой момент.`}
-                    confirmText={archiving ? 'Архивация...' : 'Архивировать'}
-                    cancelText="Отмена"
-                    onConfirm={handleArchive}
-                    onCancel={() => setConfirmArchive(null)}
-                />
-            )}
-
-            <div className="employer-header">
-                <div>
-                    <h1>Мои вакансии</h1>
-                    <p className="employer-subtitle">
-                        {myCompany.name} • {activeVacancies.length} активных
-                        {archivedVacancies.length > 0 && ` • ${archivedVacancies.length} в архиве`}
-                    </p>
-                </div>
-                <button className="btn btn-primary" onClick={onCreateVacancy}>
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    Создать вакансию
-                </button>
-            </div>
-
-            {employerError && <div className="employer-error">{employerError}</div>}
-
-            {activeVacancies.length === 0 && archivedVacancies.length === 0 ? (
-                <div className="employer-empty-small">
-                    <p>У вас пока нет вакансий</p>
-                    <button className="btn btn-primary" onClick={onCreateVacancy}>
-                        Создать первую вакансию
-                    </button>
-                </div>
-            ) : (
-                <>
-                    {/* ====== АКТИВНЫЕ ВАКАНСИИ ====== */}
-                    {activeVacancies.length > 0 && (
-                        <div className="my-vacancies-grid">
-                            {activeVacancies.map(v => (
-                                <div key={v.id} className="my-vacancy-card">
-                                    <div className="my-vacancy-header" onClick={() => onOpenVacancy(v.id)}>
-                                        <h3>{v.title}</h3>
-                                        <span className="vacancy-views">
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </svg>
-                                            {v.views || 0}
-                                        </span>
-                                    </div>
-                                    <div className="my-vacancy-meta" onClick={() => onOpenVacancy(v.id)}>
-                                        <span>{v.location}</span>
-                                        <span>•</span>
-                                        <span>{v.experience}</span>
-                                        {v.remote && (<><span>•</span><span className="remote-badge-mini">Удалённо</span></>)}
-                                    </div>
-                                    {v.skills && v.skills.length > 0 && (
-                                        <div className="my-vacancy-skills" onClick={() => onOpenVacancy(v.id)}>
-                                            {v.skills.slice(0, 4).map((skill, i) => (
-                                                <span key={i} className="skill-tag-mini">{skill}</span>
-                                            ))}
-                                            {v.skills.length > 4 && (
-                                                <span className="skill-tag-mini more">+{v.skills.length - 4}</span>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {/* ====== КНОПКИ ДЕЙСТВИЙ ====== */}
-                                    <div className="my-vacancy-actions">
-                                        <button
-                                            className="btn btn-secondary btn-small"
-                                            onClick={() => onOpenVacancy(v.id)}
-                                            title="Открыть"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                                                <circle cx="12" cy="12" r="3" />
-                                            </svg>
-                                        </button>
-                                        <button
-                                            className="btn btn-primary btn-small"
-                                            onClick={() => onEditVacancy && onEditVacancy(v)}
-                                            title="Редактировать"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                            </svg>
-                                            Редактировать
-                                        </button>
-                                        <button
-                                            className="btn btn-secondary btn-small"
-                                            onClick={() => setConfirmArchive(v)}
-                                            disabled={archiving === v.id}
-                                            title="В архив"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="21 8 21 21 3 21 3 8" />
-                                                <rect x="1" y="3" width="22" height="5" />
-                                            </svg>
-                                            В архив
-                                        </button>
-                                        <button
-                                            className="btn btn-danger-outline btn-small"
-                                            onClick={() => setConfirmDelete(v)}
-                                            disabled={deleting === v.id}
-                                            title="Удалить"
-                                        >
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <polyline points="3 6 5 6 21 6" />
-                                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                            </svg>
-                                            Удалить
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {/* ====== АРХИВНЫЕ ВАКАНСИИ ====== */}
-                    {archivedVacancies.length > 0 && (
-                        <div className="archived-section">
-                            <button
-                                className="archived-toggle"
-                                onClick={() => setShowArchived(!showArchived)}
-                            >
-                                <svg
-                                    width="16" height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    className={`toggle-arrow ${showArchived ? 'open' : ''}`}
-                                >
-                                    <polyline points="9 18 15 12 9 6" />
-                                </svg>
-                                Архив ({archivedVacancies.length})
-                            </button>
-
-                            {showArchived && (
-                                <div className="my-vacancies-grid archived-grid">
-                                    {archivedVacancies.map(v => (
-                                        <div key={v.id} className="my-vacancy-card archived">
-                                            <div className="archived-badge">📦 В архиве</div>
-                                            <div className="my-vacancy-header">
-                                                <h3>{v.title}</h3>
-                                            </div>
-                                            <div className="my-vacancy-meta">
-                                                <span>{v.location}</span>
-                                                <span>•</span>
-                                                <span>{v.experience}</span>
-                                            </div>
-                                            <div className="my-vacancy-actions">
-                                                <button
-                                                    className="btn btn-secondary btn-small"
-                                                    onClick={() => handleRestore(v)}
-                                                >
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <polyline points="1 4 1 10 7 10" />
-                                                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                                                    </svg>
-                                                    Восстановить
-                                                </button>
-                                                <button
-                                                    className="btn btn-danger-outline btn-small"
-                                                    onClick={() => setConfirmDelete(v)}
-                                                    disabled={deleting === v.id}
-                                                >
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <polyline points="3 6 5 6 21 6" />
-                                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                                    </svg>
-                                                    Удалить
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </>
-            )}
-        </div>
-    )
+    return <div className="employer-page workspace-screen vacancies-workspace">
+        <WorkspaceHeader eyebrow="ПОДБОР КОМАНДЫ" title="Мои вакансии" description={myCompany ? `${myCompany.name} · Управляйте публикациями и находите новых коллег.` : 'Все публикации вашей компании в одном месте.'}>
+            {myCompany && <button className="btn btn-primary" onClick={onCreateVacancy}><WorkspaceIcon name="plus" size={18}/>Новая вакансия</button>}
+        </WorkspaceHeader>
+        {confirmation && <ConfirmModal title={confirmation.action === 'delete' ? 'Удалить вакансию?' : 'Переместить в архив?'} message={confirmation.action === 'delete' ? `Вакансия «${confirmation.job.title}» будет удалена вместе с откликами и чатами. Отменить это действие нельзя.` : `Вакансия «${confirmation.job.title}» исчезнет из поиска. Её можно будет восстановить из архива.`} confirmText={confirmation.action === 'delete' ? 'Удалить' : 'В архив'} danger={confirmation.action === 'delete'} onConfirm={() => changeVacancy(confirmation.job, confirmation.action)} onCancel={() => setConfirmation(null)}/>}
+        {(employerError || actionError) && <div className="employer-error" role="alert">{actionError || employerError}{employerError && onReload && <button className="btn btn-secondary" onClick={onReload}>Повторить загрузку</button>}</div>}
+        {employerLoading ? <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем вакансии…</p></div>
+        : !myCompany ? <div className="workspace-state"><span className="workspace-state-icon"><WorkspaceIcon name="briefcase" size={28}/></span><h2>Расскажите о компании</h2><p>Создайте страницу работодателя, чтобы публиковать вакансии и получать отклики.</p><button className="btn btn-primary" onClick={onCreateCompany || onCreateVacancy}>Создать компанию</button></div>
+        : <>
+            <div className="workspace-metrics"><WorkspaceMetric icon="briefcase" value={active.length} label="Опубликовано" hint="Доступны кандидатам в поиске"/><WorkspaceMetric icon="eye" value={views.toLocaleString('ru-RU')} label="Просмотры вакансий" hint="За всё время"/><WorkspaceMetric icon="archive" value={archived.length} label="В архиве" hint="Можно опубликовать снова"/></div>
+            <div className="workspace-toolbar"><div className="workspace-tabs" aria-label="Публикации вакансий"><button aria-pressed={tab === 'active'} onClick={() => setTab('active')}>Активные<span>{active.length}</span></button><button aria-pressed={tab === 'archived'} onClick={() => setTab('archived')}>Архив<span>{archived.length}</span></button></div><label className="workspace-search"><WorkspaceIcon name="search" size={18}/><input aria-label="Найти свою вакансию" placeholder="Название или город" value={query} onChange={event => setQuery(event.target.value)}/></label></div>
+            {visible.length === 0 ? <div className="workspace-state"><span className="workspace-state-icon"><WorkspaceIcon name={query ? 'search' : tab === 'active' ? 'briefcase' : 'archive'} size={28}/></span><h2>{query ? 'Ничего не найдено' : tab === 'active' ? 'Здесь появятся ваши вакансии' : 'Архив пока пуст'}</h2><p>{query ? 'Попробуйте другое название или город.' : tab === 'active' ? 'Опишите задачи и условия — и начните знакомиться с кандидатами.' : 'Сохраняйте здесь вакансии, по которым подбор уже завершён.'}</p>{query ? <button className="btn btn-secondary" onClick={() => setQuery('')}>Сбросить поиск</button> : tab === 'active' && <button className="btn btn-primary" onClick={onCreateVacancy}>Создать вакансию</button>}</div>
+            : <div className="workspace-job-grid">{visible.map(job => <article key={job.id} className="workspace-job-card">
+                <div className="workspace-card-top"><span className={`workspace-status ${job.is_archived ? 'muted' : ''}`}>{job.is_archived ? 'В архиве' : 'Опубликована'}</span><span className="workspace-card-views" title="Просмотры"><WorkspaceIcon name="eye" size={16}/>{job.views || 0}</span></div>
+                <button className="workspace-job-title" onClick={() => onOpenVacancy(job.id)}>{job.title}</button><VacancyTerms vacancy={job}/>
+                <div className="workspace-job-meta">{[job.location, job.experience, job.remote ? 'Удалённо' : 'В офисе'].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div>
+                {!!job.skills?.length && <div className="workspace-job-skills">{job.skills.slice(0,4).map((skill, index) => <span key={index}>{skill}</span>)}{job.skills.length > 4 && <span>+{job.skills.length - 4}</span>}</div>}
+                <div className="workspace-card-actions">{job.is_archived ? <button className="btn btn-primary" disabled={busy === job.id} onClick={() => changeVacancy(job, 'restore')}>Опубликовать снова</button> : <><button className="btn btn-primary" onClick={() => onEditVacancy?.(job)}>Редактировать</button><button className="btn btn-secondary" disabled={!!busy} onClick={() => setConfirmation({ job, action:'archive' })}>В архив</button></>}<button className="workspace-delete" disabled={!!busy} onClick={() => setConfirmation({ job, action:'delete' })}>Удалить</button></div>
+            </article>)}</div>}
+        </>}
+    </div>
 }
-
-export default MyVacanciesPage

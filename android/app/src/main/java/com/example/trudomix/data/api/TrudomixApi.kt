@@ -18,6 +18,7 @@ interface TrudomixApi {
     @GET("api/my-resume/stats") suspend fun getResumeStats(): Response<ResumeStats>
     @GET("api/employer/stats") suspend fun getEmployerStats(): Response<EmployerStats>
     @POST("api/devices/status") suspend fun devicePushStatus(@Body request: DeviceTokenRequest): Response<PushStatus>
+    @POST("api/devices/test") suspend fun testDevicePush(@Body request: DeviceTokenRequest): Response<Unit>
     @Multipart @POST("api/users/me/photo")
     suspend fun uploadUserPhoto(@Part photo: okhttp3.MultipartBody.Part): Response<User>
 

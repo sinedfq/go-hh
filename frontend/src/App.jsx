@@ -349,6 +349,7 @@ function App() {
                                     employerError={app.employerError}
                                     onOpenVacancy={app.openVacancyPage}
                                     onCreateVacancy={() => app.handleModeChange('create-vacancy')}
+                                    onCreateCompany={() => app.handleModeChange('my-company')}
                                     onEditVacancy={app.startEditVacancy}
                                     onReload={app.loadMyVacancies}
                                     onDeleteVacancy={app.deleteVacancy}

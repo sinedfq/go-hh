@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import com.example.trudomix.data.api.ApiClient
 import com.example.trudomix.data.models.DeviceTokenRequest
 import com.example.trudomix.data.repository.bodyOrThrow
+import com.example.trudomix.data.repository.checkSuccess
 import com.example.trudomix.push.*
 import com.google.firebase.messaging.FirebaseMessaging
 import kotlinx.coroutines.*
@@ -33,17 +34,22 @@ fun NotificationSettings() {
     var server by remember { mutableStateOf<String?>(null) }
     var feedback by remember { mutableStateOf<String?>(null) }
     var refresh by remember { mutableIntStateOf(0) }
+    val scope = rememberCoroutineScope()
+    var serverReady by remember { mutableStateOf(false) }
+    var testingPush by remember { mutableStateOf(false) }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         allowed = AppNotifications.allowed(context); DeviceRegistration.sync(context); refresh++
     }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { allowed = AppNotifications.allowed(context); refresh++ }
     LaunchedEffect(registration, refresh) {
         server = null
+        serverReady = false
         if (registration == RegistrationStatus.REGISTERED) {
             server = try {
                 val result = withTimeout(12000) {
                     ApiClient.api.devicePushStatus(DeviceTokenRequest(FirebaseMessaging.getInstance().token.await())).bodyOrThrow()
                 }
+                serverReady = result.server_enabled && result.registered
                 when {
                     !result.server_enabled -> "На сервере ещё не включена отправка уведомлений"
                     !result.registered -> "Устройство не зарегистрировано. Нажми «Повторить подключение»"
@@ -78,6 +84,20 @@ fun NotificationSettings() {
                     feedback = "Это локальная проверка отображения. Доставка сообщений с сервера проверяется отдельно."
                 }) { Text("Тест уведомления") }
                 if (registration != RegistrationStatus.UNCONFIGURED) TextButton(onClick = { DeviceRegistration.sync(context); refresh++ }) { Text("Повторить подключение") }
+                if (serverReady && allowed) OutlinedButton(enabled = !testingPush, onClick = {
+                    testingPush = true
+                    scope.launch {
+                        try {
+                            withTimeout(20000) {
+                                ApiClient.api.testDevicePush(DeviceTokenRequest(FirebaseMessaging.getInstance().token.await())).checkSuccess()
+                            }
+                            feedback = "Firebase принял сообщение с сервера. Дождись уведомления «Уведомления Trudomix подключены»."
+                        } catch (_: TimeoutCancellationException) { feedback = "Не удалось дождаться ответа сервера. Повтори проверку." }
+                        catch (e: CancellationException) { throw e }
+                        catch (e: Exception) { feedback = com.example.trudomix.data.api.userErrorMessage(e) }
+                        finally { testingPush = false }
+                    }
+                }) { Text(if (testingPush) "Отправляем…" else "Проверить доставку с сервера") }
             }
             feedback?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             Text("Настройки по событиям", style = MaterialTheme.typography.labelLarge)

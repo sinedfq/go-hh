@@ -1,0 +1,82 @@
+.workspace-screen.employer-page,.workspace-screen.candidate-page { max-width:1200px;margin:0 auto;padding:0 0 32px;color:var(--text-primary); }
+.workspace-header { display:flex;justify-content:space-between;align-items:center;gap:24px;margin-bottom:24px; }
+.workspace-header h1 { margin:8px 0;font-size:clamp(1.6rem,3vw,2.2rem);line-height:1.2;letter-spacing:-.045em; }
+.workspace-header p { color:var(--text-secondary);max-width:65ch; }
+.workspace-header-actions { flex-shrink:0;display:flex;gap:10px; }
+.workspace-header-actions .btn { gap:8px; }
+.workspace-metrics { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:24px; }
+.workspace-metric { display:flex;align-items:flex-start;gap:16px;border:1px solid var(--border);border-radius:22px;background:var(--surface);padding:22px;min-width:0; }
+.workspace-metric-icon { display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;background:var(--accent-light);color:var(--accent);border-radius:14px; }
+.workspace-metric>div { display:flex;flex-direction:column;gap:5px;min-width:0; }
+.workspace-metric-label { color:var(--text-secondary);font-size:.82rem; }
+.workspace-metric strong { font-size:1.8rem;line-height:1.2;letter-spacing:-.04em;font-variant-numeric:tabular-nums; }
+.workspace-metric small { font-size:.75rem;color:var(--text-muted); }
+.workspace-toolbar { display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:0 0 22px; }
+.workspace-tabs { display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:16px; }
+.workspace-tabs button { display:flex;align-items:center;gap:10px;background:transparent;border:0;border-radius:11px;color:var(--text-secondary);padding:10px 16px;cursor:pointer;font-size:.85rem; }
+.workspace-tabs button[aria-pressed=true] { background:var(--accent-light);color:var(--accent);font-weight:650; }
+.workspace-tabs button span { padding:1px 7px;border-radius:7px;background:var(--bg);font-size:.75rem; }
+.workspace-search { display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;color:var(--text-muted);min-width:0;max-width:360px; }
+.workspace-screen .workspace-search input { width:100%;min-width:0;padding:12px 0;border:0;background:transparent!important;color:var(--text-primary);outline:none;box-shadow:none; }
+.workspace-search:focus-within { border-color:var(--accent);box-shadow:var(--focus-ring); }
+.workspace-state { text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px;padding:48px 24px;border:1px solid var(--border);border-radius:24px;background:var(--surface); }
+.workspace-state-icon { color:var(--accent);display:grid;place-items:center;background:var(--accent-light);width:60px;height:60px;border-radius:20px; }
+.workspace-state p { color:var(--text-secondary);max-width:50ch; }
+.workspace-status { display:inline-flex;align-items:center;gap:7px;font-size:.75rem;white-space:nowrap;font-weight:600;padding:6px 10px;border-radius:9px;background:var(--accent-light);color:var(--accent); }
+.workspace-status::before { content:'';width:6px;height:6px;border-radius:50%;background:currentColor; }
+.workspace-status.muted { background:var(--bg);color:var(--text-secondary); }
+.workspace-status.success { background:color-mix(in srgb,var(--success) 12%,var(--surface));color:var(--success); }
+.workspace-status.declined { background:var(--bg);color:var(--text-muted); }
+.workspace-job-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:18px; }
+.workspace-job-card { display:flex;flex-direction:column;gap:16px;min-width:0;padding:24px;border:1px solid var(--border);border-radius:24px;background:var(--surface); }
+.workspace-card-top { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+.workspace-card-views { display:flex;align-items:center;gap:5px;color:var(--text-muted);font-size:.8rem; }
+.workspace-job-title { display:block;width:100%;padding:0;text-align:left;background:none;border:0;font-size:1.2rem;font-weight:650;line-height:1.4;letter-spacing:-.025em;color:var(--text-primary);overflow-wrap:anywhere;cursor:pointer; }
+.workspace-job-title:hover { color:var(--accent); }
+.workspace-job-meta { display:flex;flex-wrap:wrap;gap:6px 12px;color:var(--text-secondary);font-size:.85rem; }
+.workspace-job-skills { display:flex;flex-wrap:wrap;gap:7px; }
+.workspace-job-skills span { padding:4px 9px;font-size:.75rem;border-radius:8px;background:var(--bg);color:var(--text-secondary); }
+.workspace-job-card .vacancy-terms { margin:0; }
+.workspace-card-actions { display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:auto;padding-top:18px;border-top:1px solid var(--border); }
+.workspace-card-actions .btn { min-height:38px;font-size:.8rem;padding:8px 12px; }
+.workspace-card-actions .workspace-delete { color:var(--text-muted);background:none;border:0;cursor:pointer;padding:8px;font-size:.8rem; }
+.workspace-card-actions .workspace-delete:hover { color:var(--danger); }
+.vacancy-editor-layout { display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:24px;align-items:start; }
+.workspace-screen .vacancy-form { max-width:none;padding:0;border:0;border-radius:0;background:transparent!important;box-shadow:none;min-width:0;display:flex;flex-direction:column;gap:20px; }
+.editor-section,.workspace-screen .vacancy-form>.terms-fields { min-width:0;padding:26px;background:var(--surface);border:1px solid var(--border);border-radius:24px;margin:0; }
+.editor-section-heading { display:flex;align-items:flex-start;gap:12px;margin-bottom:24px; }
+.editor-section-heading>span { display:grid;place-items:center;flex:0 0 32px;width:32px;height:32px;background:var(--accent-light);color:var(--accent);border-radius:10px;font-size:.75rem;font-weight:700; }
+.editor-section-heading h2 { font-size:1.08rem;letter-spacing:-.025em;margin:0 0 4px; }
+.editor-section-heading p { color:var(--text-muted);font-size:.8rem; }
+.workspace-screen .vacancy-form .form-field:last-child { margin-bottom:0; }
+.workspace-screen .vacancy-form .terms-fields legend { padding:0 8px;color:var(--text-primary);font-size:1.08rem; }
+.editor-legend-step { display:inline-grid;place-items:center;width:32px;height:32px;margin-right:12px;background:var(--accent-light);color:var(--accent);border-radius:10px;font-size:.75rem;font-weight:700; }
+.workspace-screen .vacancy-form :is(input,textarea,select,.dropdown-trigger) { border-radius:12px;background:var(--bg);color:var(--text-primary);border-color:var(--border); }
+.workspace-screen .vacancy-form .remote-toggle-label { display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--border);border-radius:14px;background:var(--bg); }
+.workspace-screen .vacancy-form input[type=checkbox] { width:18px;height:18px;accent-color:var(--accent); }
+.workspace-screen .vacancy-form :is(.city-dropdown,.dropdown-menu,.position-suggestions,.skills-suggestions) { background:var(--surface);color:var(--text-primary);border:1px solid var(--border);border-radius:14px;z-index:20; }
+.workspace-screen .vacancy-form .markdown-editor { background:var(--surface);border-color:var(--border); }
+.workspace-screen .vacancy-form .form-actions { margin:0;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:20px;display:flex;justify-content:flex-end;gap:12px; }
+.vacancy-editor-preview { position:sticky;top:20px;min-width:0; }
+.vacancy-editor-preview-card { border:1px solid var(--border);border-radius:24px;background:var(--surface);padding:24px;display:flex;flex-direction:column;gap:18px; }
+.vacancy-editor-preview-card h2 { font-size:1.2rem;line-height:1.4;overflow-wrap:anywhere; }
+.vacancy-editor-preview-note { padding:16px 4px;color:var(--text-muted);font-size:.8rem; }
+.applications-workspace .my-apps-list { display:flex;flex-direction:column;gap:18px; }
+.applications-workspace .applications-tabs { margin-bottom:22px;width:fit-content;max-width:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin; }
+.applications-workspace .applications-tabs button { flex:0 0 auto;white-space:nowrap; }
+.workspace-screen.applications-workspace .my-app-card { border:1px solid var(--border);border-radius:24px;padding:24px;background:var(--surface);box-shadow:none;opacity:1; }
+.applications-workspace .my-app-card:hover { transform:none;box-shadow:none;border-color:color-mix(in srgb,var(--accent) 45%,var(--border)); }
+.applications-workspace .my-app-card-top { display:flex;justify-content:space-between;gap:16px;margin-bottom:12px; }
+.applications-workspace .my-app-vacancy-info h3 { font-size:1.2rem;line-height:1.4;letter-spacing:-.025em; }
+.applications-workspace .my-app-company-name { color:var(--text-secondary);margin-top:5px; }
+.applications-workspace .my-app-meta { color:var(--text-muted);font-size:.8rem; }
+.applications-workspace .my-app-actions { border-top:1px solid var(--border);padding-top:18px;margin-top:18px;gap:10px;display:flex;flex-wrap:wrap; }
+.applications-workspace .my-app-actions .cancel-btn { margin-left:auto;border:0;background:none;color:var(--text-muted); }
+.applications-workspace .my-app-actions .cancel-btn:hover { color:var(--danger); }
+.applications-workspace .my-app-actions .btn { border-radius:12px;min-height:40px; }
+.applications-workspace .archived-badge-top { position:static;display:inline-flex;width:fit-content;margin:0 0 14px;padding:5px 10px;background:var(--bg);color:var(--text-muted);border-radius:8px; }
+.applications-workspace .my-app-card.vacancy-archived { opacity:1; }
+.applications-workspace .application-history { border-color:var(--border);background:var(--bg);border-radius:14px; }
+@media(max-width:1050px) { .vacancy-editor-layout { grid-template-columns:minmax(0,1fr); }.vacancy-editor-preview { display:none; } }
+@media(max-width:640px) { .workspace-header { align-items:stretch;flex-direction:column;gap:16px; }.workspace-header-actions .btn { width:100%; }.workspace-header-actions { display:block; }.workspace-metrics { gap:8px; }.workspace-metric { flex-direction:column;gap:10px;padding:14px;border-radius:18px; }.workspace-metric-icon { width:32px;height:32px;flex-basis:32px;border-radius:10px; }.workspace-metric-label { font-size:.72rem; }.workspace-metric strong { font-size:1.4rem; }.workspace-metric small { display:none; }.workspace-search { max-width:none;width:100%; }.workspace-tabs { width:100%; }.workspace-tabs button { flex:1;padding:9px 10px;justify-content:center; }.editor-section,.workspace-screen .vacancy-form>.terms-fields { padding:20px;border-radius:20px; }.workspace-screen .vacancy-form .form-row-2 { grid-template-columns:1fr; }.workspace-screen .vacancy-form .form-actions { padding:16px; }.workspace-job-card,.applications-workspace .my-app-card { padding:20px;border-radius:20px; }.applications-workspace .my-app-card-top { flex-direction:column; }.applications-workspace .my-app-actions .cancel-btn { margin-left:0; } }
+@media(prefers-reduced-motion:reduce) { .workspace-screen { animation:none; } }
