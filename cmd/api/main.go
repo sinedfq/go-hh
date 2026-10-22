@@ -45,6 +45,7 @@ func main() {
 	mux.HandleFunc("DELETE /api/saved-searches/{id}", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
 	mux.HandleFunc("POST /api/devices", server.authMiddleware(server.registerDeviceHandler))
 	mux.HandleFunc("POST /api/devices/status", server.authMiddleware(server.devicePushStatusHandler))
+	mux.HandleFunc("POST /api/devices/test", server.authMiddleware(server.testDevicePushHandler))
 	mux.HandleFunc("DELETE /api/devices", server.authMiddleware(server.registerDeviceHandler))
 
 	mux.HandleFunc("/health", server.healthHandler)

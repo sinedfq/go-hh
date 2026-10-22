@@ -2,9 +2,9 @@ import { salaryLabel,employmentLabels,scheduleLabels } from '../../utils/vacancy
 export default function VacancyTerms({vacancy}) {
     return <div className="vacancy-terms"><strong>{salaryLabel(vacancy)}</strong><div>{employmentLabels[vacancy.employment]&&<span>{employmentLabels[vacancy.employment]}</span>}{scheduleLabels[vacancy.schedule]&&<span>{scheduleLabels[vacancy.schedule]}</span>}</div></div>
 }
-export function VacancyTermsFields({value,onChange}) {
+export function VacancyTermsFields({value,onChange,step}) {
     const update=(key,newValue)=>onChange({...value,[key]:newValue})
-    return <fieldset className="terms-fields"><legend>Зарплата и условия</legend><p>Оплата за месяц. Если зарплата не раскрывается, оставь оба поля пустыми.</p><div className="form-row-2">
+    return <fieldset className="terms-fields"><legend>{step && <span className="editor-legend-step">{step}</span>}Зарплата и условия</legend><p>Оплата за месяц. Если зарплата не раскрывается, оставь оба поля пустыми.</p><div className="form-row-2">
         <label>Зарплата от<input type="number" min="0" max="1000000000" value={value.salary_from||''} onChange={event=>update('salary_from',event.target.value)} /></label>
         <label>Зарплата до<input type="number" min={value.salary_from||0} max="1000000000" value={value.salary_to||''} onChange={event=>update('salary_to',event.target.value)} /></label>
         <label>Валюта<select value={value.currency||'RUB'} onChange={event=>update('currency',event.target.value)}>{['RUB','USD','EUR'].map(currency=><option key={currency}>{currency}</option>)}</select></label>

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
@@ -86,6 +87,31 @@ INSERT INTO device_tokens VALUES('owner-device',7),('other-user-device',8);`)
 	case event := <-sender.deliveries:
 		t.Fatalf("delivered an unsaved event or to another user: %+v", event)
 	case <-time.After(150 * time.Millisecond):
+	}
+	for _, tc := range []struct {
+		token  string
+		status int
+	}{{"other-user-device", 403}, {"owner-device", 204}} {
+		r := httptest.NewRequest("POST", "/api/devices/test", strings.NewReader(`{"token":"`+tc.token+`"}`))
+		r = r.WithContext(context.WithValue(r.Context(), userContextKey, &Claims{UserID: 7}))
+		w := httptest.NewRecorder()
+		server.testDevicePushHandler(w, r)
+		if w.Code != tc.status {
+			t.Fatalf("device diagnostic returned %d, want %d", w.Code, tc.status)
+		}
+	}
+	select {
+	case event := <-sender.deliveries:
+		if event.token != "owner-device" || event.data["type"] != "push_test" {
+			t.Fatalf("unexpected diagnostic destination: %+v", event)
+		}
+	default:
+		t.Fatal("diagnostic event was not delivered")
+	}
+	select {
+	case <-sender.deliveries:
+		t.Fatal("diagnostic sent to another user's device")
+	default:
 	}
 }
 

@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import VacancyMapPicker from './VacancyMapPicker'
 import MarkdownEditor from '../../components/vacancy/MarkdownEditor'
-import { VacancyTermsFields } from '../../components/vacancy/VacancyTerms'
+import VacancyTerms, { VacancyTermsFields } from '../../components/vacancy/VacancyTerms'
+import WorkspaceHeader from '../../components/common/WorkspaceHeader'
+import { userError } from '../../utils/userError'
 import './EmployerPages.css'
 
 function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkills = [], allPositions = [], editVacancy = null }) {
@@ -191,29 +193,27 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                 'forbidden: insufficient role': 'Недостаточно прав',
                 'vacancy not found or access denied': 'Вакансия не найдена'
             }
-            setError(errorMap[rawMessage] || rawMessage)
+            setError(errorMap[rawMessage] || userError(err))
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="employer-page">
-            <div className="employer-header">
-                <h1>{isEditMode ? 'Редактировать вакансию' : 'Создать вакансию'}</h1>
-                <p className="employer-subtitle">
-                    {isEditMode ? 'Обновите информацию о вакансии' : 'Заполните информацию о вакансии'}
-                </p>
+        <div className="employer-page workspace-screen vacancy-editor-screen">
+            <WorkspaceHeader eyebrow="КОМАНДА НАЧИНАЕТСЯ ЗДЕСЬ" title={isEditMode ? 'Редактировать вакансию' : 'Новая вакансия'} description="Расскажите о работе, условиях и команде — так подходящим кандидатам будет проще вас найти.">
                 {onCancel && (
                     <button className="btn btn-secondary" onClick={onCancel}>
-                        Отмена
+                        К вакансиям
                     </button>
                 )}
-            </div>
+            </WorkspaceHeader>
 
+            <div className="vacancy-editor-layout">
             <form className="vacancy-form" onSubmit={handleSubmit}>
-                <VacancyTermsFields value={terms} onChange={setTerms}/>
-                {error && <div className="employer-error">{error}</div>}
+                {error && <div className="employer-error" role="alert">{error}</div>}
+                <section className="editor-section">
+                <div className="editor-section-heading"><span>01</span><div><h2>Кого ищете</h2><p>Должность, город и уровень специалиста. Обязательные поля отмечены звёздочкой.</p></div></div>
 
                 {/* ====== НАЗВАНИЕ ВАКАНСИИ С АВТОДОПОЛНЕНИЕМ ====== */}
                 <div className="form-field" ref={titleInputRef}>
@@ -260,6 +260,7 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                                 value={citySearch}
                                 onChange={(e) => {
                                     setCitySearch(e.target.value)
+                                    setForm(prev => ({ ...prev, location: e.target.value }))
                                     setShowCityDropdown(true)
                                 }}
                                 onFocus={() => setShowCityDropdown(true)}
@@ -363,6 +364,10 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                 </div>
 
                 {/* ====== НАВЫКИ ====== */}
+                </section>
+                <VacancyTermsFields value={terms} onChange={setTerms} step="02"/>
+                <section className="editor-section">
+                <div className="editor-section-heading"><span>03</span><div><h2>Задачи и ожидания</h2><p>Добавьте навыки и опишите работу. В описании доступны Markdown и изображения.</p></div></div>
                 <div className="form-field" ref={skillInputRef}>
                     <label>Требуемые навыки</label>
                     <div className="skills-input-wrapper">
@@ -429,9 +434,9 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                 </div>
 
                 {/* ====== РАСПОЛОЖЕНИЕ С КАРТОЙ ====== */}
-                <div className="form-section-title">
-                    Расположение офиса
-                </div>
+                </section>
+                <section className="editor-section">
+                <div className="editor-section-heading"><span>04</span><div><h2>Где работает команда</h2><p>{form.remote ? 'Адрес необязателен для удалённой работы.' : 'Укажите офис на карте, чтобы кандидатам было проще оценить дорогу.'}</p></div></div>
 
                 <div className="form-field">
                     <VacancyMapPicker
@@ -448,6 +453,7 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                         }}
                     />
                 </div>
+                </section>
 
                 <div className="form-actions">
                     <button type="button" className="btn btn-secondary" onClick={onCancel}>
@@ -458,6 +464,8 @@ function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkill
                     </button>
                 </div>
             </form>
+            <aside className="vacancy-editor-preview"><div className="vacancy-editor-preview-card"><span className="eyebrow">ПРЕДПРОСМОТР КАРТОЧКИ</span><h2>{form.title || 'Название вашей вакансии'}</h2><VacancyTerms vacancy={terms}/><div className="workspace-job-meta"><span>{form.location || 'Город'}</span><span>{form.experience || 'Уровень'}</span><span>{form.remote ? 'Удалённо' : 'В офисе'}</span></div>{form.skills.length > 0 && <div className="workspace-job-skills">{form.skills.slice(0,5).map(skill => <span key={skill}>{skill}</span>)}</div>}</div><p className="vacancy-editor-preview-note">Перед публикацией проверьте зарплату, город и контакты компании. Описание и фотографии будут доступны на странице вакансии.</p></aside>
+            </div>
         </div>
     )
 }

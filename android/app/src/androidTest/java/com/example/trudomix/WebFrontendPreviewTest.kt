@@ -28,6 +28,7 @@ class WebFrontendPreviewTest {
         fun company()="""{"id":99,"name":"Команда Trudomix","it_accredited":true,"description":"Создаём удобные продукты","city":"Новосибирск","logo_url":"${companyLogo.get()}","team_story":"Небольшая команда инженеров, дизайнеров и исследователей.","benefits":["Обучение и конференции","Гибкий график"],"hiring_process":"Знакомство с HR → разговор с командой → предложение","photos":["/brand-dark-waves.png"]}"""
         val vacancies=(1..16).joinToString(",",prefix="[",postfix="]"){"""{"id":$it,"title":"Android-разработчик $it","company":"Команда Trudomix","salary_from":120000,"salary_to":180000,"currency":"RUB","employment":"full_time","schedule":"flexible","location":"Новосибирск","experience":"Middle","remote":true,"skills":["Kotlin","Compose"],"description":"Создавай удобные продукты вместе с командой. Гибкий график и возможность работать удалённо.","latitude":55.03,"longitude":82.92}"""}
         val resume="""{"id":99,"user_id":9999,"full_name":"Александр Иванов","desired_position":"Android-разработчик","city":"Новосибирск","experience":"Middle","skills":["Kotlin","React","Go"],"about":"Создаю удобные продукты и люблю работать с сильными командами.","photo_url":"/brand-dark-waves.png","remote":true}"""
+        val employerVacancies=org.json.JSONArray(vacancies).apply { getJSONObject(length()-1).put("is_archived",true) }.toString()
         val detailVacancy=org.json.JSONArray(vacancies).getJSONObject(0).apply {put("company_it_accredited",true);put("description","## Наша команда\n\n**Создаём** полезные продукты.\n\n- Поддержка\n- Обучение\n\n![Команда](/brand-dark-waves.png)\n\n<script>window.markdownInjected=true</script>")}.toString()
         val conversations="""[{"conversation_id":7,"id":7,"application_id":8,"vacancy_id":1,"vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","candidate_id":9999,"candidate_name":"Александр Иванов","last_message":"Давайте обсудим проект","last_message_at":"2026-10-21T10:00:00Z","unread_count":1,"cover_letter":"Здравствуйте! Хочу присоединиться к вашей команде."}]"""
         instrumentation.runOnMainSync { compose.activity.setContentView(WebView(compose.activity).apply {
@@ -47,10 +48,9 @@ class WebFrontendPreviewTest {
                     path=="/api/companies/99"->company()
                     path=="/api/companies/99/vacancies"->vacancies
                     path=="/api/companies"->"[${company()}]"
-                    path=="/api/companies/99/vacancies"->vacancies
                     path=="/api/saved-searches"->if(request.method=="POST")"""{"id":1}""" else """[{"id":1,"name":"Android в Новосибирске","filters":{"query":"Android","location":"Новосибирск","remote":true,"skills":["Kotlin"],"salary_min":100000,"currency":"RUB"}}]"""
                     path=="/api/applications/8/history"->"""[{"id":1,"status":"new","feedback":"","created_at":"2026-10-20T10:00:00Z"},{"id":2,"status":"accepted","feedback":"Приглашаем познакомиться с командой","interview_at":"2026-11-01T10:00:00+07:00","created_at":"2026-10-21T10:00:00Z"}]"""
-                    path=="/api/my-vacancies"->"""{"company":${company()},"vacancies":[]}"""
+                    path=="/api/my-vacancies"->"""{"company":${company()},"vacancies":$employerVacancies}"""
                     path=="/api/my-resume"->resume
                     path=="/api/my-resume/stats"->"""{"total_views":28}"""
                     path=="/api/my-applications"->"""[{"id":8,"vacancy_id":1,"vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","status":"accepted","created_at":"2026-10-20T10:00:00Z"}]"""
@@ -154,6 +154,12 @@ class WebFrontendPreviewTest {
         evaluate("document.querySelector('.application-history button').click()")
         waitFor("document.querySelectorAll('.application-history li').length===2")
         capture("application-history")
+        assertEquals("Application dashboard has three metrics","3",evaluate("document.querySelectorAll('.applications-workspace .workspace-metric').length"))
+        evaluate("(()=>{const input=document.querySelector('input[aria-label=\"Поиск по откликам\"]');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'нет такой компании');input.dispatchEvent(new Event('input',{bubbles:true}));})()")
+        waitFor("document.querySelector('.applications-workspace').textContent.includes('Ничего не найдено')")
+        evaluate("[...document.querySelectorAll('.workspace-state button')].find(node=>node.textContent.includes('Показать все')).click()")
+        waitFor("document.querySelectorAll('.my-app-card').length===1")
+        capture("applications-light")
         evaluate("window.previewReloading=true;localStorage.setItem('user',JSON.stringify({...$user,role:'employer'}));sessionStorage.setItem('currentMode','my-company');location.href=location.pathname")
         waitFor("!window.previewReloading&&!!document.querySelector('.company-avatar-editor')")
         assertEquals("Favicon configured","true",evaluate("!!document.querySelector('link[rel=icon][href=\"/brand-dark-waves.png\"]')"))
@@ -167,6 +173,26 @@ class WebFrontendPreviewTest {
         waitFor("!!document.querySelector('#company-team')")
         assertEquals("IT status is editable","true",evaluate("document.querySelector('.company-accreditation-option input').checked"))
         capture("company-editor")
+        evaluate("window.previewReloading=true;sessionStorage.setItem('currentMode','my-vacancies');location.href=location.pathname")
+        waitFor("!window.previewReloading&&document.querySelectorAll('.workspace-job-card').length===15")
+        capture("my-vacancies-dark")
+        evaluate("[...document.querySelectorAll('.workspace-tabs button')].find(node=>node.textContent.includes('Архив')).click()")
+        waitFor("document.querySelectorAll('.workspace-job-card').length===1")
+        assertEquals("Archived job is separate","true",evaluate("document.querySelector('.workspace-job-title').textContent.includes('16')"))
+        capture("my-vacancies-archive")
+        evaluate("[...document.querySelectorAll('.workspace-header button')].find(node=>node.textContent.includes('Новая вакансия')).click()")
+        waitFor("!!document.querySelector('.vacancy-editor-screen')")
+        assertEquals("Vacancy form is split into sections","3",evaluate("document.querySelectorAll('.vacancy-form>.editor-section').length"))
+        evaluate("(()=>{const input=document.querySelector('.position-input-wrapper input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Go-разработчик');input.dispatchEvent(new Event('input',{bubbles:true}));})()")
+        waitFor("document.querySelector('.vacancy-editor-preview-card h2').textContent==='Go-разработчик'")
+        evaluate("(()=>{const input=document.querySelector('.city-picker-input');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,'Новосибирск');input.dispatchEvent(new Event('input',{bubbles:true}));})()")
+        waitFor("document.querySelector('.vacancy-editor-preview-card .workspace-job-meta').textContent.includes('Новосибирск')")
+        capture("create-vacancy-dark")
+        evaluate("document.querySelector('.theme-toggle').click()")
+        waitFor("document.documentElement.dataset.theme==='light'")
+        capture("create-vacancy-light")
+        evaluate("document.querySelector('.theme-toggle').click()")
+        waitFor("document.documentElement.dataset.theme==='dark'")
         evaluate("window.previewReloading=true;sessionStorage.setItem('currentMode','companies');location.href=location.pathname")
         waitFor("!window.previewReloading&&!!document.querySelector('.company-card')")
         assertEquals("Dark public company card","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-card')).backgroundColor").trim('"'))
