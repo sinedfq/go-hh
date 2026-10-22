@@ -9,6 +9,41 @@ import org.junit.Assume.assumeTrue
 import org.junit.Test
 
 class NotificationDisplayTest {
+    @Test fun visibleChatClearsItsNotificationAndOtherChatsStillNotify() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        AppNotifications.createChannel(context)
+        assumeTrue("Enable notification permission before this display test", AppNotifications.allowed(context))
+        val manager = context.getSystemService(NotificationManager::class.java)
+        val active = 987654320
+        val other = 987654319
+        fun send(id: Int) = AppNotifications.show(context, "Новое сообщение", "Откройте чат", mapOf("conversation_id" to id.toString()))
+        fun shown(id: Int) = manager.activeNotifications.any { it.id == "conversation-$id".hashCode() }
+        fun awaitShown(id: Int, expected: Boolean) {
+            val deadline = System.currentTimeMillis() + 3000
+            while (shown(id) != expected && System.currentTimeMillis() < deadline) Thread.sleep(50)
+            assertEquals(expected, shown(id))
+        }
+        try {
+            assertTrue(send(active))
+            awaitShown(active, true)
+            AppNotifications.openConversation(context, active)
+            assertFalse(send(active))
+            awaitShown(active, false)
+            assertTrue(send(other))
+            awaitShown(other, true)
+            // A screen finishing its transition must not clear the current chat.
+            AppNotifications.closeConversation(other)
+            assertFalse(send(active))
+            // Backgrounding or leaving the chat enables its notifications again.
+            AppNotifications.closeConversation(active)
+            assertTrue(send(active))
+            awaitShown(active, true)
+        } finally {
+            AppNotifications.closeConversation(active)
+            manager.cancel("conversation-$active".hashCode())
+            manager.cancel("conversation-$other".hashCode())
+        }
+    }
     @Test fun messageNotificationUsesChannelBodyAndNavigationIntent() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         assumeTrue("Enable notification permission before this display test", AppNotifications.allowed(context))

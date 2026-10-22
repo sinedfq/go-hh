@@ -31,7 +31,14 @@ fun ChatScreen(conversationId:Int,onBackClick:()->Unit,onVacancyClick:(Int)->Uni
     val model:ConversationViewModel=viewModel(key="conversation-$conversationId")
     val state by model.state.collectAsState()
     val lifecycle=LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(conversationId,lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){model.observe(conversationId)}}
+    val context = androidx.compose.ui.platform.LocalContext.current.applicationContext
+    LaunchedEffect(conversationId,lifecycle){
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED){
+            com.example.trudomix.push.AppNotifications.openConversation(context, conversationId)
+            try { model.observe(conversationId) }
+            finally { com.example.trudomix.push.AppNotifications.closeConversation(conversationId) }
+        }
+    }
     ConversationContent(conversationId,state,onBackClick,onVacancyClick,{model.send(conversationId,it)},{model.typing(conversationId)})
 }
 
