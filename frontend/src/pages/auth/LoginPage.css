@@ -1,4 +1,9 @@
 .auth-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:28px;background:color-mix(in srgb,var(--bg) 75%,transparent);backdrop-filter:blur(14px);overflow-y:auto}
+.auth-overlay::before{content:'';position:fixed;inset:-30%;pointer-events:none;background:radial-gradient(ellipse at 25% 35%,#137aff22,transparent 52%),radial-gradient(ellipse at 75% 65%,#0066cc18,transparent 50%);animation:auth-color-flow 18s ease-in-out infinite alternate;z-index:-1}
+.auth-story::before{content:'';position:absolute;inset:-35%;pointer-events:none;background:radial-gradient(ellipse at 30% 40%,#0066cc26,transparent 65%);animation:auth-color-flow 16s ease-in-out infinite alternate}
+.auth-story{isolation:isolate;overflow:hidden}.auth-story>*{position:relative}
+@keyframes auth-color-flow{from{transform:translate(-4%,-3%) rotate(-8deg);opacity:.45}to{transform:translate(6%,5%) rotate(10deg);opacity:.95}}
+@media(prefers-reduced-motion:reduce){.auth-overlay::before,.auth-story::before{animation:none;opacity:.5}}
 .auth-dialog{display:grid;grid-template-columns:1fr 1fr;width:min(1040px,100%);border:1px solid var(--border);border-radius:30px;overflow:hidden;background:var(--surface);box-shadow:0 24px 90px #001b4524;animation:auth-appear .3s ease-out}
 .auth-story{position:relative;padding:56px 44px;display:flex;flex-direction:column;gap:24px;background:radial-gradient(ellipse at top left,var(--accent-light),transparent 70%),var(--bg);justify-content:center}
 .auth-logo{width:76px;height:76px;object-fit:cover;border-radius:22px}

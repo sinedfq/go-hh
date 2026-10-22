@@ -12,6 +12,20 @@ if(Test-Path -LiteralPath (Join-Path $projectRoot '.cache/firebase-service-accou
 }
 Push-Location $projectRoot
 try {
+    if($env:OS -eq 'Windows_NT') {
+        if($Action -eq 'up') {
+            $apiContainer=& docker @composeArgs ps -aq api
+            if($LASTEXITCODE -ne 0){throw 'Cannot inspect existing Docker stack'}
+            if($apiContainer) {
+                $existing=(& docker inspect $apiContainer|ConvertFrom-Json)[0]
+                if(($existing.Mounts|Where-Object Destination -eq '/app/uploads').Type -eq 'volume') {
+                    & docker @composeArgs cp 'api:/app/uploads/.' (Join-Path $projectRoot 'uploads')
+                    if($LASTEXITCODE -ne 0){throw 'Cannot preserve existing Docker uploads'}
+                }
+            }
+        }
+        $composeArgs+=@('-f',(Join-Path $projectRoot 'docker-compose.windows.yml'))
+    }
     switch($Action) {
         'up' { & docker @composeArgs up -d --build --wait --wait-timeout 120 }
         'down' { & docker @composeArgs down }

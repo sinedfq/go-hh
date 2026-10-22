@@ -41,3 +41,4 @@
 @media(max-width:900px) { .company-profile-hero { grid-template-columns:1fr; }.company-profile-layout { grid-template-columns:1fr; } }
 @media(max-width:560px) { .company-profile-panel { padding:20px;border-radius:20px; }.company-profile-identity { align-items:flex-start;gap:14px; }.company-profile-logo { width:64px;height:64px;flex-basis:64px;border-radius:18px;font-size:28px; }.company-profile-heading h1 { font-size:1.4rem; }.company-profile-stats { border-top:1px solid var(--border);padding-top:16px; }.company-profile-jobs-link { width:100%; }.company-profile-job { padding:20px;border-radius:20px; } }
 @media(prefers-reduced-motion:reduce) { .company-profile-job { transition:none; } }
+.company-profile-gallery video{width:100%;max-height:480px;object-fit:contain;border-radius:16px;background:#080c12}

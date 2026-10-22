@@ -1,0 +1,7 @@
+# Share uploads with the ordinary Windows Go process used by the physical phone.
+services:
+  api:
+    volumes:
+      - type: bind
+        source: ${HOST_UPLOADS_PATH:-./uploads}
+        target: /app/uploads

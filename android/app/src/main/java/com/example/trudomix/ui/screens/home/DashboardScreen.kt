@@ -45,15 +45,16 @@ class DashboardViewModel:ViewModel(){
 @Composable
 fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,onResume:()->Unit,onEmployer:()->Unit,onVacancy:(Int)->Unit){
     val model:DashboardViewModel=viewModel();val state by model.state.collectAsState()
+    val employer=(state.user?:SessionIdentity.user.value)?.role in listOf("employer","admin")
     LaunchedEffect(Unit){model.refreshIfStale()}
     RefreshContent(state.loading,model::load){
         LazyColumn(Modifier.fillMaxSize().statusBarsPadding(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=16.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(18.dp)){
-            item{AppScreenHeader(title={Text("Твоя карьера")},subtitle="Возможности и следующие шаги в одном месте",applyInsets=false,contentPadding=PaddingValues(0.dp))}
+            item{AppScreenHeader(title={Text(if(employer)"Ваша команда"else "Твоя карьера")},subtitle=if(employer)"Вакансии, кандидаты и работа с командой"else "Возможности и следующие шаги в одном месте",applyInsets=false,contentPadding=PaddingValues(0.dp))}
             item{Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primaryContainer)){
                 Column(Modifier.padding(24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){
                     Text("Привет, ${state.resume?.full_name?.substringBefore(' ')?.takeIf{it.isNotBlank()}?:state.user?.email?.substringBefore('@')?:"друг"}!",style=MaterialTheme.typography.headlineSmall)
-                    Text("Найди команду, с которой захочется расти.",style=MaterialTheme.typography.bodyLarge)
-                    Button(onClick=onSearch){Text("Найти работу")}
+                    Text(if(employer)"Находите людей, с которыми хочется создавать больше."else "Найди команду, с которой захочется расти.",style=MaterialTheme.typography.bodyLarge)
+                    Button(onClick=onSearch){Text(if(employer)"Мои вакансии"else "Найти работу")}
                 }
             }}
             if(state.error)item{Text("Часть данных не загрузилась. Потяни экран вниз, чтобы обновить.",color=MaterialTheme.colorScheme.error)}

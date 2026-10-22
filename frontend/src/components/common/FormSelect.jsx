@@ -1,11 +1,14 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import './FormSelect.css'
 
-export default function FormSelect({ id, value = '', onChange, options = [], placeholder = 'Выберите значение', label, searchable = false, allowCustom = false, freeText = false, required = false, inputClassName = '', disabled = false }) {
+export default function FormSelect({ id, value = '', onChange, options = [], placeholder = 'Выберите значение', label, searchable = false, allowCustom = false, freeText = false, required = false, inputClassName = '', disabled = false, floating = false }) {
     const generatedId = useId()
     const controlId = id || `select-${generatedId}`
     const listId = `${controlId}-options`
     const root = useRef(null)
+    const menu = useRef(null)
+    const [position,setPosition] = useState({})
     const [open, setOpen] = useState(false)
     const [query, setQuery] = useState('')
     const [active, setActive] = useState(0)
@@ -17,15 +20,27 @@ export default function FormSelect({ id, value = '', onChange, options = [], pla
         ? [...visible, { value: custom, label: `Использовать «${custom}»`, custom: true }] : visible
 
     useEffect(() => {
-        function outside(event) { if (!root.current?.contains(event.target)) setOpen(false) }
+        function outside(event) { if (!root.current?.contains(event.target)&&!menu.current?.contains(event.target)) setOpen(false) }
         function anotherOpened(event) { if (event.detail !== controlId) setOpen(false) }
         document.addEventListener('pointerdown', outside)
         document.addEventListener('form-select-open', anotherOpened)
         return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('form-select-open', anotherOpened) }
     }, [controlId])
     useEffect(() => { if (open) document.dispatchEvent(new CustomEvent('form-select-open',{detail:controlId})) }, [open,controlId])
-    useEffect(() => { setActive(0) }, [query, open])
-    useEffect(() => { if (open) document.getElementById(`${listId}-${active}`)?.scrollIntoView({block:'nearest'}) }, [active,open,listId])
+    const selection = useRef({items,value})
+    selection.current={items,value}
+    useEffect(() => { const current=selection.current;setActive(Math.max(0,current.items.findIndex(item=>item.value===current.value))) }, [query, open])
+    useEffect(() => {
+        if(!open)return
+        const option=document.getElementById(`${listId}-${active}`),list=document.getElementById(listId)
+        if(option&&list){if(option.offsetTop<list.scrollTop)list.scrollTop=option.offsetTop;else if(option.offsetTop+option.offsetHeight>list.scrollTop+list.clientHeight)list.scrollTop=option.offsetTop+option.offsetHeight-list.clientHeight}
+    }, [active,open,listId])
+    useLayoutEffect(()=>{
+        if(!open||!floating)return
+        function place(){const r=root.current.getBoundingClientRect(),below=innerHeight-r.bottom-12;const height=Math.max(60,Math.min(200,below>=140?below:r.top-12));setPosition({left:Math.max(8,Math.min(r.left,innerWidth-r.width-8)),width:r.width,top:below>=140?r.bottom+6:Math.max(8,r.top-height-6),maxHeight:height})}
+        place();window.addEventListener('resize',place);window.addEventListener('scroll',place,true)
+        return ()=>{window.removeEventListener('resize',place);window.removeEventListener('scroll',place,true)}
+    },[open,floating])
 
     function choose(option) {
         onChange(option.value)
@@ -47,15 +62,16 @@ export default function FormSelect({ id, value = '', onChange, options = [], pla
         }
     }
     const attributes = { id: controlId, role:'combobox', 'aria-label':label, 'aria-expanded':open, 'aria-controls':listId, 'aria-haspopup':'listbox', 'aria-activedescendant':open && items[active] ? `${listId}-${active}` : undefined, disabled, onKeyDown:keyboard }
+    const list = <div className="form-select-menu" ref={menu} id={listId} role="listbox" aria-label={label || placeholder}>
+        {items.length === 0 && <p className="form-select-empty">Ничего не найдено</p>}
+        {items.map((option,index) => <button type="button" role="option" id={`${listId}-${index}`} key={`${option.custom ? 'custom-' : ''}${option.value}`} aria-selected={option.value === value} className={`form-select-option ${index === active ? 'is-highlighted' : ''}`} onMouseDown={event => event.preventDefault()} onPointerMove={() => setActive(index)} onClick={() => choose(option)}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span>{option.value === value && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>}</button>)}
+    </div>
     return <div className={`form-select ${open ? 'is-open' : ''}`} ref={root}>
         {searchable ? <div className="form-select-trigger">
             <input {...attributes} className={`form-select-input ${inputClassName}`} autoComplete="off" required={required} value={open ? query : selected?.label || value} placeholder={placeholder} onFocus={() => { setQuery(freeText ? (selected?.label || value) : ''); setOpen(true) }} onChange={event => { setQuery(event.target.value); setOpen(true); if (freeText) onChange(event.target.value) }}/>
             <button type="button" className="form-select-arrow" aria-label={`${open ? 'Закрыть' : 'Открыть'} список: ${label || placeholder}`} disabled={disabled} onClick={toggle}><Chevron/></button>
         </div> : <button {...attributes} type="button" className="form-select-trigger" onClick={toggle}><span className={selected ? '' : 'form-select-placeholder'}>{selected?.label || value || placeholder}</span><Chevron/></button>}
-        {open && <div className="form-select-menu" id={listId} role="listbox" aria-label={label || placeholder}>
-            {items.length === 0 && <p className="form-select-empty">Ничего не найдено</p>}
-            {items.map((option,index) => <button type="button" role="option" id={`${listId}-${index}`} key={`${option.custom ? 'custom-' : ''}${option.value}`} aria-selected={option.value === value} className={`form-select-option ${index === active ? 'is-highlighted' : ''}`} onMouseDown={event => event.preventDefault()} onPointerMove={() => setActive(index)} onClick={() => choose(option)}><span><strong>{option.label}</strong>{option.description && <small>{option.description}</small>}</span>{option.value === value && <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m5 12 4 4 10-10"/></svg>}</button>)}
-        </div>}
+        {open && (floating?createPortal(<div className="form-select form-select-floating" data-select-owner={root.current?.closest('[role=dialog]')?.id} style={position}>{list}</div>,document.body):list)}
     </div>
 }
 

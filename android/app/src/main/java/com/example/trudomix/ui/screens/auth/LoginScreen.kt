@@ -69,7 +69,7 @@ internal fun AuthBackdrop(modifier: Modifier) {
     val animation = rememberInfiniteTransition(label = "ambient")
     val drift by animation.animateFloat(0f, 1f, infiniteRepeatable(tween(12000, easing = LinearEasing), RepeatMode.Reverse), label = "ambient-drift")
     Canvas(modifier) {
-        drawRect(colors.background)
+        drawRect(androidx.compose.ui.graphics.lerp(colors.background,colors.primary,.025f+drift*.035f))
         drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha = .16f), colors.primary.copy(alpha = 0f)), center = Offset(size.width * (.08f + drift * .12f), size.height * .08f), radius = size.width * .85f), radius = size.width * .85f, center = Offset(size.width * (.08f + drift * .12f), size.height * .08f))
         drawCircle(Brush.radialGradient(listOf(colors.primary.copy(alpha = .11f), colors.primary.copy(alpha = 0f)), center = Offset(size.width * .95f, size.height * (.8f - drift * .1f)), radius = size.width * .7f), radius = size.width * .7f, center = Offset(size.width * .95f, size.height * (.8f - drift * .1f)))
     }
