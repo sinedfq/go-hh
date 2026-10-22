@@ -15,6 +15,18 @@ import com.example.trudomix.data.local.AppIcons
 
 object AppNotifications {
     const val CHANNEL = "trudomix_events"
+    @Volatile private var activeConversation: Int? = null
+
+    private fun conversationNotificationId(id: Int) = "conversation-$id".hashCode()
+
+    @Synchronized fun openConversation(context: Context, id: Int) {
+        activeConversation = id
+        context.getSystemService(NotificationManager::class.java).cancel(conversationNotificationId(id))
+    }
+
+    @Synchronized fun closeConversation(id: Int) {
+        if (activeConversation == id) activeConversation = null
+    }
     fun createChannel(context: Context) {
         context.getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(CHANNEL, "Сообщения и отклики", NotificationManager.IMPORTANCE_HIGH).apply {
@@ -26,9 +38,11 @@ object AppNotifications {
         return NotificationManagerCompat.from(context).areNotificationsEnabled() &&
             context.getSystemService(NotificationManager::class.java).getNotificationChannel(CHANNEL)?.importance != NotificationManager.IMPORTANCE_NONE
     }
-    fun show(context: Context, title: String, body: String, data: Map<String, String>, messageId: String? = null): Boolean {
+    @Synchronized fun show(context: Context, title: String, body: String, data: Map<String, String>, messageId: String? = null): Boolean {
         createChannel(context)
         if (!allowed(context)) return false
+        val conversation = data["conversation_id"]?.toIntOrNull()?.takeIf { it > 0 }
+        if (conversation != null && conversation == activeConversation) return false
         val id = (data["conversation_id"]?.let { "conversation-$it" } ?: messageId ?: data.toString()).hashCode()
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
