@@ -1,3 +1,4 @@
+import ModalPortal from '../common/ModalPortal'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import ChatMessage from './ChatMessage'
@@ -555,7 +556,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
 
             {/* МОДАЛКА УЧАСТНИКОВ */}
             {showParticipants && activeChat && (
-                <div className="chat-participants-modal" onClick={() => setShowParticipants(false)}>
+                <ModalPortal><div className="chat-participants-modal" role="dialog" aria-modal="true" aria-label="Участники чата" onClick={() => setShowParticipants(false)}>
                     <div className="chat-participants-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Участники чата</h3>
                         <div className="participant-item">
@@ -580,7 +581,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                             Закрыть
                         </button>
                     </div>
-                </div>
+                </div></ModalPortal>
             )}
 
             {/* ====== КАСТОМНАЯ МОДАЛКА ОТМЕНЫ ОТКЛИКА ====== */}

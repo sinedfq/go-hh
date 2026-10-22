@@ -15,4 +15,6 @@
 .form-select .form-select-option svg { flex-shrink:0; }
 .form-select .form-select-empty { color:var(--text-muted);font-size:.85rem;padding:12px; }
 .form-select [disabled] { opacity:.6;cursor:not-allowed; }
+.form-select.form-select-floating { position:fixed;z-index:10040; }
+.form-select-floating .form-select-menu { position:relative;inset:auto;max-height:inherit; }
 @media(prefers-reduced-motion:reduce) { .form-select .form-select-chevron { transition:none; } }

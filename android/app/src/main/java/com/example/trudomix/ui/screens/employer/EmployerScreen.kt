@@ -18,23 +18,23 @@ import kotlinx.coroutines.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit){
+fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit,initialTab:Int=0,embedded:Boolean=false){
     val model:EmployerViewModel=viewModel()
     val state by model.state.collectAsState()
-    var tab by remember{mutableIntStateOf(0)}
+    var tab by remember(initialTab){mutableIntStateOf(initialTab)}
     var editing by remember{mutableStateOf<Vacancy?>(null)}
     var form by remember{mutableStateOf(false)}
     var companyForm by remember{mutableStateOf(false)}
     var deleting by remember{mutableStateOf<Vacancy?>(null)}
-    Scaffold(topBar={AppScreenHeader(title={Text("Кабинет работодателя")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}},actions={TextButton(onClick=model::load,enabled=!state.busy){Text("Обновить")}})}){padding->
+    Scaffold(topBar={AppScreenHeader(title={Text(if(embedded)if(tab==0)"Мои вакансии"else "Отклики"else "Кабинет работодателя")},navigationIcon={if(!embedded)IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}},actions={TextButton(onClick=model::load,enabled=!state.busy){Text("Обновить")}})}){padding->
         Column(Modifier.fillMaxSize().padding(padding)){
             if(state.loading||state.busy)LinearProgressIndicator(Modifier.fillMaxWidth())
             state.error?.let{Text(it,Modifier.padding(16.dp),color=MaterialTheme.colorScheme.error)}
             if(!state.loading && state.company.id==0) {
                 Column(Modifier.padding(24.dp)){Text("Создайте компанию для публикации вакансий");Button(onClick={companyForm=true},enabled=!state.busy){Text("Создать компанию")}}
             }else{
-                TabRow(tab){Tab(tab==0,{tab=0},text={Text("Вакансии")});Tab(tab==1,{tab=1},text={Text("Отклики")})}
-                LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+                if(!embedded)TabRow(tab){Tab(tab==0,{tab=0},text={Text("Вакансии")});Tab(tab==1,{tab=1},text={Text("Отклики")})}
+                LazyColumn(Modifier.fillMaxSize(),contentPadding=PaddingValues(start=16.dp,end=16.dp,top=16.dp,bottom=if(embedded)148.dp else 16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
                     if(tab==0){
                         item{Text(state.company.name,style=MaterialTheme.typography.titleLarge);Button(onClick={editing=null;form=true},enabled=!state.busy){Text("Новая вакансия")}}
                         items(state.vacancies,key={it.id}){v->Card(Modifier.fillMaxWidth()){Column(Modifier.padding(16.dp)){

@@ -1,7 +1,9 @@
 export function userError(error, { login = false } = {}) {
     const status = error?.response?.status
     const message = error?.response?.data?.error || (typeof error?.response?.data==='string'?error.response.data.trim():'')
-    if(message==='gallery limit reached')return 'В галерее уже 6 фотографий. Удали одну, чтобы добавить новую.'
+    if(message==='gallery limit reached')return 'В галерее можно хранить до 6 фотографий и 4 видео. Удали ненужный файл.'
+    if(message==='video must be at most 50 MB'||message==='media too large or invalid multipart')return 'Видео должно быть не больше 50 МБ, фото — не больше 4 МБ.'
+    if(message==='only mp4 and webm videos allowed')return 'Поддерживаются видео MP4 и WebM.'
     if(message==='saved searches limit reached')return 'Сохранено уже 20 поисков. Удали ненужную подписку.'
     if(message==='invalid salary range'||message==='invalid salary')return 'Проверь диапазон зарплаты: сумма «до» должна быть не меньше суммы «от».'
     if (!status) return 'Нет соединения с сервером. Проверь интернет и попробуй снова.'

@@ -66,6 +66,10 @@ func TestProductGrowthFlows(t *testing.T) {
 	if _, err = pool.Exec(ctx, strings.Split(string(migration), "-- +goose Down")[0]); err != nil {
 		t.Fatal(err)
 	}
+	videoData, err := os.ReadFile("../../android/app/src/androidTest/assets/company-story.mp4")
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Chdir(t.TempDir())
 	server := NewServer(&PostgresStorage{pool: pool}, nil)
 	mux := http.NewServeMux()
@@ -237,6 +241,44 @@ func TestProductGrowthFlows(t *testing.T) {
 		c, err = server.storage.GetCompanyByID(ctx, 10)
 		if err != nil || len(c.Photos) != 5 {
 			t.Fatalf("photo not removed: %+v %v", c, err)
+		}
+		videoUpload := func(user int, content []byte) *httptest.ResponseRecorder {
+			var body bytes.Buffer
+			writer := multipart.NewWriter(&body)
+			part, _ := writer.CreateFormFile("video", "team.mp4")
+			part.Write(content)
+			writer.Close()
+			return request(user, "POST", "/api/my-company/photos", body.Bytes(), writer.FormDataContentType())
+		}
+		check(videoUpload(1, videoData), 403)
+		check(videoUpload(2, []byte("<html>not a video</html>")), 400)
+		var videoURL string
+		for i := 0; i < 5; i++ {
+			response := videoUpload(2, videoData)
+			if i == 4 {
+				check(response, 409)
+				continue
+			}
+			check(response, 200)
+			var company CompanyWithStats
+			if err := json.Unmarshal(response.Body.Bytes(), &company); err != nil {
+				t.Fatal(err)
+			}
+			if len(company.Videos) != i+1 || len(company.Photos) != 5 {
+				t.Fatalf("media lost: %+v", company.CompanyProfile)
+			}
+			videoURL = company.Videos[0]
+		}
+		encoded, _ = json.Marshal(map[string]string{"url": videoURL})
+		check(request(3, "DELETE", "/api/my-company/photos", encoded, ""), 200)
+		c, err = server.storage.GetCompanyByID(ctx, 10)
+		if err != nil || len(c.Videos) != 4 {
+			t.Fatalf("foreign video deletion: %+v %v", c, err)
+		}
+		check(request(2, "DELETE", "/api/my-company/photos", encoded, ""), 200)
+		c, err = server.storage.GetCompanyByID(ctx, 10)
+		if err != nil || len(c.Videos) != 3 || len(c.Photos) != 5 {
+			t.Fatalf("wrong remaining media: %+v %v", c, err)
 		}
 	})
 	var second int

@@ -11,6 +11,7 @@ interface TrudomixApi {
     @POST("api/work-experience") suspend fun addWorkExperience(@Body request:WorkExperienceRequest):Response<Resume>
     @DELETE("api/work-experience/{id}") suspend fun deleteWorkExperience(@Path("id") id:Int):Response<Resume>
     @Multipart @POST("api/vacancies/images") suspend fun uploadVacancyImage(@Part photo:okhttp3.MultipartBody.Part):Response<UploadImageResponse>
+    @Multipart @POST("api/my-company/photos") suspend fun uploadCompanyMedia(@Part media:okhttp3.MultipartBody.Part):Response<Company>
     @GET("api/skills") suspend fun getSkills(): Response<List<DirectoryEntry>>
     @GET("api/positions") suspend fun getPositions(): Response<List<DirectoryEntry>>
     @POST("api/skills") suspend fun createSkill(@Body entry: DirectoryEntry): Response<DirectoryEntry>

@@ -14,6 +14,7 @@ type CompanyProfile struct {
 	Benefits      []string `json:"benefits"`
 	HiringProcess string   `json:"hiring_process"`
 	Photos        []string `json:"photos"`
+	Videos        []string `json:"videos"`
 }
 
 func (s *Server) updateCompanyProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -114,26 +115,39 @@ func (s *Server) companyGalleryHandler(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid json", 400)
 			return
 		}
-		_, err = s.pool.Exec(r.Context(), `UPDATE companies SET profile=jsonb_set(profile,'{photos}',COALESCE((SELECT jsonb_agg(photo) FROM jsonb_array_elements(COALESCE(profile->'photos','[]')) photo WHERE photo<>to_jsonb($1::text)),'[]')) WHERE id=$2`, req.URL, *user.CompanyID)
+		_, err = s.pool.Exec(r.Context(), `UPDATE companies SET profile=jsonb_set(jsonb_set(profile,'{photos}',COALESCE((SELECT jsonb_agg(item) FROM jsonb_array_elements(COALESCE(profile->'photos','[]')) item WHERE item<>to_jsonb($1::text)),'[]')),'{videos}',COALESCE((SELECT jsonb_agg(item) FROM jsonb_array_elements(COALESCE(profile->'videos','[]')) item WHERE item<>to_jsonb($1::text)),'[]')) WHERE id=$2`, req.URL, *user.CompanyID)
 	} else {
+		r.Body = http.MaxBytesReader(w, r.Body, 52<<20)
+		if err := r.ParseMultipartForm(5 << 20); err != nil {
+			http.Error(w, "media too large or invalid multipart", 400)
+			return
+		}
+		defer r.MultipartForm.RemoveAll()
+		video := len(r.MultipartForm.File["video"]) > 0
 		company, e := s.storage.GetCompanyByID(r.Context(), *user.CompanyID)
 		if e != nil {
 			http.Error(w, "company not found", 404)
 			return
 		}
-		if len(company.Photos) >= 6 {
+		if (!video && len(company.Photos) >= 6) || (video && len(company.Videos) >= 4) {
 			http.Error(w, "gallery limit reached", 409)
 			return
 		}
-		photo, e := s.saveUploadedPhoto(r, fmt.Sprintf("company_%d_gallery", *user.CompanyID))
-		if r.MultipartForm != nil {
-			defer r.MultipartForm.RemoveAll()
+		var photo string
+		if video {
+			photo, e = saveUploadedCompanyVideo(r, fmt.Sprintf("company_%d_gallery", *user.CompanyID))
+		} else {
+			photo, e = s.saveUploadedPhoto(r, fmt.Sprintf("company_%d_gallery", *user.CompanyID))
 		}
 		if e != nil {
 			http.Error(w, e.Error(), 400)
 			return
 		}
-		result, e := s.pool.Exec(r.Context(), `UPDATE companies SET profile=jsonb_set(profile,'{photos}',COALESCE(profile->'photos','[]')||jsonb_build_array($1::text)) WHERE id=$2 AND jsonb_array_length(COALESCE(profile->'photos','[]'))<6`, photo, *user.CompanyID)
+		key, limit := "photos", 6
+		if video {
+			key, limit = "videos", 4
+		}
+		result, e := s.pool.Exec(r.Context(), `UPDATE companies SET profile=jsonb_set(profile,ARRAY[$3::text],COALESCE(profile->$3::text,'[]')||jsonb_build_array($1::text)) WHERE id=$2 AND jsonb_array_length(COALESCE(profile->$3::text,'[]'))<$4`, photo, *user.CompanyID, key, limit)
 		if e != nil || result.RowsAffected() != 1 {
 			removeCompanyUpload(photo)
 			http.Error(w, "failed to add photo", 409)

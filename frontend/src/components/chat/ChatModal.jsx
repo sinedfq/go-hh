@@ -1,3 +1,4 @@
+import ModalPortal from '../common/ModalPortal'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import ChatMessage from './ChatMessage'
@@ -327,7 +328,7 @@ function ActiveChatModal({ conversation, onClose, currentUser, onOpenVacancy, on
 
             {/* ====== МОДАЛКА УЧАСТНИКОВ ====== */}
             {showParticipants && (
-                <div className="chat-participants-modal" onClick={() => setShowParticipants(false)}>
+                <ModalPortal><div className="chat-participants-modal" role="dialog" aria-modal="true" aria-label="Участники чата" onClick={() => setShowParticipants(false)}>
                     <div className="chat-participants-content" onClick={(e) => e.stopPropagation()}>
                         <h3>Участники чата</h3>
 
@@ -358,7 +359,7 @@ function ActiveChatModal({ conversation, onClose, currentUser, onOpenVacancy, on
                             Закрыть
                         </button>
                     </div>
-                </div>
+                </div></ModalPortal>
             )}
         </>
     )

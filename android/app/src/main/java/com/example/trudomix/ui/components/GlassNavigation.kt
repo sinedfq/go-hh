@@ -39,11 +39,11 @@ private fun Modifier.glass(state:HazeState,shape:Shape,blue:Boolean=false):Modif
 }
 
 @Composable
-fun GlassNavigation(state:HazeState,selected:Int,unread:Int,onSelect:(Int)->Unit,onMap:()->Unit,modifier:Modifier=Modifier) {
-    val labels=listOf("Главная","Поиск","Отклики","Чаты")
+fun GlassNavigation(state:HazeState,selected:Int,unread:Int,onSelect:(Int)->Unit,onMap:()->Unit,modifier:Modifier=Modifier,employer:Boolean=false) {
+    val labels=listOf("Главная",if(employer)"Вакансии"else "Поиск","Отклики","Чаты")
     val destinations=listOf(4,0,1,2)
     val showLabels = LocalConfiguration.current.screenWidthDp >= 360 && LocalDensity.current.fontScale <= 1.3f
-    val icons=listOf(Icons.Default.Home,Icons.Default.Search,Icons.Default.Assignment,Icons.Default.ChatBubbleOutline)
+    val icons=listOf(Icons.Default.Home,if(employer)Icons.Default.WorkOutline else Icons.Default.Search,Icons.Default.Assignment,Icons.Default.ChatBubbleOutline)
     Row(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=12.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
         // This hit target absorbs empty-space taps; children retain their own clicks.
         Row(Modifier.weight(1f).height(if(showLabels) 72.dp else 60.dp).glass(state,CircleShape).pointerInput(Unit){detectTapGestures{}},verticalAlignment=Alignment.CenterVertically) {
@@ -57,8 +57,8 @@ fun GlassNavigation(state:HazeState,selected:Int,unread:Int,onSelect:(Int)->Unit
                 }
             }
         }
-        IconButton(onClick=onMap,modifier=Modifier.size(60.dp).glass(state,CircleShape,true)) {
-            Icon(Icons.Default.Map,"Карта вакансий",tint=MaterialTheme.colorScheme.primary,modifier=Modifier.size(28.dp))
+        IconButton(onClick={if(employer)onSelect(6)else onMap()},modifier=Modifier.size(60.dp).glass(state,CircleShape,true)) {
+            Icon(if(employer)Icons.Default.Business else Icons.Default.Map,if(employer)"Моя компания"else "Карта вакансий",tint=MaterialTheme.colorScheme.primary,modifier=Modifier.size(28.dp))
         }
     }
 }

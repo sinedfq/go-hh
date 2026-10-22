@@ -155,7 +155,7 @@ data class VacancySearchResponse(val vacancies: List<Vacancy> = emptyList(), val
 @Serializable data class PushStatus(val server_enabled: Boolean = false, val registered: Boolean = false)
 @Serializable data class ResumeStats(val total_views: Int = 0)
 @Serializable data class EmployerStats(val total_vacancies: Int = 0, val total_vacancy_views: Int = 0, val total_applications: Int = 0, val new_applications: Int = 0)
-@Serializable data class Company(val id: Int = 0, val name: String = "", val description: String = "", val city: String = "", val website: String = "", val industry: String = "", val logo_url: String = "", val it_accredited: Boolean = false)
+@Serializable data class Company(val id: Int = 0, val name: String = "", val description: String = "", val city: String = "", val website: String = "", val industry: String = "", val logo_url: String = "", val it_accredited: Boolean = false, val size:String="",val team_story:String="",val benefits:List<String> = emptyList(),val hiring_process:String="",val photos:List<String> = emptyList(),val videos:List<String> = emptyList())
 @Serializable data class MyVacanciesResponse(val company: Company = Company(), val vacancies: List<Vacancy> = emptyList())
 @Serializable data class CompanyRequest(val name: String, val description: String = "", val city: String = "", val website: String = "", val industry: String = "", val size: String = "")
 @Serializable data class VacancyRequest(val title: String, val location: String, val experience: String, val remote: Boolean, val skills: List<String>, val description: String, val address: String, val latitude: Double? = null, val longitude: Double? = null)
