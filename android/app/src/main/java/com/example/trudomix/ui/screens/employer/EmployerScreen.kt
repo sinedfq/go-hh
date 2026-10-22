@@ -47,6 +47,7 @@ fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit){
                         items(state.applications,key={it.id?:0}){app->Card(Modifier.fillMaxWidth()){Column(Modifier.padding(16.dp)){
                             Text(app.resume_full_name.ifBlank{app.candidate_email},style=MaterialTheme.typography.titleMedium)
                             Text(app.vacancy_title.orEmpty());Text(applicationStatusLabel(app.status));if(!app.cover_letter.isNullOrBlank())Text(app.cover_letter)
+                            com.example.trudomix.ui.screens.applications.ApplicationDetailsSummary(app.feedback,app.interview_at)
                             Row{TextButton(onClick={app.id?.let{model.status(it,"viewed")}},enabled=!state.busy){Text("Просмотрен")};TextButton(onClick={app.id?.let{model.chat(it,onChat)}},enabled=!state.busy){Text("Чат")}}
                             Row{TextButton(onClick={app.id?.let{model.status(it,"accepted")}},enabled=!state.busy){Text("Принять")};TextButton(onClick={app.id?.let{model.status(it,"rejected")}},enabled=!state.busy){Text("Отказать")}}
                         }}}

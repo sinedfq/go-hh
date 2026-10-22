@@ -36,7 +36,7 @@ class RefinementsTest {
         compose.onNodeWithContentDescription("Отозвать отклик").performClick()
         compose.onNodeWithText("Отозвать",useUnmergedTree=true).performClick()
         compose.runOnIdle{assertEquals(1,cancelled)}
-        compose.onNodeWithText("Принятые").performScrollTo().performClick()
+        compose.onNodeWithText("Приглашения").performScrollTo().performClick()
         compose.onNodeWithText("Дизайнер").assertIsDisplayed()
         compose.onNodeWithText("Android-разработчик").assertDoesNotExist()
     }

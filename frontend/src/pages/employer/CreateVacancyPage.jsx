@@ -1,473 +1,64 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import VacancyMapPicker from './VacancyMapPicker'
 import MarkdownEditor from '../../components/vacancy/MarkdownEditor'
 import VacancyTerms, { VacancyTermsFields } from '../../components/vacancy/VacancyTerms'
 import WorkspaceHeader from '../../components/common/WorkspaceHeader'
+import FormSelect from '../../components/common/FormSelect'
 import { userError } from '../../utils/userError'
 import './EmployerPages.css'
 
-function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkills = [], allPositions = [], editVacancy = null }) {
-    const isEditMode = !!editVacancy
-
-    const [form, setForm] = useState({
-        title: editVacancy?.title || '',
-        location: editVacancy?.location || '',
-        experience: editVacancy?.experience || '',
-        remote: editVacancy?.remote || false,
-        skills: editVacancy?.skills || [],
-        description: editVacancy?.description || '',
-        address: editVacancy?.address || '',
-        latitude: editVacancy?.latitude ? editVacancy.latitude.toString() : '',
-        longitude: editVacancy?.longitude ? editVacancy.longitude.toString() : ''
-    })
-    const [loading, setLoading] = useState(false)
-    const [terms,setTerms]=useState({salary_from:editVacancy?.salary_from||'',salary_to:editVacancy?.salary_to||'',currency:editVacancy?.currency||'RUB',salary_gross:editVacancy?.salary_gross||false,employment:editVacancy?.employment||'',schedule:editVacancy?.schedule||''})
-    const [error, setError] = useState('')
-
-    // ====== НАЗВАНИЕ ВАКАНСИИ ======
-    const [titleInput, setTitleInput] = useState(editVacancy?.title || '')
-    const [showTitleSuggestions, setShowTitleSuggestions] = useState(false)
-    const titleInputRef = useRef(null)
-
-    const titleSuggestions = allPositions.filter(pos =>
-        pos.toLowerCase().includes(titleInput.toLowerCase()) &&
-        pos.toLowerCase() !== form.title.toLowerCase()
-    ).slice(0, 8)
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (titleInputRef.current && !titleInputRef.current.contains(e.target)) {
-                setShowTitleSuggestions(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
-
-    const selectTitle = (title) => {
-        setForm(prev => ({ ...prev, title }))
-        setTitleInput(title)
-        setShowTitleSuggestions(false)
-    }
-
-    // ====== ГОРОД ======
-    const [showCityDropdown, setShowCityDropdown] = useState(false)
-    const [citySearch, setCitySearch] = useState(editVacancy?.location || '')
-    const cityDropdownRef = useRef(null)
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target)) {
-                setShowCityDropdown(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
-
-    const filteredCities = cities.filter(city =>
-        city.toLowerCase().includes(citySearch.toLowerCase())
-    )
-
-    const selectCity = (city) => {
-        setForm(prev => ({ ...prev, location: city }))
-        setShowCityDropdown(false)
-        setCitySearch(city)
-    }
-
-    // ====== ОПЫТ ======
-    const [showExpDropdown, setShowExpDropdown] = useState(false)
-    const expDropdownRef = useRef(null)
-
-    const experienceOptions = [
-        { value: 'Junior', label: 'Junior', desc: 'До 1 года опыта' },
-        { value: 'Middle', label: 'Middle', desc: '1-3 года опыта' },
-        { value: 'Senior', label: 'Senior', desc: '3-6 лет опыта' },
-        { value: 'Lead', label: 'Lead', desc: '6+ лет опыта' }
-    ]
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (expDropdownRef.current && !expDropdownRef.current.contains(e.target)) {
-                setShowExpDropdown(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
-
-    const selectExperience = (exp) => {
-        setForm(prev => ({ ...prev, experience: exp }))
-        setShowExpDropdown(false)
-    }
-
-    // ====== НАВЫКИ ======
-    const [skillInput, setSkillInput] = useState('')
-    const [showSkillSuggestions, setShowSkillSuggestions] = useState(false)
-    const skillInputRef = useRef(null)
-
-    useEffect(() => {
-        const handleClickOutside = (e) => {
-            if (skillInputRef.current && !skillInputRef.current.contains(e.target)) {
-                setShowSkillSuggestions(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
-
-    const skillSuggestions = allSkills.filter(skill =>
-        skill.toLowerCase().includes(skillInput.toLowerCase()) &&
-        !form.skills.includes(skill)
-    ).slice(0, 5)
-
-    const addSkill = (skill) => {
-        if (skill && !form.skills.includes(skill)) {
-            setForm(prev => ({ ...prev, skills: [...prev.skills, skill] }))
-        }
-        setSkillInput('')
-        setShowSkillSuggestions(false)
-    }
-
-    const removeSkill = (skill) => {
-        setForm(prev => ({
-            ...prev,
-            skills: prev.skills.filter(s => s !== skill)
-        }))
-    }
-
-    const handleSkillKeyDown = (e) => {
-        if (e.key === 'Enter' && skillInput.trim()) {
-            e.preventDefault()
-            addSkill(skillInput.trim())
-        }
-    }
-
-    const handleChange = (field, value) => {
-        setForm(prev => ({ ...prev, [field]: value }))
-    }
-
-    const handleSubmit = async (e) => {
-        e.preventDefault()
-        setError('')
-
-        if (!form.title.trim()) {
-            setError('Укажите название вакансии')
-            return
-        }
-        if (!form.location.trim()) {
-            setError('Выберите город')
-            return
-        }
-        if (!form.experience) {
-            setError('Выберите требуемый опыт')
-            return
-        }
-
+const grades = [
+    { value:'Junior', label:'Junior', description:'До 1 года опыта' },
+    { value:'Middle', label:'Middle', description:'1–3 года опыта' },
+    { value:'Senior', label:'Senior', description:'3–6 лет опыта' },
+    { value:'Lead', label:'Lead', description:'Более 6 лет опыта' }
+]
+function EditorSection({ number, title, description, children }) {
+    return <section className="editor-section"><div className="editor-section-heading"><span>{number}</span><div><h2>{title}</h2><p>{description}</p></div></div>{children}</section>
+}
+export default function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkills = [], allPositions = [], editVacancy = null }) {
+    const [form,setForm] = useState({ title:editVacancy?.title || '', location:editVacancy?.location || '', experience:editVacancy?.experience || '', remote:editVacancy?.remote || false, skills:editVacancy?.skills || [], description:editVacancy?.description || '', address:editVacancy?.address || '', latitude:editVacancy?.latitude?.toString() || '', longitude:editVacancy?.longitude?.toString() || '' })
+    const [terms,setTerms] = useState({ salary_from:editVacancy?.salary_from || '', salary_to:editVacancy?.salary_to || '', currency:editVacancy?.currency || 'RUB', salary_gross:editVacancy?.salary_gross || false, employment:editVacancy?.employment || '', schedule:editVacancy?.schedule || '' })
+    const [loading,setLoading] = useState(false)
+    const [error,setError] = useState('')
+    const update = (key,value) => setForm(previous => ({ ...previous,[key]:value }))
+    function addSkill(skill) { if (skill.trim() && !form.skills.includes(skill.trim())) update('skills',[...form.skills,skill.trim()]) }
+    async function submit(event) {
+        event.preventDefault();setError('')
+        if (!form.title.trim()) { setError('Укажите название вакансии');return }
+        if (!form.location.trim()) { setError('Укажите город');return }
+        if (!form.experience) { setError('Выберите требуемый опыт');return }
         setLoading(true)
         try {
-            const vacancyData = {
-                ...terms,salary_from:Number(terms.salary_from)||0,salary_to:Number(terms.salary_to)||0,
-                title: form.title,
-                location: form.location,
-                experience: form.experience,
-                remote: form.remote,
-                skills: form.skills,
-                description: form.description,
-                address: form.address,
-                latitude: form.latitude ? parseFloat(form.latitude) : 0,
-                longitude: form.longitude ? parseFloat(form.longitude) : 0
-            }
-
-            if (isEditMode) {
-                await onUpdate(editVacancy.id, vacancyData)
-            } else {
-                await onCreate(vacancyData)
-            }
-        } catch (err) {
-            const rawMessage = err.response?.data?.error || 'Ошибка'
-            const errorMap = {
-                'title, location and experience required': 'Заполните обязательные поля',
-                'you must create a company first': 'Сначала создайте компанию',
-                'unauthorized': 'Требуется авторизация',
-                'forbidden: insufficient role': 'Недостаточно прав',
-                'vacancy not found or access denied': 'Вакансия не найдена'
-            }
-            setError(errorMap[rawMessage] || userError(err))
-        } finally {
-            setLoading(false)
-        }
+            const data = { ...form, ...terms, title:form.title.trim(), location:form.location.trim(), salary_from:Number(terms.salary_from) || 0, salary_to:Number(terms.salary_to) || 0, latitude:Number(form.latitude) || 0, longitude:Number(form.longitude) || 0 }
+            if (editVacancy) await onUpdate(editVacancy.id,data)
+            else await onCreate(data)
+        } catch (failure) { setError(userError(failure)) }
+        finally { setLoading(false) }
     }
-
-    return (
-        <div className="employer-page workspace-screen vacancy-editor-screen">
-            <WorkspaceHeader eyebrow="КОМАНДА НАЧИНАЕТСЯ ЗДЕСЬ" title={isEditMode ? 'Редактировать вакансию' : 'Новая вакансия'} description="Расскажите о работе, условиях и команде — так подходящим кандидатам будет проще вас найти.">
-                {onCancel && (
-                    <button className="btn btn-secondary" onClick={onCancel}>
-                        К вакансиям
-                    </button>
-                )}
-            </WorkspaceHeader>
-
-            <div className="vacancy-editor-layout">
-            <form className="vacancy-form" onSubmit={handleSubmit}>
-                {error && <div className="employer-error" role="alert">{error}</div>}
-                <section className="editor-section">
-                <div className="editor-section-heading"><span>01</span><div><h2>Кого ищете</h2><p>Должность, город и уровень специалиста. Обязательные поля отмечены звёздочкой.</p></div></div>
-
-                {/* ====== НАЗВАНИЕ ВАКАНСИИ С АВТОДОПОЛНЕНИЕМ ====== */}
-                <div className="form-field" ref={titleInputRef}>
-                    <label>Название вакансии *</label>
-                    <div className="position-input-wrapper">
-                        <input
-                            type="text"
-                            value={titleInput}
-                            onChange={(e) => {
-                                setTitleInput(e.target.value)
-                                setForm(prev => ({ ...prev, title: e.target.value }))
-                                setShowTitleSuggestions(e.target.value.length > 0)
-                            }}
-                            onFocus={() => setShowTitleSuggestions(titleInput.length > 0)}
-                            placeholder="Начните вводить должность..."
-                            required
-                        />
-
-                        {showTitleSuggestions && titleSuggestions.length > 0 && (
-                            <div className="position-suggestions">
-                                {titleSuggestions.map(pos => (
-                                    <button
-                                        key={pos}
-                                        type="button"
-                                        className="position-suggestion-item"
-                                        onClick={() => selectTitle(pos)}
-                                    >
-                                        {pos}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+    return <div className="employer-page workspace-screen vacancy-editor-screen">
+        <WorkspaceHeader eyebrow="КОМАНДА НАЧИНАЕТСЯ ЗДЕСЬ" title={editVacancy ? 'Редактировать вакансию' : 'Новая вакансия'} description="Расскажите о работе, условиях и команде — так подходящим кандидатам будет проще вас найти.">
+            {onCancel && <button className="btn btn-secondary" onClick={onCancel}>К вакансиям</button>}
+        </WorkspaceHeader>
+        <div className="vacancy-editor-layout"><form className="vacancy-form" onSubmit={submit}>
+            {error && <div className="employer-error" role="alert">{error}</div>}
+            <EditorSection number="01" title="Кого ищете" description="Должность, город и уровень специалиста. Обязательные поля отмечены звёздочкой.">
+                <div className="form-field position-input-wrapper"><label htmlFor="vacancy-title">Название вакансии *</label><FormSelect id="vacancy-title" label="Название вакансии" value={form.title} onChange={value=>update('title',value)} options={allPositions} searchable allowCustom freeText required placeholder="Выберите или введите должность"/></div>
+                <div className="form-row-2"><div className="form-field"><label htmlFor="vacancy-city">Город *</label><FormSelect id="vacancy-city" inputClassName="city-picker-input" label="Город вакансии" value={form.location} onChange={value=>update('location',value)} options={cities} searchable allowCustom freeText required placeholder="Выберите или введите город"/></div>
+                <div className="form-field"><label htmlFor="vacancy-grade">Требуемый опыт *</label><FormSelect id="vacancy-grade" label="Требуемый опыт" value={form.experience} onChange={value=>update('experience',value)} options={grades} placeholder="Выберите уровень"/></div></div>
+                <div className="form-field"><label className="remote-toggle-label"><input type="checkbox" checked={form.remote} onChange={event=>update('remote',event.target.checked)}/><span>Удалённая работа</span></label></div>
+            </EditorSection>
+            <VacancyTermsFields value={terms} onChange={setTerms} step="02"/>
+            <EditorSection number="03" title="Задачи и ожидания" description="Добавьте навыки и опишите работу. В описании доступны Markdown и изображения.">
+                <div className="form-field"><label htmlFor="vacancy-skill">Требуемые навыки</label><FormSelect id="vacancy-skill" label="Добавить навык" value="" onChange={addSkill} options={allSkills.filter(skill=>!form.skills.includes(skill))} searchable allowCustom placeholder="Выберите или добавьте навык"/>
+                    {form.skills.length > 0 && <div className="skills-list">{form.skills.map(skill=><span key={skill} className="skill-tag-form">{skill}<button type="button" className="remove-skill" aria-label={`Удалить навык ${skill}`} onClick={()=>update('skills',form.skills.filter(item=>item!==skill))}>×</button></span>)}</div>}
                 </div>
-
-                <div className="form-row-2">
-                    {/* ====== ГОРОД ====== */}
-                    <div className="form-field" ref={cityDropdownRef}>
-                        <label>Город *</label>
-                        <div className="city-picker-wrapper">
-                            <input
-                                type="text"
-                                className="city-picker-input"
-                                value={citySearch}
-                                onChange={(e) => {
-                                    setCitySearch(e.target.value)
-                                    setForm(prev => ({ ...prev, location: e.target.value }))
-                                    setShowCityDropdown(true)
-                                }}
-                                onFocus={() => setShowCityDropdown(true)}
-                                placeholder="Начните вводить город..."
-                                autoComplete="off"
-                            />
-
-                            {form.location && form.location !== citySearch && (
-                                <span className="city-selected-badge">
-                                    ✓ {form.location}
-                                </span>
-                            )}
-
-                            {showCityDropdown && citySearch.length > 0 && (
-                                <div className="city-dropdown">
-                                    {filteredCities.length === 0 ? (
-                                        <div className="city-dropdown-empty">Город не найден</div>
-                                    ) : (
-                                        filteredCities.map(city => (
-                                            <div
-                                                key={city}
-                                                className={`city-dropdown-item ${form.location === city ? 'selected' : ''}`}
-                                                onClick={() => selectCity(city)}
-                                            >
-                                                {city}
-                                            </div>
-                                        ))
-                                    )}
-
-                                    {citySearch.trim() && !filteredCities.some(c => c.toLowerCase() === citySearch.toLowerCase()) && (
-                                        <div
-                                            className="city-dropdown-item city-dropdown-add"
-                                            onClick={() => {
-                                                const newCity = citySearch.trim()
-                                                setForm(prev => ({ ...prev, location: newCity }))
-                                                setShowCityDropdown(false)
-                                                setCitySearch(newCity)
-                                            }}
-                                        >
-                                            + Добавить "{citySearch.trim()}"
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* ====== ОПЫТ ====== */}
-                    <div className="form-field" ref={expDropdownRef}>
-                        <label>Требуемый опыт *</label>
-                        <div className="custom-dropdown">
-                            <button
-                                type="button"
-                                className={`dropdown-trigger ${showExpDropdown ? 'open' : ''} ${form.experience ? 'has-value' : ''}`}
-                                onClick={() => setShowExpDropdown(!showExpDropdown)}
-                            >
-                                <span className="dropdown-value">
-                                    {form.experience || 'Выберите опыт'}
-                                </span>
-                                <svg className={`dropdown-arrow ${showExpDropdown ? 'rotated' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <polyline points="6 9 12 15 18 9" />
-                                </svg>
-                            </button>
-
-                            {showExpDropdown && (
-                                <div className="dropdown-menu">
-                                    {experienceOptions.map(opt => (
-                                        <button
-                                            key={opt.value}
-                                            type="button"
-                                            className={`dropdown-option ${form.experience === opt.value ? 'selected' : ''}`}
-                                            onClick={() => selectExperience(opt.value)}
-                                        >
-                                            <div className="option-content">
-                                                <span className="option-label">{opt.label}</span>
-                                                <span className="option-description">{opt.desc}</span>
-                                            </div>
-                                            {form.experience === opt.value && (
-                                                <svg className="option-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                                    <polyline points="20 6 9 17 4 12" />
-                                                </svg>
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* ====== УДАЛЁНКА ====== */}
-                <div className="form-field">
-                    <label className="remote-toggle-label">
-                        <input
-                            type="checkbox"
-                            checked={form.remote}
-                            onChange={(e) => handleChange('remote', e.target.checked)}
-                        />
-                        <span>Удалённая работа</span>
-                    </label>
-                </div>
-
-                {/* ====== НАВЫКИ ====== */}
-                </section>
-                <VacancyTermsFields value={terms} onChange={setTerms} step="02"/>
-                <section className="editor-section">
-                <div className="editor-section-heading"><span>03</span><div><h2>Задачи и ожидания</h2><p>Добавьте навыки и опишите работу. В описании доступны Markdown и изображения.</p></div></div>
-                <div className="form-field" ref={skillInputRef}>
-                    <label>Требуемые навыки</label>
-                    <div className="skills-input-wrapper">
-                        <div className="skills-input">
-                            <input
-                                type="text"
-                                value={skillInput}
-                                onChange={(e) => {
-                                    setSkillInput(e.target.value)
-                                    setShowSkillSuggestions(e.target.value.length > 0)
-                                }}
-                                onKeyDown={handleSkillKeyDown}
-                                onFocus={() => setShowSkillSuggestions(skillInput.length > 0)}
-                                placeholder="Начните вводить навык и нажмите Enter"
-                            />
-                            <button
-                                type="button"
-                                className="add-skill-btn"
-                                onClick={() => addSkill(skillInput.trim())}
-                                disabled={!skillInput.trim()}
-                            >
-                                +
-                            </button>
-                        </div>
-
-                        {showSkillSuggestions && skillSuggestions.length > 0 && (
-                            <div className="skills-suggestions">
-                                {skillSuggestions.map(skill => (
-                                    <button
-                                        key={skill}
-                                        type="button"
-                                        className="skill-suggestion-item"
-                                        onClick={() => addSkill(skill)}
-                                    >
-                                        {skill}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    {form.skills.length > 0 && (
-                        <div className="skills-list">
-                            {form.skills.map(skill => (
-                                <span key={skill} className="skill-tag-form">
-                                    {skill}
-                                    <button
-                                        type="button"
-                                        className="remove-skill"
-                                        onClick={() => removeSkill(skill)}
-                                    >
-                                        ×
-                                    </button>
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                </div>
-
-                {/* ====== ОПИСАНИЕ ====== */}
-                <div className="form-field">
-                    <label>Описание вакансии</label>
-                    <MarkdownEditor value={form.description} onChange={value=>handleChange('description',value)}/>
-                </div>
-
-                {/* ====== РАСПОЛОЖЕНИЕ С КАРТОЙ ====== */}
-                </section>
-                <section className="editor-section">
-                <div className="editor-section-heading"><span>04</span><div><h2>Где работает команда</h2><p>{form.remote ? 'Адрес необязателен для удалённой работы.' : 'Укажите офис на карте, чтобы кандидатам было проще оценить дорогу.'}</p></div></div>
-
-                <div className="form-field">
-                    <VacancyMapPicker
-                        address={form.address}
-                        latitude={form.latitude}
-                        longitude={form.longitude}
-                        onAddressChange={(addr) => handleChange('address', addr)}
-                        onCoordinatesChange={(lat, lng) => {
-                            setForm(prev => ({
-                                ...prev,
-                                latitude: lat.toString(),
-                                longitude: lng.toString()
-                            }))
-                        }}
-                    />
-                </div>
-                </section>
-
-                <div className="form-actions">
-                    <button type="button" className="btn btn-secondary" onClick={onCancel}>
-                        Отмена
-                    </button>
-                    <button type="submit" className="btn btn-primary" disabled={loading}>
-                        {loading ? (isEditMode ? 'Сохранение...' : 'Создание...') : (isEditMode ? 'Сохранить изменения' : 'Создать вакансию')}
-                    </button>
-                </div>
-            </form>
-            <aside className="vacancy-editor-preview"><div className="vacancy-editor-preview-card"><span className="eyebrow">ПРЕДПРОСМОТР КАРТОЧКИ</span><h2>{form.title || 'Название вашей вакансии'}</h2><VacancyTerms vacancy={terms}/><div className="workspace-job-meta"><span>{form.location || 'Город'}</span><span>{form.experience || 'Уровень'}</span><span>{form.remote ? 'Удалённо' : 'В офисе'}</span></div>{form.skills.length > 0 && <div className="workspace-job-skills">{form.skills.slice(0,5).map(skill => <span key={skill}>{skill}</span>)}</div>}</div><p className="vacancy-editor-preview-note">Перед публикацией проверьте зарплату, город и контакты компании. Описание и фотографии будут доступны на странице вакансии.</p></aside>
-            </div>
-        </div>
-    )
+                <div className="form-field"><label>Описание вакансии</label><MarkdownEditor value={form.description} onChange={value=>update('description',value)}/></div>
+            </EditorSection>
+            <EditorSection number="04" title="Где работает команда" description={form.remote ? 'Адрес необязателен для удалённой работы.' : 'Укажите офис на карте, чтобы кандидатам было проще оценить дорогу.'}>
+                <div className="form-field"><VacancyMapPicker address={form.address} latitude={form.latitude} longitude={form.longitude} onAddressChange={value=>update('address',value)} onCoordinatesChange={(latitude,longitude)=>setForm(previous=>({...previous,latitude:latitude.toString(),longitude:longitude.toString()}))}/></div>
+            </EditorSection>
+            <div className="form-actions">{onCancel && <button type="button" className="btn btn-secondary" onClick={onCancel}>Отмена</button>}<button type="submit" className="btn btn-primary" disabled={loading}>{loading ? 'Сохраняем…' : editVacancy ? 'Сохранить изменения' : 'Создать вакансию'}</button></div>
+        </form><aside className="vacancy-editor-preview"><div className="vacancy-editor-preview-card"><span className="eyebrow">ПРЕДПРОСМОТР КАРТОЧКИ</span><h2>{form.title || 'Название вашей вакансии'}</h2><VacancyTerms vacancy={terms}/><div className="workspace-job-meta"><span>{form.location || 'Город'}</span><span>{form.experience || 'Уровень'}</span><span>{form.remote ? 'Удалённо' : 'В офисе'}</span></div>{form.skills.length>0 && <div className="workspace-job-skills">{form.skills.slice(0,5).map(skill=><span key={skill}>{skill}</span>)}</div>}</div><p className="vacancy-editor-preview-note">Перед публикацией проверьте зарплату, город и контакты компании. Описание и фотографии будут доступны на странице вакансии.</p></aside></div>
+    </div>
 }
-
-export default CreateVacancyPage

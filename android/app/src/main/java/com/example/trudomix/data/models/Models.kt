@@ -83,6 +83,8 @@ data class JobApplication(
     val status: String? = null,
     val created_at: String? = null,
     val viewed_at: String? = null,      // И это
+    val feedback: String = "",
+    val interview_at: String? = null,
     val vacancy_title: String? = null,
     val company_name: String? = null,
     val conversation_id: Int? = null,

@@ -302,6 +302,25 @@ func TestProductGrowthFlows(t *testing.T) {
 		if len(events) != 2 || events[1].Feedback != "Приглашаем познакомиться" || events[1].InterviewAt == nil {
 			t.Fatalf("wrong history: %+v", events)
 		}
+		if _, err := pool.Exec(ctx, "CREATE TABLE conversations(id SERIAL PRIMARY KEY,application_id INT)"); err != nil {
+			t.Fatal(err)
+		}
+		storage := &PostgresStorage{pool: pool}
+		candidateApps, candidateErr := storage.GetMyApplications(ctx, 1)
+		employerApps, employerErr := storage.GetApplicationsForEmployer(ctx, 10)
+		for _, result := range []struct {
+			name string
+			apps []Application
+			err  error
+		}{{"candidate", candidateApps, candidateErr}, {"employer", employerApps, employerErr}} {
+			if result.err != nil || len(result.apps) != 1 {
+				t.Fatalf("%s application list: %+v %v", result.name, result.apps, result.err)
+			}
+			app := result.apps[0]
+			if app.ID != id || app.Feedback != events[1].Feedback || app.InterviewAt == nil || !app.InterviewAt.Equal(*events[1].InterviewAt) {
+				t.Fatalf("%s lost current history details: %+v", result.name, app)
+			}
+		}
 		check(request(2, "PATCH", statusPath, []byte(`{"status":"accepted","interview_at":"not a date"}`), ""), 400)
 		var unknown int
 		if err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM application_events WHERE application_id=100 AND created_at IS NULL").Scan(&unknown); err != nil || unknown != 1 {

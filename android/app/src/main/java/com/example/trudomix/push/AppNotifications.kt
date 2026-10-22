@@ -10,6 +10,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.Person
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.drawable.IconCompat
 import com.example.trudomix.MainActivity
 import com.example.trudomix.R
 import com.example.trudomix.data.local.AppIcons
@@ -73,9 +74,10 @@ object AppNotifications {
         val pending = PendingIntent.getActivity(context, id, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val dismissed = PendingIntent.getBroadcast(context, id, Intent(context, NotificationDismissReceiver::class.java), PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val manager = context.getSystemService(NotificationManager::class.java)
+        val appIcon = ContextCompat.getDrawable(context, AppIcons.current(context).resource)!!.toBitmap(192,192)
         val builder = NotificationCompat.Builder(context, presentation.channel)
             .setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(body)
-            .setLargeIcon(ContextCompat.getDrawable(context, AppIcons.current(context).resource)!!.toBitmap(192,192))
+            .setLargeIcon(appIcon)
             .setSubText(presentation.label).setColor(0xFF0066CC.toInt())
             .addAction(R.drawable.ic_notification, presentation.action, pending)
             .setStyle(NotificationCompat.BigTextStyle().bigText(body)).setAutoCancel(true)
@@ -87,7 +89,7 @@ object AppNotifications {
                 .setSmallIcon(R.drawable.ic_notification).setContentTitle("Trudomix")
                 .setContentText(presentation.label).setContentIntent(pending).build())
         if (conversation != null && !data["sender_name"].isNullOrBlank()) {
-            val sender = Person.Builder().setName(data["sender_name"]).build()
+            val sender = Person.Builder().setName(data["sender_name"]).setIcon(IconCompat.createWithBitmap(appIcon)).build()
             val previous = manager.activeNotifications.firstOrNull { it.id == id }?.notification
                 ?.let { NotificationCompat.MessagingStyle.extractMessagingStyleFromNotification(it) }
             val style = NotificationCompat.MessagingStyle(Person.Builder().setName("Вы").build()).setGroupConversation(false)

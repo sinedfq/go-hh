@@ -244,6 +244,8 @@ type Application struct {
 	Status          string     `json:"status"`
 	CreatedAt       time.Time  `json:"created_at"`
 	ViewedAt        *time.Time `json:"viewed_at,omitempty"`
+	Feedback        string     `json:"feedback"`
+	InterviewAt     *time.Time `json:"interview_at,omitempty"`
 
 	ConversationID *int `json:"conversation_id,omitempty"`
 

@@ -1,343 +1,85 @@
-import { useState, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import ApplicationHistory from '../../components/common/ApplicationHistory'
 import ConfirmModal from '../../components/common/ConfirmModal'
+import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
+import { userError } from '../../utils/userError'
 import './EmployerPages.css'
 
-function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatWith, showToast }) {
-    const [applications, setApplications] = useState([])
-    const [loading, setLoading] = useState(true)
-    const [filter, setFilter] = useState('all')
-    const [updating, setUpdating] = useState(null)
-    const [confirmAction, setConfirmAction] = useState(null)
-    
-    const lastKnownIdsRef = useRef(new Set())
-    const isFirstLoadRef = useRef(true)
-
-    const loadApplications = async (silent = false) => {
+const statuses = { new:'Новый отклик', viewed:'В работе', accepted:'Приглашение', rejected:'Отказ' }
+export default function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatWith, showToast }) {
+    const [applications,setApplications] = useState([])
+    const [loading,setLoading] = useState(true)
+    const [filter,setFilter] = useState('all')
+    const [query,setQuery] = useState('')
+    const [updating,setUpdating] = useState(null)
+    const [error,setError] = useState('')
+    const [confirmation,setConfirmation] = useState(null)
+    const knownIds = useRef(null)
+    const request = useRef(null)
+    const toast = useRef(showToast)
+    useEffect(()=>{toast.current=showToast},[showToast])
+    const load = useCallback(async (silent = false) => {
+        request.current?.abort()
+        const controller = new AbortController();request.current=controller
+        if (!silent) setLoading(true)
         try {
-            if (!silent) setLoading(true)
-            const res = await axios.get('/api/employer/applications')
-            const apps = Array.isArray(res.data) ? res.data : []
-            
-            // На первом загрузке просто запоминаем ID
-            if (isFirstLoadRef.current) {
-                isFirstLoadRef.current = false
-                apps.forEach(a => lastKnownIdsRef.current.add(a.id))
-                setApplications(apps)
-                return
+            const response = await axios.get('/api/employer/applications',{signal:controller.signal})
+            if (controller.signal.aborted) return
+            const items = Array.isArray(response.data) ? response.data : []
+            if (knownIds.current) {
+                const fresh = items.filter(item=>!knownIds.current.has(item.id))
+                if (fresh.length) toast.current?.(fresh.length===1 ? `Новый отклик от ${fresh[0].resume_full_name || fresh[0].candidate_email}` : `Новых откликов: ${fresh.length}`)
             }
-            
-            // Проверяем новые отклики
-            const newApps = apps.filter(a => !lastKnownIdsRef.current.has(a.id))
-            if (newApps.length > 0 && showToast) {
-                newApps.forEach(app => {
-                    showToast(`🎉 Новый отклик от ${app.resume_full_name || app.candidate_email} на "${app.vacancy_title}"`)
-                })
-                // Обновляем известные ID
-                newApps.forEach(a => lastKnownIdsRef.current.add(a.id))
-            }
-            
-            setApplications(apps)
-        } catch (err) {
-            console.error('Ошибка загрузки откликов:', err)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    useEffect(() => {
-        loadApplications()
-    }, [])
-
-    // ====== POLLING КАЖДЫЕ 10 СЕКУНД ======
-    useEffect(() => {
-        const interval = setInterval(() => {
-            loadApplications(true)
-        }, 10000)
-        return () => clearInterval(interval)
-    }, [])
-
-    // ====== ОБНОВЛЕНИЕ СТАТУСА С TOAST ======
-    const updateStatus = async (applicationId, status, candidateName) => {
-        setUpdating(applicationId)
+            knownIds.current = new Set(items.map(item=>item.id))
+            setApplications(items);setError('')
+        } catch (failure) { if (!controller.signal.aborted) setError(userError(failure)) }
+        finally { if (!controller.signal.aborted) setLoading(false) }
+    },[])
+    useEffect(()=>{
+        load()
+        const refresh=()=>{if(!document.hidden)load(true)}
+        const interval=setInterval(refresh,10000)
+        document.addEventListener('visibilitychange',refresh)
+        return ()=>{clearInterval(interval);document.removeEventListener('visibilitychange',refresh);request.current?.abort()}
+    },[load])
+    async function changeStatus(app,status) {
+        if(updating) return
+        setUpdating(app.id);setError('')
         try {
-            await axios.patch(`/api/applications/${applicationId}/status`, { status })
-            setApplications(prev => prev.map(app =>
-                app.id === applicationId ? { ...app, status } : app
-            ))
-            if (showToast) {
-                if (status === 'accepted') {
-                    showToast(`Кандидат ${candidateName} принят!`)
-                } else if (status === 'rejected') {
-                    showToast(`Отклик ${candidateName} отклонён`)
-                }
-            }
-        } catch (err) {
-            console.error('Ошибка обновления статуса:', err)
-            if (showToast) showToast('Не удалось обновить статус')
-        } finally {
-            setUpdating(null)
-            setConfirmAction(null)
-        }
+            await axios.patch(`/api/applications/${app.id}/status`,{status})
+            await load(true)
+            showToast?.(status==='accepted' ? 'Приглашение отправлено кандидату' : 'Ответ отправлен кандидату')
+        } catch(failure) { setError(userError(failure)) }
+        finally {setUpdating(null);setConfirmation(null)}
     }
-
-    // ====== СОЗДАТЬ ЧАТ ВРУЧНУЮ (если ещё не создан) ======
-    const handleOpenChat = async (app) => {
-        if (app.conversation_id) {
-            // Чат есть — открываем
-            if (onOpenChatWith) {
-                onOpenChatWith({
-                    conversation_id: app.conversation_id,
-                    application_id: app.id,
-                    vacancy_id: app.vacancy_id,
-                    vacancy_title: app.vacancy_title,
-                    company_name: app.company_name,
-                    candidate_name: app.resume_full_name || app.candidate_email,
-                    candidate_id: app.candidate_user_id,
-                    candidate_photo: app.candidate_photo,
-                })
-            }
-        } else {
-            // Чата нет — создаём
-            try {
-                const res = await axios.post(`/api/applications/${app.id}/start-chat`)
-                const newConvId = res.data.conversation_id
-                
-                // Обновляем локальное состояние
-                setApplications(prev => prev.map(a => 
-                    a.id === app.id ? { ...a, conversation_id: newConvId } : a
-                ))
-                
-                // Открываем чат
-                if (onOpenChatWith) {
-                    onOpenChatWith({
-                        conversation_id: newConvId,
-                        application_id: app.id,
-                        vacancy_id: app.vacancy_id,
-                        vacancy_title: app.vacancy_title,
-                        company_name: app.company_name,
-                        candidate_name: app.resume_full_name || app.candidate_email,
-                        candidate_id: app.candidate_user_id,
-                        candidate_photo: app.candidate_photo,
-                    })
-                }
-            } catch (err) {
-                console.error('Ошибка создания чата:', err)
-                if (showToast) showToast('Не удалось создать чат')
-            }
-        }
+    async function openChat(app) {
+        if(updating) return
+        setUpdating(app.id)
+        try {
+            const id = app.conversation_id || (await axios.post(`/api/applications/${app.id}/start-chat`)).data.conversation_id
+            onOpenChatWith?.({conversation_id:id,application_id:app.id,vacancy_id:app.vacancy_id,vacancy_title:app.vacancy_title,company_name:app.company_name,candidate_name:app.resume_full_name || app.candidate_email,candidate_id:app.candidate_user_id,candidate_photo:app.candidate_photo})
+        } catch(failure) { setError(userError(failure)) }
+        finally {setUpdating(null)}
     }
-
-    const handleConfirmAction = () => {
-        if (!confirmAction) return
-        const { app, action } = confirmAction
-        const status = action === 'accept' ? 'accepted' : 'rejected'
-        const name = app.resume_full_name || app.candidate_email
-        updateStatus(app.id, status, name)
-    }
-
-    const getStatusInfo = (status) => {
-        switch (status) {
-            case 'new': return { label: 'Новый', className: 'status-new' }
-            case 'viewed': return { label: 'Просмотрен', className: 'status-viewed' }
-            case 'accepted': return { label: 'Принят', className: 'status-accepted' }
-            case 'rejected': return { label: 'Отклонён', className: 'status-rejected' }
-            default: return { label: status, className: '' }
-        }
-    }
-
-    const filteredApps = applications.filter(app => {
-        if (filter === 'all') return true
-        return app.status === filter
-    })
-
-    const stats = {
-        all: applications.length,
-        new: applications.filter(a => a.status === 'new').length,
-        viewed: applications.filter(a => a.status === 'viewed').length,
-        accepted: applications.filter(a => a.status === 'accepted').length,
-        rejected: applications.filter(a => a.status === 'rejected').length,
-    }
-
-    const formatDate = (dateString) => {
-        const date = new Date(dateString)
-        return date.toLocaleDateString('ru-RU', {
-            day: 'numeric', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        })
-    }
-
-    if (loading) {
-        return (
-            <div className="employer-page">
-                <div className="loading">
-                    <div className="spinner"></div>
-                    <p>Загрузка откликов...</p>
-                </div>
-            </div>
-        )
-    }
-
-    return (
-        <div className="employer-page">
-            {confirmAction && (
-                <ConfirmModal
-                    title={confirmAction.action === 'accept' ? 'Принять кандидата?' : 'Отклонить отклик?'}
-                    message={
-                        confirmAction.action === 'accept'
-                            ? `Вы собираетесь принять кандидата "${confirmAction.app.resume_full_name || confirmAction.app.candidate_email}".`
-                            : `Отклонить отклик от "${confirmAction.app.resume_full_name || confirmAction.app.candidate_email}"?`
-                    }
-                    confirmText={confirmAction.action === 'accept' ? 'Принять' : 'Отклонить'}
-                    cancelText="Отмена"
-                    danger={confirmAction.action === 'reject'}
-                    onConfirm={handleConfirmAction}
-                    onCancel={() => setConfirmAction(null)}
-                />
-            )}
-
-            <div className="employer-header">
-                <div>
-                    <h1>Отклики на вакансии</h1>
-                    <p className="employer-subtitle">
-                        Всего откликов: {applications.length}
-                        {stats.new > 0 && <span className="new-count"> • {stats.new} новых</span>}
-                    </p>
-                </div>
-            </div>
-
-            <div className="applications-filters">
-                <button className={`filter-btn ${filter === 'all' ? 'active' : ''}`} onClick={() => setFilter('all')}>
-                    Все <span className="filter-count">{stats.all}</span>
-                </button>
-                <button className={`filter-btn ${filter === 'new' ? 'active' : ''}`} onClick={() => setFilter('new')}>
-                    Новые <span className="filter-count">{stats.new}</span>
-                </button>
-                <button className={`filter-btn ${filter === 'viewed' ? 'active' : ''}`} onClick={() => setFilter('viewed')}>
-                    Просмотренные <span className="filter-count">{stats.viewed}</span>
-                </button>
-                <button className={`filter-btn ${filter === 'accepted' ? 'active' : ''}`} onClick={() => setFilter('accepted')}>
-                    Принятые <span className="filter-count">{stats.accepted}</span>
-                </button>
-                <button className={`filter-btn ${filter === 'rejected' ? 'active' : ''}`} onClick={() => setFilter('rejected')}>
-                    Отклонённые <span className="filter-count">{stats.rejected}</span>
-                </button>
-            </div>
-
-            {filteredApps.length === 0 ? (
-                <div className="applications-empty">
-                    <div className="applications-empty-icon">📭</div>
-                    <h3>{filter === 'all' ? 'Пока нет откликов' : 'Нет откликов'}</h3>
-                    <p>Когда кандидаты откликнутся, они появятся здесь</p>
-                </div>
-            ) : (
-                <div className="applications-list">
-                    {filteredApps.map(app => {
-                        const statusInfo = getStatusInfo(app.status)
-                        const isUpdating = updating === app.id
-
-                        return (
-                            <div key={app.id} className={`application-card ${statusInfo.className}`}>
-                                <div className="application-card-header">
-                                    <div className="application-candidate">
-                                        <div className="candidate-avatar">
-                                            {app.candidate_photo ? (
-                                                <img src={app.candidate_photo} alt="" />
-                                            ) : (
-                                                <div className="avatar-placeholder">
-                                                    {(app.resume_full_name || app.candidate_email || '?')[0].toUpperCase()}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="candidate-info">
-                                            <h3 className="candidate-name">
-                                                {app.resume_full_name || app.candidate_email}
-                                            </h3>
-                                            {app.resume_position && (
-                                                <p className="candidate-position">{app.resume_position}</p>
-                                            )}
-                                            <div className="candidate-meta">
-                                                {app.resume_experience && (
-                                                    <span className="candidate-experience">
-                                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                                        </svg>
-                                                        {app.resume_experience}
-                                                    </span>
-                                                )}
-                                                <p className="candidate-email">{app.candidate_email}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className={`application-status-badge ${statusInfo.className}`}>
-                                        {statusInfo.label}
-                                    </div>
-                                </div>
-
-                                <div className="application-vacancy-row">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                    </svg>
-                                    <button className="application-vacancy-link" onClick={() => onOpenVacancy?.(app.vacancy_id)}>
-                                        {app.vacancy_title}
-                                    </button>
-                                </div>
-
-                                {app.cover_letter && (
-                                    <div className="application-cover">
-                                        <div className="cover-label">Сопроводительное письмо:</div>
-                                        <p className="cover-text">{app.cover_letter}</p>
-                                    </div>
-                                )}
-
-                                <ApplicationHistory application={app} employer onUpdated={loadApplications}/>
-                                <div className="application-meta">
-                                    <span className="application-date">{formatDate(app.created_at)}</span>
-                                </div>
-
-                                <div className="application-actions">
-                                    {app.resume_id && app.resume_id > 0 ? (
-                                        <button className="btn btn-secondary btn-small" onClick={() => onOpenResume?.(app.resume_id)}>
-                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                <polyline points="14 2 14 8 20 8" />
-                                            </svg>
-                                            Посмотреть резюме
-                                        </button>
-                                    ) : (
-                                        <span className="no-resume-hint">Резюме не прикреплено</span>
-                                    )}
-
-                                    {app.status !== 'accepted' && (
-                                        <button className="btn btn-success btn-small" onClick={() => setConfirmAction({ app, action: 'accept' })} disabled={isUpdating}>
-                                            {isUpdating ? '...' : '✓ Принять'}
-                                        </button>
-                                    )}
-
-                                    {app.status !== 'rejected' && (
-                                        <button className="btn btn-danger-outline btn-small" onClick={() => setConfirmAction({ app, action: 'reject' })} disabled={isUpdating}>
-                                            {isUpdating ? '...' : '✕ Отклонить'}
-                                        </button>
-                                    )}
-
-                                    <button className="btn btn-primary btn-small" onClick={() => handleOpenChat(app)}>
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                                        </svg>
-                                        Чат
-                                    </button>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
-        </div>
-    )
+    const stats = Object.fromEntries(['new','viewed','accepted','rejected'].map(status=>[status,applications.filter(app=>app.status===status).length]))
+    const filtered = applications.filter(app=>(filter==='all'||app.status===filter)&&`${app.resume_full_name} ${app.candidate_email} ${app.vacancy_title}`.toLocaleLowerCase('ru').includes(query.trim().toLocaleLowerCase('ru')))
+    return <div className="employer-page workspace-screen employer-applications-workspace">
+        <WorkspaceHeader eyebrow="ЗНАКОМСТВО С КАНДИДАТАМИ" title="Отклики" description="Все ответы на вакансии команды. Изучайте резюме, приглашайте кандидатов и планируйте встречи."/>
+        {confirmation && <ConfirmModal title={confirmation.status==='accepted'?'Пригласить кандидата?':'Отправить отказ?'} message={`${confirmation.app.resume_full_name || confirmation.app.candidate_email} получит ответ по вакансии «${confirmation.app.vacancy_title}». Комментарий и время встречи можно добавить в истории отклика.`} confirmText={confirmation.status==='accepted'?'Пригласить':'Отправить отказ'} danger={confirmation.status==='rejected'} onConfirm={()=>changeStatus(confirmation.app,confirmation.status)} onCancel={()=>setConfirmation(null)}/>}
+        {error && <div className="employer-error" role="alert">{error}<button className="btn btn-secondary" onClick={()=>load()}>Повторить загрузку</button></div>}
+        {loading ? <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем отклики…</p></div> : <>
+            <div className="workspace-metrics"><WorkspaceMetric icon="briefcase" value={applications.length} label="Всего откликов" hint="На вакансии вашей компании"/><WorkspaceMetric icon="eye" value={stats.new} label="Новые кандидаты" hint="Ожидают первого ответа"/><WorkspaceMetric icon="check" value={stats.accepted} label="Приглашения" hint="Следующий шаг — знакомство"/></div>
+            <div className="workspace-toolbar"><label className="workspace-search"><WorkspaceIcon name="search" size={18}/><input aria-label="Поиск кандидатов и вакансий" placeholder="Кандидат или вакансия" value={query} onChange={event=>setQuery(event.target.value)}/></label></div>
+            <div className="workspace-tabs applications-tabs" aria-label="Этапы подбора">{[['all','Все',applications.length],['new','Новые',stats.new],['viewed','В работе',stats.viewed],['accepted','Приглашения',stats.accepted],['rejected','Отказы',stats.rejected]].map(([value,label,count])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}<span>{count}</span></button>)}</div>
+            {filtered.length===0 ? <div className="workspace-state"><span className="workspace-state-icon"><WorkspaceIcon name="search" size={28}/></span><h2>{applications.length?'Подходящих откликов пока нет':'Здесь появятся будущие коллеги'}</h2><p>{applications.length?'Измените поиск или выберите другой этап.':'Когда кандидаты откликнутся на ваши вакансии, вы сможете познакомиться с ними здесь.'}</p>{(query||filter!=='all')&&<button className="btn btn-secondary" onClick={()=>{setQuery('');setFilter('all')}}>Показать все отклики</button>}</div>
+            : <div className="recruitment-list">{filtered.map(app=><article key={app.id} className="recruitment-card">
+                <div className="recruitment-card-header"><div className="recruitment-candidate"><div className="recruitment-avatar">{app.candidate_photo?<img src={app.candidate_photo} alt=""/>:(app.resume_full_name || app.candidate_email || '?')[0].toUpperCase()}</div><div><h2>{app.resume_full_name || app.candidate_email}</h2>{app.resume_position && <p>{app.resume_position}</p>}<span>{[app.resume_experience,app.candidate_email].filter(Boolean).join(' · ')}</span></div></div><span className={`workspace-status ${app.status==='accepted'?'success':app.status==='rejected'?'declined':app.status==='new'?'muted':''}`}>{statuses[app.status] || app.status}</span></div>
+                <button className="recruitment-vacancy" onClick={()=>onOpenVacancy?.(app.vacancy_id)}><WorkspaceIcon name="briefcase" size={17}/>{app.vacancy_title}<WorkspaceIcon name="arrow" size={16}/></button>
+                {app.cover_letter && <details className="recruitment-cover"><summary>Сопроводительное письмо</summary><p>{app.cover_letter}</p></details>}
+                <ApplicationHistory application={app} employer onUpdated={()=>load(true)}/>
+                <div className="recruitment-card-footer"><span>Отклик {app.created_at?new Date(app.created_at).toLocaleDateString('ru-RU'):'получен'}</span><div className="workspace-card-actions">{app.resume_id>0&&<button className="btn btn-secondary" onClick={()=>onOpenResume?.(app.resume_id)}>Резюме</button>}<button className="btn btn-primary" disabled={!!updating} onClick={()=>openChat(app)}>Открыть чат</button>{app.status!=='accepted'&&<button className="btn btn-secondary" disabled={!!updating} onClick={()=>setConfirmation({app,status:'accepted'})}>Пригласить</button>}{app.status!=='rejected'&&<button className="workspace-delete" disabled={!!updating} onClick={()=>setConfirmation({app,status:'rejected'})}>Отказать</button>}</div></div>
+            </article>)}</div>}
+        </>}
+    </div>
 }
-
-export default EmployerApplicationsPage

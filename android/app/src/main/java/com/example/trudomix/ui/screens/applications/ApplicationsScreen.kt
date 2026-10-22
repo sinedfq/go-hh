@@ -15,6 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.example.trudomix.data.models.JobApplication
 import com.example.trudomix.ui.components.AppScreenHeader
 import com.example.trudomix.ui.components.AppSnackbarHost
@@ -23,19 +26,22 @@ import com.example.trudomix.ui.components.AppSnackbarHost
 fun ApplicationsScreen(viewModel: ApplicationsViewModel = viewModel(), onVacancyClick:(Int)->Unit={}, onChatClick:(Int)->Unit={}) {
     val state by viewModel.uiState.collectAsState()
     val busy by viewModel.busy.collectAsState()
+    val histories by viewModel.histories.collectAsState()
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(viewModel,lifecycle) { lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { viewModel.observe() } }
     val snackbar=remember{SnackbarHostState()}
     LaunchedEffect(viewModel){viewModel.messageEvent.collect{snackbar.showSnackbar(it)}}
     Box(Modifier.fillMaxSize()) {
         ApplicationsContent(state,busy,viewModel::loadApplications,onVacancyClick,{app->
             app.conversation_id?.takeIf{it>0}?.let(onChatClick) ?: app.id?.let{viewModel.startChat(it,onChatClick)}
-        },{it.id?.let(viewModel::cancelApplication)})
+        },{it.id?.let(viewModel::cancelApplication)},histories,viewModel::loadHistory)
         AppSnackbarHost(snackbar,Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(bottom=108.dp))
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onRefresh:()->Unit={},onVacancy:(Int)->Unit={},onChat:(JobApplication)->Unit={},onCancel:(JobApplication)->Unit={}) {
+fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onRefresh:()->Unit={},onVacancy:(Int)->Unit={},onChat:(JobApplication)->Unit={},onCancel:(JobApplication)->Unit={},histories:Map<Int,ApplicationHistoryState> = emptyMap(),onHistory:(Int)->Unit={}) {
     var filter by rememberSaveable{mutableStateOf("all")}
     var cancelling by remember{mutableStateOf<JobApplication?>(null)}
     val apps=(state as? ApplicationsUiState.Success)?.applications.orEmpty()
@@ -49,7 +55,7 @@ fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onR
 )
             }
             item { LazyRow(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                items(listOf("all" to "Все","active" to "В работе","accepted" to "Принятые","rejected" to "Отказы")){(key,label)->FilterChip(filter==key,{filter=key},label={Text(label)})}
+                items(listOf("all" to "Все","active" to "В работе","accepted" to "Приглашения","rejected" to "Отказы")){(key,label)->FilterChip(filter==key,{filter=key},label={Text(label)})}
             } }
             when(state) {
                 ApplicationsUiState.Loading -> item{LinearProgressIndicator(Modifier.fillMaxWidth())}
@@ -77,10 +83,12 @@ fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onR
                                 Text(app.company_name.orEmpty(),style=MaterialTheme.typography.bodyMedium,color=colors.onSurfaceVariant)
                                 if(app.vacancy_archived)Text("Вакансия в архиве",style=MaterialTheme.typography.labelMedium,color=colors.onSurfaceVariant)
                                 app.created_at?.let{Text("Отправлен ${applicationDate(it)}",style=MaterialTheme.typography.bodySmall,color=colors.onSurfaceVariant)}
+                                ApplicationDetailsSummary(app.feedback, app.interview_at)
                                 if(!app.cover_letter.isNullOrBlank()) {
                                     TextButton(onClick={letter=!letter}){Icon(Icons.Default.Description,null,Modifier.size(18.dp));Spacer(Modifier.width(8.dp));Text(if(letter)"Скрыть письмо" else "Моё сопроводительное письмо")}
                                     AnimatedVisibility(letter){Text(app.cover_letter,style=MaterialTheme.typography.bodyMedium)}
                                 }
+                                app.id?.let { id -> ApplicationHistorySection(id,histories[id]) { onHistory(id) } }
                                 HorizontalDivider(color=colors.outlineVariant)
                                 FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(4.dp)){
                                     Button(onClick={onChat(app)},enabled=app.id!=null&&app.id !in busy){Icon(Icons.Default.ChatBubbleOutline,null,Modifier.size(18.dp));Spacer(Modifier.width(8.dp));Text(if(app.id in busy)"Открываем…" else "Открыть чат")}
@@ -96,5 +104,5 @@ fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onR
     }
     cancelling?.let{app->AlertDialog(onDismissRequest={cancelling=null},title={Text("Отозвать отклик?")},text={Text("Отклик на «${app.vacancy_title.orEmpty()}» будет удалён.")},confirmButton={TextButton(onClick={cancelling=null;onCancel(app)}){Text("Отозвать",color=colors.error)}},dismissButton={TextButton(onClick={cancelling=null}){Text("Оставить")}})}
 }
-fun applicationLabel(status:String?):String=when(status){"new"->"Отправлен";"viewed"->"Просмотрен";"accepted"->"Принят";"rejected"->"Отказ";else->"На рассмотрении"}
+fun applicationLabel(status:String?):String=when(status){"new"->"Отправлен";"viewed"->"Просмотрен";"accepted"->"Приглашение";"rejected"->"Отказ";else->"На рассмотрении"}
 private fun applicationDate(value:String):String=runCatching{java.time.OffsetDateTime.parse(value).format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))}.getOrElse{value.take(10)}

@@ -1,3 +1,4 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <path android:fillColor="#FFFFFFFF" android:pathData="M4,3h16a2,2 0,0 1,2 2v12a2,2 0,0 1,-2 2H8l-6,4V5a2,2 0,0 1,2 -2zM6,7v2h12V7zM6,11v2h9v-2z" android:fillType="evenOdd"/>
+    <!-- Monochrome Trudomix T with a wave across the top, on a transparent background. -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M3,4.2C5.7,2.7 8.9,3.1 12,4C15.1,4.9 18.3,5.3 21,3.8L21,8.1C18.4,9.5 15.3,9.1 12,8.2C8.7,7.3 5.6,6.9 3,8.4Z M9.4,9.2C11,9.3 12.7,9.9 14.6,10.3L14.6,20.5C12.7,21.4 11.2,21.2 9.4,20.3Z"/>
 </vector>
