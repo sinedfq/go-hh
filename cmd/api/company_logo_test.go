@@ -49,7 +49,7 @@ func TestCompanyLogoUpload(t *testing.T) {
 	defer pool.Close()
 	_, err = pool.Exec(ctx, `CREATE TABLE users(id INT PRIMARY KEY,email TEXT,password_hash TEXT,photo_url TEXT,role TEXT,company_id INT,created_at TIMESTAMPTZ DEFAULT NOW());
     CREATE TABLE companies(id INT PRIMARY KEY,name TEXT,description TEXT,industry TEXT,size TEXT,city TEXT,website TEXT,logo_url TEXT,photo_url TEXT,created_at TIMESTAMPTZ DEFAULT NOW());
-    CREATE TABLE vacancies(id INT PRIMARY KEY,company_id INT,views INT);
+    CREATE TABLE vacancies(id INT PRIMARY KEY,company_id INT,views INT,is_archived BOOLEAN DEFAULT FALSE);
     INSERT INTO companies(id,name,logo_url) VALUES(12,'Own',''),(999,'Other','unchanged');
     INSERT INTO users(id,email,password_hash,role,company_id) VALUES(7,'logo@test','hash','employer',12);`)
 	if err != nil {

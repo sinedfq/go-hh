@@ -45,6 +45,7 @@ class WebFrontendPreviewTest {
                     path=="/api/my-company/logo"->{companyLogo.set("/brand-dark-waves.png?uploaded");company()}
                     path=="/api/my-company"->company()
                     path=="/api/companies/99"->company()
+                    path=="/api/companies/99/vacancies"->vacancies
                     path=="/api/companies"->"[${company()}]"
                     path=="/api/companies/99/vacancies"->vacancies
                     path=="/api/saved-searches"->if(request.method=="POST")"""{"id":1}""" else """[{"id":1,"name":"Android в Новосибирске","filters":{"query":"Android","location":"Новосибирск","remote":true,"skills":["Kotlin"],"salary_min":100000,"currency":"RUB"}}]"""
@@ -170,10 +171,16 @@ class WebFrontendPreviewTest {
         waitFor("!window.previewReloading&&!!document.querySelector('.company-card')")
         assertEquals("Dark public company card","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-card')).backgroundColor").trim('"'))
         evaluate("document.querySelector('.company-card').click()")
-        waitFor("!!document.querySelector('.company-header-card')")
-        assertEquals("Dark company header","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-header-card')).backgroundColor").trim('"'))
-        assertEquals("IT badge in company profile","true",evaluate("!!document.querySelector('.company-header-card .it-accreditation-badge')"))
-        capture("public-company-dark")
+        waitFor("!!document.querySelector('.company-profile-hero')")
+        assertEquals("Dark company surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-profile-logo')).backgroundColor").trim('"'))
+        assertEquals("IT badge in company profile","true",evaluate("!!document.querySelector('.company-profile-hero .it-accreditation-badge')"))
+        assertEquals("Company vacancies include salary","true",evaluate("document.querySelector('.company-profile-job .vacancy-terms').textContent.includes('120')"))
+        assertEquals("Job cards support keyboard","BUTTON",evaluate("document.querySelector('.company-profile-job').tagName").trim('"'))
+        capture("company-profile-dark")
+        evaluate("document.querySelector('.theme-toggle').click()")
+        waitFor("document.documentElement.dataset.theme==='light'")
+        assertEquals("Light company surface","rgb(255, 255, 255)",evaluate("getComputedStyle(document.querySelector('.company-profile-logo')).backgroundColor").trim('"'))
+        capture("company-profile-light")
         } finally {
             evaluate("localStorage.removeItem('user');localStorage.removeItem('token');sessionStorage.removeItem('currentMode');localStorage.removeItem('theme')")
             instrumentation.runOnMainSync{web.get().destroy()}

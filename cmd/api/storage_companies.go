@@ -15,7 +15,7 @@ func (s *PostgresStorage) GetAllCompanies(ctx context.Context) ([]CompanyWithSta
 		SELECT c.id, c.name, COALESCE(c.description, ''), COALESCE(c.industry, ''),
 		       COALESCE(c.size, ''), COALESCE(c.city, ''), COALESCE(c.website, ''),
 		       COALESCE(c.logo_url, ''), COALESCE(c.photo_url, ''), c.created_at,
-		       COUNT(v.id) AS vacancies_count,
+		       COUNT(v.id) FILTER (WHERE COALESCE(v.is_archived, FALSE) = FALSE) AS vacancies_count,
 		       COALESCE(SUM(v.views), 0) AS total_views, c.profile
 		FROM companies c
 		LEFT JOIN vacancies v ON v.company_id = c.id
@@ -55,7 +55,7 @@ func (s *PostgresStorage) GetCompanyByID(ctx context.Context, id int) (CompanyWi
 		SELECT c.id, c.name, COALESCE(c.description, ''), COALESCE(c.industry, ''),
 		       COALESCE(c.size, ''), COALESCE(c.city, ''), COALESCE(c.website, ''),
 		       COALESCE(c.logo_url, ''), COALESCE(c.photo_url, ''), c.created_at,
-		       COUNT(v.id) AS vacancies_count,
+		       COUNT(v.id) FILTER (WHERE COALESCE(v.is_archived, FALSE) = FALSE) AS vacancies_count,
 		       COALESCE(SUM(v.views), 0) AS total_views, c.profile
 		FROM companies c
 		LEFT JOIN vacancies v ON v.company_id = c.id
@@ -86,7 +86,7 @@ func (s *PostgresStorage) GetVacanciesByCompanyID(ctx context.Context, companyID
 		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0),
 		       COALESCE((SELECT c.logo_url FROM companies c WHERE c.id=vacancies.company_id), ''), COALESCE((SELECT c.profile->>'it_accredited' FROM companies c WHERE c.id=vacancies.company_id),'false')='true', terms
 		FROM vacancies
-		WHERE company_id = $1
+		WHERE company_id = $1 AND COALESCE(is_archived, FALSE) = FALSE
 		ORDER BY created_at DESC
 	`
 

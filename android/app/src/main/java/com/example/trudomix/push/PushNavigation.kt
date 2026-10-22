@@ -4,9 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 object PushNavigation{
     val target=MutableStateFlow<String?>(null)
     fun accept(intent:Intent?){
-        val conversation=intent?.getStringExtra("conversation_id")?.toIntOrNull()
-        val application=intent?.getStringExtra("application_id")?.toIntOrNull()
-        if(conversation!=null&&conversation>0)target.value="chat_detail/$conversation"
-        else if(application!=null&&application>0)target.value="applications"
+        val data = listOf("type", "conversation_id", "application_id", "resume_id", "vacancy_id")
+            .mapNotNull { key -> intent?.getStringExtra(key)?.let { key to it } }.toMap()
+        notificationTarget(data)?.let { target.value = it }
     }
 }

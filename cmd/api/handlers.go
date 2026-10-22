@@ -1,18 +1,22 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sinedfq/go-hh/internal/push"
 )
 
 // ====== СТРУКТУРА СЕРВЕРА ======
+type notificationSender interface {
+	Send(context.Context, string, string, string, map[string]string) error
+}
+
 type Server struct {
-	pushSender  *push.Sender
+	pushSender  notificationSender
 	storage     *PostgresStorage // ← КОНКРЕТНЫЙ ТИП, без интерфейса
 	mlClient    *MLClient
 	pool        *pgxpool.Pool
