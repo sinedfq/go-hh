@@ -4,16 +4,35 @@ import { useAuth } from '../../contexts/AuthContext'
 import ResumeModal from '../../components/resume/ResumeModal'
 import ResumeDetailsModal from '../../components/resume/ResumeDetailsModal'
 import PhotoUpload from '../../components/common/PhotoUpload'
+import { userError } from '../../utils/userError'
 import './ProfilePage.css'
 
 function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
-    const { user, logout, updateUserPhoto } = useAuth()
+    const { user, updateUserPhoto } = useAuth()
     const [resume, setResume] = useState(null)
     const [loading, setLoading] = useState(true)
     const [showResumeModal, setShowResumeModal] = useState(false)
     const [showResumeDetails, setShowResumeDetails] = useState(false)
-    const [stats, setStats] = useState({ favorites: 0, applications: 0, new_applications: 0 })
-    const [resumeStats, setResumeStats] = useState({ total_views: 0 })
+    const [stats, setStats] = useState({ favorites: null, applications: null, new_applications: null })
+    const [resumeStats, setResumeStats] = useState(null)
+    const [dataError,setDataError]=useState(false)
+    const [resumeError,setResumeError]=useState(false)
+    const [exporting,setExporting]=useState(false)
+    const [exportError,setExportError]=useState('')
+    const downloadResume = async () => {
+        setExporting(true);setExportError('')
+        try {
+            const response=await axios.get('/api/my-resume/pdf',{responseType:'blob'})
+            if(!response.data.type.includes('application/pdf'))throw new Error('Неверный формат PDF')
+            const url=URL.createObjectURL(response.data)
+            const link=document.createElement('a')
+            link.href=url;link.download=`trudomix-resume-${resume.id}.pdf`
+            document.body.appendChild(link);link.click();link.remove()
+            setTimeout(()=>URL.revokeObjectURL(url),1000)
+            showToast?.('Резюме сохранено в PDF')
+        } catch(error) {setExportError(userError(error))}
+        finally {setExporting(false)}
+    }
 
     const isEmployer = user && (user.role === 'employer' || user.role === 'admin')
 
@@ -24,6 +43,7 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
     }, [user])
 
     const loadData = async () => {
+        setDataError(false)
         try {
             if (isEmployer) {
                 await loadStats()
@@ -42,6 +62,8 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             const res = await axios.get('/api/my-resume', {
                 validateStatus: (status) => status < 500
             })
+            if(res.status!==404&&res.status>=400)throw new Error('Resume unavailable')
+            setResumeError(false)
             if (res.status === 404 || !res.data || !res.data.id) {
                 setResume(null)
             } else {
@@ -49,18 +71,18 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             }
         } catch (err) {
             console.error('Ошибка сервера:', err)
-            setResume(null)
+            setResumeError(true);setDataError(true)
         }
     }
 
     const loadResumeStats = async () => {
         try {
             const res = await axios.get('/api/my-resume/stats')
-            setResumeStats(res.data || { total_views: 0 })
+            setResumeStats(res.data || null)
             console.log('📊 Resume stats loaded:', res.data)
         } catch (err) {
             console.error('Ошибка загрузки статистики резюме:', err)
-            setResumeStats({ total_views: 0 })
+            setResumeStats(null);setDataError(true)
         }
     }
 
@@ -72,7 +94,6 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             updateUserPhoto(res.data.photo_url)
         } catch (err) {
             console.error('Ошибка загрузки фото профиля:', err)
-            alert('Не удалось загрузить фото: ' + (err.response?.data?.error || err.message))
             throw err
         }
     }
@@ -86,7 +107,6 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             onResumeUpdate?.(res.data)
         } catch (err) {
             console.error('Ошибка загрузки фото резюме:', err)
-            alert('Не удалось загрузить фото: ' + (err.response?.data?.error || err.message))
             throw err
         }
     }
@@ -100,12 +120,13 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
                 setStats({ applications: apps.length, new_applications: newCount })
                 console.log('📊 Employer stats:', { applications: apps.length, new_applications: newCount })
             } else {
-                const res = await axios.get('/api/favorites')
-                const data = Array.isArray(res.data) ? res.data : []
-                setStats({ favorites: data.length })
+                const [favorites,applications]=await Promise.allSettled([axios.get('/api/favorites'),axios.get('/api/my-applications')])
+                setStats({favorites:favorites.status==='fulfilled'?favorites.value.data?.length??0:null,applications:applications.status==='fulfilled'?applications.value.data?.length??0:null})
+                if(favorites.status==='rejected'||applications.status==='rejected')setDataError(true)
             }
         } catch (err) {
             console.error('Ошибка загрузки статистики:', err)
+            setDataError(true)
         }
     }
 
@@ -175,6 +196,7 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
             )}
 
             <div className="profile-card">
+                {dataError&&<div className="profile-status" role="status">Часть данных не загрузилась. <button type="button" className="auth-switch" onClick={loadData}>Попробовать снова</button></div>}
                 {/* Шапка профиля */}
                 <div className="profile-header animate-in" style={{ animationDelay: '0ms' }}>
                     <PhotoUpload
@@ -185,7 +207,8 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
                         fallback={user.email}
                     />
                     <div className="profile-info">
-                        <h2>{user.email}</h2>
+                        <span className="eyebrow">МОЙ ПРОФИЛЬ</span><h2>{resume?.full_name||user.email}</h2>
+                        {resume?.full_name&&<p>{user.email}</p>}
                         <p className="member-since">
                             Участник с {new Date(user.created_at).toLocaleDateString('ru-RU')}
                         </p>
@@ -203,24 +226,25 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
                             {isEmployer ? (
                                 <>
                                     <div className="stat-item">
-                                        <span className="stat-number">{stats.applications || 0}</span>
+                                        <span className="stat-number">{stats.applications ?? '—'}</span>
                                         <span className="stat-label">Откликов получено</span>
                                     </div>
                                     <div className="stat-item">
-                                        <span className="stat-number">{stats.new_applications || 0}</span>
+                                        <span className="stat-number">{stats.new_applications ?? '—'}</span>
                                         <span className="stat-label">Новых откликов</span>
                                     </div>
                                 </>
                             ) : (
                                 <>
                                     <div className="stat-item">
-                                        <span className="stat-number">{stats.favorites || 0}</span>
+                                        <span className="stat-number">{stats.favorites ?? '—'}</span>
                                         <span className="stat-label">Избранное</span>
                                     </div>
                                     <div className="stat-item">
-                                        <span className="stat-number">{resumeStats.total_views || 0}</span>
+                                        <span className="stat-number">{resumeStats?.total_views ?? '—'}</span>
                                         <span className="stat-label">Просмотров резюме</span>
                                     </div>
+                                    <div className="stat-item"><span className="stat-number">{stats.applications??'—'}</span><span className="stat-label">Моих откликов</span></div>
                                 </>
                             )}
                         </div>
@@ -233,9 +257,11 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast }) {
                             <div className="profile-section">
                                 <div className="section-header">
                                     <h3>Моё резюме</h3>
+                                    {resume&&<button type="button" className="btn btn-secondary" disabled={exporting} onClick={downloadResume}>{exporting?'Сохранение…':'Скачать PDF'}</button>}
                                 </div>
+                                {exportError&&<p className="export-error" role="alert">{exportError}</p>}
 
-                                {resume ? (
+                                {resumeError&&!resume ? <p className="profile-status">Резюме временно недоступно. Попробуй обновить данные.</p> : resume ? (
                                     <div
                                         className="resume-card clickable"
                                         onClick={() => setShowResumeDetails(true)}

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/jackc/pgx/v5"
 )
@@ -61,7 +62,7 @@ func (s *PostgresStorage) GetApplicationByUserAndVacancy(ctx context.Context, us
 
 func (s *PostgresStorage) GetApplicationsByVacancyID(ctx context.Context, vacancyID int) ([]Application, error) {
 	query := `
-        SELECT 
+        SELECT
             a.id, a.vacancy_id, a.candidate_user_id, a.resume_id,
             COALESCE(a.cover_letter, ''), a.status, a.created_at, a.viewed_at,
             u.email AS candidate_email,
@@ -88,8 +89,7 @@ func (s *PostgresStorage) GetApplicationsByVacancyID(ctx context.Context, vacanc
 			&a.ID, &a.VacancyID, &a.CandidateUserID, &a.ResumeID,
 			&a.CoverLetter, &a.Status, &a.CreatedAt, &a.ViewedAt,
 			&a.CandidateEmail, &a.CandidatePhoto,
-			&a.ResumeFullName, &a.ResumePosition, &a.ResumeExperience,
-			&a.VacancyTitle, &a.CompanyName,
+			&a.ResumeFullName, &a.ResumePosition,
 		)
 		if err != nil {
 			return nil, err
@@ -106,7 +106,7 @@ func (s *PostgresStorage) GetApplicationsByVacancyID(ctx context.Context, vacanc
 
 func (s *PostgresStorage) GetApplicationsForEmployer(ctx context.Context, companyID int) ([]Application, error) {
 	query := `
-        SELECT 
+        SELECT
             a.id, a.vacancy_id, a.candidate_user_id, a.resume_id,
             COALESCE(a.cover_letter, ''), a.status, a.created_at, a.viewed_at,
             u.email AS candidate_email,
@@ -115,56 +115,65 @@ func (s *PostgresStorage) GetApplicationsForEmployer(ctx context.Context, compan
             COALESCE(r.desired_position, '') AS resume_position,
             COALESCE(r.experience, '') AS resume_experience,
             v.title AS vacancy_title,
-            v.company AS company_name
+            v.company AS company_name,
+            COALESCE(v.is_archived, FALSE) AS vacancy_archived,
+            COALESCE(c.id, 0) AS conversation_id
         FROM applications a
         JOIN users u ON u.id = a.candidate_user_id
         JOIN vacancies v ON v.id = a.vacancy_id
         LEFT JOIN resumes r ON r.id = a.resume_id
+        LEFT JOIN conversations c ON c.application_id = a.id
         WHERE v.company_id = $1
         ORDER BY a.created_at DESC
     `
-
 	rows, err := s.pool.Query(ctx, query, companyID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-
 	var apps []Application
 	for rows.Next() {
 		var a Application
+		var isArchived bool
+		var convID int
 		err := rows.Scan(
 			&a.ID, &a.VacancyID, &a.CandidateUserID, &a.ResumeID,
 			&a.CoverLetter, &a.Status, &a.CreatedAt, &a.ViewedAt,
 			&a.CandidateEmail, &a.CandidatePhoto,
 			&a.ResumeFullName, &a.ResumePosition, &a.ResumeExperience,
 			&a.VacancyTitle, &a.CompanyName,
+			&isArchived, &convID,
 		)
 		if err != nil {
 			return nil, err
 		}
+		a.VacancyArchived = isArchived
+		if convID > 0 {
+			a.ConversationID = &convID
+		}
 		apps = append(apps, a)
 	}
-
 	if apps == nil {
 		apps = []Application{}
 	}
-
 	return apps, rows.Err()
 }
-
 func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]Application, error) {
 	query := `
-		SELECT 
-			a.id, a.vacancy_id, a.candidate_user_id, a.resume_id, 
-			a.cover_letter, a.status, a.created_at, a.viewed_at,
+		SELECT
+			a.id,
+			a.vacancy_id,
+			a.candidate_user_id,
+			a.resume_id,
+			COALESCE(a.cover_letter, ''),
+			a.status,
+			a.created_at,
+			a.viewed_at,
 			v.title as vacancy_title,
-			COALESCE(comp.name, '') as company_name,
-			v.company_id as vacancy_company_id,
+			COALESCE(v.company, '') as company_name, -- Берем название компании прямо из вакансии, если там оно хранится
 			COALESCE(c.id, 0) as conversation_id
 		FROM applications a
 		JOIN vacancies v ON v.id = a.vacancy_id
-		LEFT JOIN companies comp ON comp.id = v.company_id
 		LEFT JOIN conversations c ON c.application_id = a.id
 		WHERE a.candidate_user_id = $1
 		ORDER BY a.created_at DESC
@@ -180,13 +189,22 @@ func (s *PostgresStorage) GetMyApplications(ctx context.Context, userID int) ([]
 	for rows.Next() {
 		var app Application
 		var convID int
+		// Важно: количество аргументов должно строго совпадать с SELECT (11 штук)
 		err := rows.Scan(
-			&app.ID, &app.VacancyID, &app.CandidateUserID, &app.ResumeID,
-			&app.CoverLetter, &app.Status, &app.CreatedAt, &app.ViewedAt,
-			&app.VacancyTitle, &app.CompanyName, &app.VacancyCompanyID,
+			&app.ID,
+			&app.VacancyID,
+			&app.CandidateUserID,
+			&app.ResumeID,
+			&app.CoverLetter,
+			&app.Status,
+			&app.CreatedAt,
+			&app.ViewedAt,
+			&app.VacancyTitle,
+			&app.CompanyName,
 			&convID,
 		)
 		if err != nil {
+			log.Printf("❌ Scan error in GetMyApplications: %v", err) // Лог для отладки
 			return nil, err
 		}
 		if convID > 0 {
@@ -277,22 +295,24 @@ func (s *PostgresStorage) GetUnreadCount(ctx context.Context, userID int) (int, 
 // GetApplicationByID — получить отклик с данными вакансии
 func (s *PostgresStorage) GetApplicationByID(ctx context.Context, appID int) (*Application, error) {
 	query := `
-        SELECT 
+        SELECT
             a.id, a.vacancy_id, a.candidate_user_id, a.resume_id,
             COALESCE(a.cover_letter, ''), a.status, a.created_at, a.viewed_at,
             v.title AS vacancy_title,
             v.company AS company_name,
-            COALESCE(v.company_id, 0) AS vacancy_company_id
+            COALESCE(v.company_id, 0) AS vacancy_company_id,
+            COALESCE(v.is_archived, FALSE) AS vacancy_archived
         FROM applications a
         JOIN vacancies v ON v.id = a.vacancy_id
         WHERE a.id = $1
     `
-
 	var a Application
+	var isArchived bool
 	err := s.pool.QueryRow(ctx, query, appID).Scan(
 		&a.ID, &a.VacancyID, &a.CandidateUserID, &a.ResumeID,
 		&a.CoverLetter, &a.Status, &a.CreatedAt, &a.ViewedAt,
 		&a.VacancyTitle, &a.CompanyName, &a.VacancyCompanyID,
+		&isArchived,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
@@ -300,7 +320,7 @@ func (s *PostgresStorage) GetApplicationByID(ctx context.Context, appID int) (*A
 		}
 		return nil, err
 	}
-
+	a.VacancyArchived = isArchived
 	return &a, nil
 }
 
@@ -309,8 +329,8 @@ func (s *PostgresStorage) GetApplicationByID(ctx context.Context, appID int) (*A
 func (s *PostgresStorage) HasRecentResumeViewNotification(ctx context.Context, resumeOwnerUserID, viewerUserID int, hours int) (bool, error) {
 	var count int
 	query := `
-        SELECT COUNT(*) FROM notifications 
-        WHERE user_id = $1 
+        SELECT COUNT(*) FROM notifications
+        WHERE user_id = $1
           AND type = 'resume_viewed'
           AND (data->>'viewer_user_id')::int = $2
           AND created_at > NOW() - INTERVAL '1 hour' * $3

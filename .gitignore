@@ -218,3 +218,45 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+.cache/
+android/app/google-services.json
+android/emulator.local.json
+**/*service-account*.json
+**/firebase-adminsdk-*.json
+
+# Local configuration and credentials (keep distributable examples)
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+keystore.properties
+
+# IDE and operating system state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Go, web and Android generated files
+node_modules/
+.gradle/
+.kotlin/
+.externalNativeBuild/
+.cxx/
+local.properties
+*.apk
+*.aab
+*.exe
+*.test
+*.out
+/cmd.zip
+
+# Runtime uploads; fictional demo assets belong to the source tree
+/uploads/*
+!/uploads/demo_*.png

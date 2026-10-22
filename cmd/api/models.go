@@ -7,40 +7,48 @@ type Health struct {
 }
 
 type Vacancy struct {
-	ID           int      `json:"id"`
-	Title        string   `json:"title"`
-	Company      string   `json:"company"`
-	CompanyID    int      `json:"company_id"`
-	Location     string   `json:"location"`
-	Experience   string   `json:"experience"`
-	Remote       bool     `json:"remote"`
-	Skills       []string `json:"skills"`
-	Description  string   `json:"description"`
-	Address      string   `json:"address"`
-	Latitude     float64  `json:"latitude"`
-	Longitude    float64  `json:"longitude"`
-	Views        int      `json:"views"`
-	AuthorUserID int      `json:"author_user_id"`
+	VacancyTerms
+	ID                  int       `json:"id"`
+	Title               string    `json:"title"`
+	Company             string    `json:"company"`
+	CompanyID           int       `json:"company_id"`
+	CompanyLogo         string    `json:"company_logo"`
+	CompanyITAccredited bool      `json:"company_it_accredited"`
+	Location            string    `json:"location"`
+	Experience          string    `json:"experience"`
+	Remote              bool      `json:"remote"`
+	Skills              []string  `json:"skills"`
+	Description         string    `json:"description"`
+	Address             string    `json:"address"`
+	Latitude            float64   `json:"latitude"`
+	Longitude           float64   `json:"longitude"`
+	Views               int       `json:"views"`
+	AuthorUserID        int       `json:"author_user_id"`
+	IsArchived          bool      `json:"is_archived"`
+	CreatedAt           time.Time `json:"created_at,omitempty"`
+	UpdatedAt           time.Time `json:"updated_at,omitempty"`
 }
 
 type Resume struct {
-	ID              int              `json:"id"`
-	UserID          int              `json:"user_id"`
-	FullName        string           `json:"full_name"`
-	DesiredPosition string           `json:"desired_position"`
-	Experience      string           `json:"experience"`
-	Skills          []string         `json:"skills"`
-	About           string           `json:"about"`
-	City            string           `json:"city"`
-	Remote          bool             `json:"remote"`
-	Phone           string           `json:"phone"`
-	Telegram        string           `json:"telegram"`
-	GitHub          string           `json:"github"`
-	LinkedIn        string           `json:"linkedin"`
-	CreatedAt       time.Time        `json:"created_at"`
-	WorkExperience  []WorkExperience `json:"work_experience,omitempty"`
-	PhotoURL        string           `json:"photo_url"`
-	Views           int              `json:"views"`
+	TotalExperienceMonths int              `json:"total_experience_months"`
+	TotalExperience       string           `json:"total_experience"`
+	ID                    int              `json:"id"`
+	UserID                int              `json:"user_id"`
+	FullName              string           `json:"full_name"`
+	DesiredPosition       string           `json:"desired_position"`
+	Experience            string           `json:"experience"`
+	Skills                []string         `json:"skills"`
+	About                 string           `json:"about"`
+	City                  string           `json:"city"`
+	Remote                bool             `json:"remote"`
+	Phone                 string           `json:"phone"`
+	Telegram              string           `json:"telegram"`
+	GitHub                string           `json:"github"`
+	LinkedIn              string           `json:"linkedin"`
+	CreatedAt             time.Time        `json:"created_at"`
+	WorkExperience        []WorkExperience `json:"work_experience,omitempty"`
+	PhotoURL              string           `json:"photo_url"`
+	Views                 int              `json:"views"`
 }
 
 type WorkExperience struct {
@@ -158,6 +166,7 @@ type Recommendation struct {
 }
 
 type Company struct {
+	CompanyProfile
 	ID          int       `json:"id"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
@@ -177,16 +186,28 @@ type CompanyWithStats struct {
 }
 
 type SearchFilters struct {
-	Query      string   `json:"query"`
-	Location   string   `json:"location"`
-	Experience string   `json:"experience"`
-	Remote     *bool    `json:"remote"`
-	Skills     []string `json:"skills"`
-	Limit      int      `json:"limit"`
-	Offset     int      `json:"offset"`
+	ExcludeSearchID int        `json:"-"`
+	SalaryMin       int        `json:"salary_min"`
+	SalaryMax       int        `json:"salary_max"`
+	Currency        string     `json:"currency"`
+	Employment      string     `json:"employment"`
+	Schedule        string     `json:"schedule"`
+	SalaryOnly      bool       `json:"salary_only"`
+	NewAfter        *time.Time `json:"-"`
+	Company         string     `json:"company"`
+	Sort            string     `json:"sort"`
+	HasCoordinates  bool       `json:"has_coordinates"`
+	Query           string     `json:"query"`
+	Location        string     `json:"location"`
+	Experience      string     `json:"experience"`
+	Remote          *bool      `json:"remote"`
+	Skills          []string   `json:"skills"`
+	Limit           int        `json:"limit"`
+	Offset          int        `json:"offset"`
 }
 
 type CreateVacancyRequest struct {
+	VacancyTerms
 	Title       string   `json:"title"`
 	Location    string   `json:"location"`
 	Experience  string   `json:"experience"`
@@ -199,6 +220,7 @@ type CreateVacancyRequest struct {
 }
 
 type CreateCompanyRequest struct {
+	CompanyProfile
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Industry    string `json:"industry"`
@@ -223,10 +245,8 @@ type Application struct {
 	CreatedAt       time.Time  `json:"created_at"`
 	ViewedAt        *time.Time `json:"viewed_at,omitempty"`
 
-	// ====== НОВОЕ: ID чата ======
 	ConversationID *int `json:"conversation_id,omitempty"`
 
-	// Заполняется через JOIN
 	CandidateEmail   string `json:"candidate_email,omitempty"`
 	CandidatePhoto   string `json:"candidate_photo,omitempty"`
 	ResumeFullName   string `json:"resume_full_name,omitempty"`
@@ -235,6 +255,7 @@ type Application struct {
 	VacancyTitle     string `json:"vacancy_title,omitempty"`
 	CompanyName      string `json:"company_name,omitempty"`
 	VacancyCompanyID int    `json:"vacancy_company_id,omitempty"`
+	VacancyArchived  bool   `json:"vacancy_archived"` // ← НОВОЕ
 }
 
 type CreateApplicationRequest struct {
@@ -284,18 +305,20 @@ type Message struct {
 }
 
 type ChatInfo struct {
-	ConversationID int        `json:"conversation_id"`
-	ApplicationID  int        `json:"application_id"`
-	CompanyName    string     `json:"company_name"`
-	VacancyTitle   string     `json:"vacancy_title"`
-	VacancyID      int        `json:"vacancy_id"`
-	CandidateName  string     `json:"candidate_name"`
-	CandidateID    int        `json:"candidate_id"`
-	CandidatePhoto string     `json:"candidate_photo,omitempty"`
-	CandidateEmail string     `json:"candidate_email,omitempty"`
-	LastMessage    string     `json:"last_message,omitempty"`
-	LastMessageAt  *time.Time `json:"last_message_at,omitempty"`
-	UnreadCount    int        `json:"unread_count"`
+	ConversationID  int        `json:"conversation_id"`
+	ApplicationID   int        `json:"application_id"`
+	CompanyName     string     `json:"company_name"`
+	VacancyTitle    string     `json:"vacancy_title"`
+	VacancyID       int        `json:"vacancy_id"`
+	CandidateName   string     `json:"candidate_name"`
+	CandidateID     int        `json:"candidate_id"`
+	CandidatePhoto  string     `json:"candidate_photo,omitempty"`
+	CandidateEmail  string     `json:"candidate_email,omitempty"`
+	CoverLetter     string     `json:"cover_letter,omitempty"` // ← НОВОЕ
+	LastMessage     string     `json:"last_message,omitempty"`
+	LastMessageAt   *time.Time `json:"last_message_at,omitempty"`
+	UnreadCount     int        `json:"unread_count"`
+	VacancyArchived bool       `json:"vacancy_archived"` // ← НОВОЕ
 }
 
 type CreateMessageRequest struct {

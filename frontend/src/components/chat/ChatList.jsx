@@ -18,7 +18,6 @@ function ChatList({ currentUser, onOpenChat, onOpenVacancy }) {
                 setLoading(false)
             }
         }
-
         loadConversations()
         const interval = setInterval(loadConversations, 10000)
         return () => clearInterval(interval)
@@ -28,27 +27,21 @@ function ChatList({ currentUser, onOpenChat, onOpenVacancy }) {
         if (!dateString) return ''
         const date = new Date(dateString)
         const now = new Date()
-
         if (date.toDateString() === now.toDateString()) {
             return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
         }
-
         const yesterday = new Date(now)
         yesterday.setDate(yesterday.getDate() - 1)
-        if (date.toDateString() === yesterday.toDateString()) {
-            return 'Вчера'
-        }
-
+        if (date.toDateString() === yesterday.toDateString()) return 'Вчера'
         return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
     }
+
+    const isEmployer = currentUser?.role === 'employer' || currentUser?.role === 'admin'
 
     if (loading) {
         return (
             <div className="chat-list-container">
-                <div className="loading">
-                    <div className="spinner"></div>
-                    <p>Загрузка чатов...</p>
-                </div>
+                <div className="loading"><div className="spinner"></div><p>Загрузка чатов...</p></div>
             </div>
         )
     }
@@ -58,9 +51,7 @@ function ChatList({ currentUser, onOpenChat, onOpenVacancy }) {
             <div className="chat-list-header">
                 <h1>Чаты</h1>
                 <p className="chat-list-subtitle">
-                    {currentUser.role === 'employer' || currentUser.role === 'admin'
-                        ? 'Переписка с кандидатами'
-                        : 'Переписка с работодателями'}
+                    {isEmployer ? 'Переписка с кандидатами' : 'Переписка с работодателями'}
                 </p>
             </div>
 
@@ -68,49 +59,64 @@ function ChatList({ currentUser, onOpenChat, onOpenVacancy }) {
                 <div className="chat-list-empty">
                     <div className="chat-list-empty-icon">💬</div>
                     <h3>Чатов пока нет</h3>
-                    <p>
-                        {currentUser.role === 'employer' || currentUser.role === 'admin'
-                            ? 'Когда кандидаты откликнутся на ваши вакансии, здесь появится переписка'
-                            : 'Когда вы откликнетесь на вакансию, здесь появится переписка'}
-                    </p>
+                    <p>{isEmployer
+                        ? 'Когда кандидаты откликнутся на ваши вакансии, здесь появится переписка'
+                        : 'Когда вы откликнетесь на вакансию, здесь появится переписка'}</p>
                 </div>
             ) : (
                 <div className="chat-list">
                     {conversations.map(chat => {
-                        const isEmployer = currentUser.role === 'employer' || currentUser.role === 'admin'
-                        const displayName = isEmployer
-                            ? chat.candidate_name
-                            : chat.company_name
+                        const isArchived = chat.vacancy_archived === true
 
                         return (
                             <div
                                 key={chat.conversation_id}
-                                className="chat-list-item"
+                                className={`chat-list-item ${isArchived ? 'archived' : ''}`}
                                 onClick={() => onOpenChat(chat)}
                             >
                                 <div className="chat-list-avatar">
-                                    {displayName?.[0]?.toUpperCase() || '?'}
+                                    {isEmployer
+                                        ? (chat.candidate_photo
+                                            ? <img src={chat.candidate_photo} alt="" />
+                                            : (chat.candidate_name?.[0]?.toUpperCase() || '?'))
+                                        : (chat.company_name?.[0]?.toUpperCase() || '?')}
                                 </div>
 
                                 <div className="chat-list-info">
-                                    <h3 className="chat-list-title">{displayName}</h3>
-                                    <p className="chat-list-preview">
-                                        <span className="chat-list-vacancy">{chat.vacancy_title}</span>
-                                        <span className="chat-list-sep">•</span>
-                                        <span className="chat-list-message">
-                                            {chat.last_message || 'Нет сообщений'}
+                                    {/* Строка 1: Название вакансии + время */}
+                                    <div className="chat-list-row-1">
+                                        <h3 className="chat-list-vacancy-title">{chat.vacancy_title}</h3>
+                                        <span className="chat-list-time">{formatTime(chat.last_message_at)}</span>
+                                    </div>
+
+                                    {/* Строка 2: Компания */}
+                                    <div className="chat-list-row-2">
+                                        <span className="chat-list-company">
+                                            {isEmployer ? chat.candidate_name : chat.company_name}
                                         </span>
-                                    </p>
+                                    </div>
+
+                                    {/* Строка 3: Сообщение ИЛИ "В архиве" */}
+                                    <div className="chat-list-row-3">
+                                        {isArchived ? (
+                                            <span className="chat-list-archived-hint">
+                                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <polyline points="21 8 21 21 3 21 3 8" />
+                                                    <rect x="1" y="3" width="22" height="5" />
+                                                </svg>
+                                                Вакансия в архиве
+                                            </span>
+                                        ) : (
+                                            <span className="chat-list-message">
+                                                {chat.last_message || 'Нет сообщений'}
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
 
-                                <div className="chat-list-meta">
-                                    <span className="chat-list-time">
-                                        {formatTime(chat.last_message_at)}
-                                    </span>
-                                    {chat.unread_count > 0 && (
-                                        <span className="chat-list-unread">{chat.unread_count}</span>
-                                    )}
-                                </div>
+                                {chat.unread_count > 0 && (
+                                    <span className="chat-list-unread">{chat.unread_count}</span>
+                                )}
                             </div>
                         )
                     })}

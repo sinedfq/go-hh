@@ -3,7 +3,11 @@ import axios from 'axios'
 import ChatMessage from './ChatMessage'
 import './Chat.css'
 
-function ChatModal({ conversation, onClose, currentUser, onOpenVacancy, onCancelApplication }) {
+function ChatModal(props) {
+    return props.conversation?.conversation_id ? <ActiveChatModal key={props.conversation.conversation_id} {...props} /> : null
+}
+
+function ActiveChatModal({ conversation, onClose, currentUser, onOpenVacancy, onCancelApplication }) {
     const [messages, setMessages] = useState([])
     const [loading, setLoading] = useState(true)
     const [inputValue, setInputValue] = useState('')
@@ -16,9 +20,6 @@ function ChatModal({ conversation, onClose, currentUser, onOpenVacancy, onCancel
     const inputRef = useRef(null)
 
     // ====== ЗАЩИТА ОТ undefined ======
-    if (!conversation || !conversation.conversation_id) {
-        return null
-    }
 
     // ====== ЗАГРУЗКА СООБЩЕНИЙ ======
     useEffect(() => {

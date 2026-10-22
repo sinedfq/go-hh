@@ -125,6 +125,7 @@ function ResumeDetailsModal({ resume, currentUser, onClose, onUpdate, onDelete, 
                 <div className="details-info">
                   <h2>{resume.full_name}</h2>
                   <p className="details-position">{resume.desired_position}</p>
+                  <p className="total-experience">Общий опыт: {resume.total_experience||'Не указан'}</p>
                   <div className="details-badges">
                     <span className="badge">{resume.experience}</span>
                     {resume.city && <span className="badge">{resume.city}</span>}

@@ -1,4 +1,5 @@
 import './VacancyDetail.css'
+import MarkdownContent from '../common/MarkdownContent'
 
 function VacancyDetail({ 
     vacancy, 
@@ -81,7 +82,7 @@ function VacancyDetail({
             {vacancy.description && (
                 <div className="detail-section">
                     <h3>Описание</h3>
-                    <p className="description">{vacancy.description}</p>
+                    <MarkdownContent>{vacancy.description}</MarkdownContent>
                 </div>
             )}
 

@@ -19,12 +19,14 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
         <>
             <aside className="sidebar">
                 <div className="sidebar-logo">
-                    <h1>GoHH</h1>
+                    <img src="/brand-dark-waves.png" width="36" height="36" alt="" />
+                    <h1>Trudomix</h1>
                 </div>
 
                 <nav className="sidebar-nav">
+                    <div className={`nav-item ${mode === 'home' ? 'active' : ''}`} onClick={() => handleMode('home')} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' ')handleMode('home')}}><span className="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 10 9-7 9 7v11H3Z"/><path d="M9 21v-8h6v8"/></svg></span><div className="nav-label"><span className="nav-title">Главная</span></div></div>
                     {/* ====== ОБЩЕЕ ДЛЯ ВСЕХ РОЛЕЙ ====== */}
-                    <div className={`nav-item ${mode === 'browse' ? 'active' : ''}`} onClick={() => handleMode('browse')}>
+                    <div className={`nav-item desktop-only ${mode === 'browse' ? 'active' : ''}`} onClick={() => handleMode('browse')}>
                         <div className="nav-bar"></div>
                         <span className="nav-icon">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -56,7 +58,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                 </div>
                             </div>
 
-                            <div className={`nav-item ${mode === 'swipe' ? 'active' : ''}`} onClick={() => handleMode('swipe')}>
+                            <div className={`nav-item desktop-only ${mode === 'swipe' ? 'active' : ''}`} onClick={() => handleMode('swipe')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -211,8 +213,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                     )}
 
                     {/* ====== КНОПКА ЕЩЁ (мобильная) ====== */}
+                    {user&&user.role!=='employer'&&<button className={`nav-item desktop-only ${mode==='saved-searches'?'active':''}`} onClick={()=>handleMode('saved-searches')}><span className="nav-icon">☆</span><div className="nav-label"><span className="nav-title">Мои поиски</span></div></button>}
                     <div
-                        className={`nav-item mobile-more-btn ${showMore ? 'active' : ''} ${['recommendations', 'companies', 'profile', 'my-company', 'applications', 'stats'].includes(mode) ? 'active' : ''}`}
+                        className={`nav-item mobile-more-btn ${showMore ? 'active' : ''} ${['browse','swipe','saved-searches','recommendations', 'companies', 'profile', 'my-company', 'applications', 'stats'].includes(mode) ? 'active' : ''}`}
                         onClick={() => setShowMore(!showMore)}
                     >
                         <div className="nav-bar"></div>
@@ -265,6 +268,8 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                 <div className="mobile-more-overlay" onClick={() => setShowMore(false)}>
                     <div className="mobile-more-sheet" onClick={(e) => e.stopPropagation()}>
                         <div className="mobile-more-handle"></div>
+                        <button className="mobile-more-item" onClick={()=>handleMode('browse')}>Карта вакансий</button>
+                        {(!user||user.role!=='employer')&&<><button className="mobile-more-item" onClick={()=>handleMode('swipe')}>Свайпы</button><button className="mobile-more-item" onClick={()=>handleMode('saved-searches')}>Сохранённые поиски</button></>}
 
                         {/* Кандидатские пункты */}
                         {(!user || user.role === 'candidate' || user.role === 'admin') && (

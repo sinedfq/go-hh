@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/sinedfq/go-hh/internal/push"
 )
 
 func main() {
@@ -28,8 +30,22 @@ func main() {
 	mlClient := NewMLClient(mlURL)
 
 	server := NewServer(storage, mlClient)
+	if projectID := os.Getenv("FIREBASE_PROJECT_ID"); projectID != "" {
+		server.pushSender, err = push.New(ctx, projectID)
+		if err != nil {
+			log.Fatalf("push initialization: %v", err)
+		}
+	} else {
+		log.Println("FCM disabled: FIREBASE_PROJECT_ID is not set")
+	}
 
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/saved-searches", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
+	mux.HandleFunc("POST /api/saved-searches", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
+	mux.HandleFunc("DELETE /api/saved-searches/{id}", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
+	mux.HandleFunc("POST /api/devices", server.authMiddleware(server.registerDeviceHandler))
+	mux.HandleFunc("POST /api/devices/status", server.authMiddleware(server.devicePushStatusHandler))
+	mux.HandleFunc("DELETE /api/devices", server.authMiddleware(server.registerDeviceHandler))
 
 	mux.HandleFunc("/health", server.healthHandler)
 
@@ -40,9 +56,13 @@ func main() {
 
 	// Вакансии (публичные + создание для employer)
 	mux.HandleFunc("GET /api/vacancies/search", server.searchVacanciesHandler)
+	mux.HandleFunc("POST /api/vacancies/images", server.authMiddleware(server.RequireRole("employer", "admin")(server.uploadVacancyImageHandler)))
 	mux.HandleFunc("GET /api/vacancies/{id}", server.getVacancyByIDHandler)
 	mux.HandleFunc("GET /api/vacancies", server.vacancyHandler)
 	mux.HandleFunc("POST /api/vacancies", server.authMiddleware(server.RequireRole("employer", "admin")(server.createVacancyHandler)))
+	mux.HandleFunc("PUT /api/vacancies/{id}", server.authMiddleware(server.RequireRole("employer", "admin")(server.updateVacancyHandler)))            // ← НОВОЕ
+	mux.HandleFunc("DELETE /api/vacancies/{id}", server.authMiddleware(server.RequireRole("employer", "admin")(server.deleteVacancyHandler)))         // ← НОВОЕ
+	mux.HandleFunc("PATCH /api/vacancies/{id}/archive", server.authMiddleware(server.RequireRole("employer", "admin")(server.archiveVacancyHandler))) // ← НОВОЕ
 	mux.HandleFunc("POST /api/vacancies/{id}/view", server.authMiddleware(server.viewVacancyHandler))
 
 	// Статистика
@@ -54,6 +74,7 @@ func main() {
 	mux.HandleFunc("GET /api/resumes/{id}", server.authMiddleware(server.getResumeByIDHandler))
 	mux.HandleFunc("POST /api/resumes", server.authMiddleware(server.createResumeHandler))
 	mux.HandleFunc("GET /api/my-resume", server.authMiddleware(server.getMyResumeHandler))
+	mux.HandleFunc("GET /api/my-resume/pdf", server.authMiddleware(server.downloadMyResumeHandler))
 	mux.HandleFunc("DELETE /api/my-resume", server.authMiddleware(server.deleteMyResumeHandler))
 	mux.HandleFunc("PUT /api/my-resume", server.authMiddleware(server.updateMyResumeHandler))
 
@@ -95,6 +116,10 @@ func main() {
 	// ====== КОМПАНИИ РАБОТОДАТЕЛЯ (employer/admin) ======
 	mux.HandleFunc("POST /api/companies", server.authMiddleware(server.RequireRole("employer", "admin")(server.createCompanyHandler)))
 	mux.HandleFunc("GET /api/my-company", server.authMiddleware(server.RequireRole("employer", "admin")(server.getMyCompanyHandler)))
+	mux.HandleFunc("POST /api/my-company/logo", server.authMiddleware(server.RequireRole("employer", "admin")(server.uploadCompanyLogoHandler)))
+	mux.HandleFunc("PUT /api/my-company", server.authMiddleware(server.RequireRole("employer", "admin")(server.updateCompanyProfileHandler)))
+	mux.HandleFunc("POST /api/my-company/photos", server.authMiddleware(server.RequireRole("employer", "admin")(server.companyGalleryHandler)))
+	mux.HandleFunc("DELETE /api/my-company/photos", server.authMiddleware(server.RequireRole("employer", "admin")(server.companyGalleryHandler)))
 	mux.HandleFunc("GET /api/my-vacancies", server.authMiddleware(server.RequireRole("employer", "admin")(server.getMyVacanciesHandler)))
 
 	// Геокодинг (прокси через бэкенд)
@@ -106,6 +131,7 @@ func main() {
 	mux.HandleFunc("GET /api/vacancies/{id}/application", server.authMiddleware(server.getMyApplicationHandler))
 	mux.HandleFunc("GET /api/employer/applications", server.authMiddleware(server.RequireRole("employer", "admin")(server.getEmployerApplicationsHandler)))
 	mux.HandleFunc("GET /api/my-applications", server.authMiddleware(server.getMyApplicationsHandler))
+	mux.HandleFunc("GET /api/applications/{id}/history", server.authMiddleware(server.applicationHistoryHandler))
 	mux.HandleFunc("DELETE /api/applications/{id}", server.authMiddleware(server.cancelApplicationHandler))
 	mux.HandleFunc("PATCH /api/applications/{id}/status", server.authMiddleware(server.RequireRole("employer", "admin")(server.updateApplicationStatusHandler)))
 	mux.HandleFunc("POST /api/applications/{id}/start-chat", server.authMiddleware(server.startChatHandler)) // ← ДОБАВЬ ЭТУ СТРОКУ
@@ -117,10 +143,10 @@ func main() {
 	// ====== ЧАТ ======
 	mux.HandleFunc("GET /api/conversations", server.authMiddleware(server.getUserConversationsHandler))
 	mux.HandleFunc("GET /api/conversations/unread-count", server.authMiddleware(server.getUnreadMessagesCountHandler))
-	mux.HandleFunc("GET /api/conversations/{id}/messages", server.authMiddleware(server.getChatMessagesHandler))
-	mux.HandleFunc("POST /api/conversations/{id}/messages", server.authMiddleware(server.sendMessageHandler))
-	mux.HandleFunc("POST /api/conversations/{id}/typing", server.authMiddleware(server.markTypingHandler))    // ← НОВОЕ
-	mux.HandleFunc("GET /api/conversations/{id}/typing", server.authMiddleware(server.getTypingUsersHandler)) // ← НОВОЕ
+	mux.HandleFunc("GET /api/conversations/{id}/messages", server.authMiddleware(server.conversationMiddleware(server.getChatMessagesHandler)))
+	mux.HandleFunc("POST /api/conversations/{id}/messages", server.authMiddleware(server.conversationMiddleware(server.sendMessageHandler)))
+	mux.HandleFunc("POST /api/conversations/{id}/typing", server.authMiddleware(server.conversationMiddleware(server.markTypingHandler)))    // ← НОВОЕ
+	mux.HandleFunc("GET /api/conversations/{id}/typing", server.authMiddleware(server.conversationMiddleware(server.getTypingUsersHandler))) // ← НОВОЕ
 
 	// Статика
 	uploadsFS := http.FileServer(http.Dir("uploads"))
@@ -130,11 +156,16 @@ func main() {
 	mux.Handle("/", fs)
 
 	handler := corsMiddleware(mux)
+	go server.runSavedSearches(ctx)
 
-	log.Println("Server starting on :8080")
+	address := os.Getenv("HTTP_ADDR")
+	if address == "" {
+		address = ":8080"
+	}
+	log.Printf("Server starting on %s", address)
 	log.Printf("ML service URL: %s", mlURL)
 
-	if err := http.ListenAndServe(":8080", handler); err != nil {
+	if err := http.ListenAndServe(address, handler); err != nil {
 		log.Fatalf("server failed: %v", err)
 	}
 }

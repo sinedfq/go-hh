@@ -1,3 +1,4 @@
+import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import CompanyDetails from '../../components/company/CompanyDetails'
@@ -83,7 +84,7 @@ function CompaniesPage({ onSelectVacancy }) {
                             )}
                         </div>
                         <div className="company-card-info">
-                            <h3>{company.name}</h3>
+                            <h3 className="company-name-with-badge">{company.name} <ITAccreditationBadge accredited={company.it_accredited}/></h3>
                             {company.industry && (
                                 <p className="company-industry">{company.industry}</p>
                             )}

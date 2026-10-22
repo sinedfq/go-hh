@@ -52,6 +52,7 @@ type Storage interface {
 
 	// Компании работодателя
 	CreateCompany(ctx context.Context, req CreateCompanyRequest, ownerUserID int) (int, error)
+	UpdateCompanyLogo(ctx context.Context, companyID, userID int, logoURL string) error
 	GetMyVacancies(ctx context.Context, companyID int) ([]Vacancy, error)
 
 	// Счётчики просмотров

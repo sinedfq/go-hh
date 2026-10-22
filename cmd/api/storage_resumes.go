@@ -44,8 +44,39 @@ func (s *PostgresStorage) GetAllResumes(ctx context.Context) ([]Resume, error) {
 	if resumes == nil {
 		resumes = []Resume{}
 	}
-
-	return resumes, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	// One batch for totals in employer lists, rather than one query per resume.
+	if len(resumes) > 0 {
+		ids := make([]int, len(resumes))
+		for i, r := range resumes {
+			ids[i] = r.ID
+		}
+		experienceRows, err := s.pool.Query(ctx, `SELECT resume_id,start_date,end_date FROM work_experience WHERE resume_id=ANY($1)`, ids)
+		if err != nil {
+			return nil, err
+		}
+		defer experienceRows.Close()
+		jobs := map[int][]WorkExperience{}
+		for experienceRows.Next() {
+			var id int
+			var job WorkExperience
+			if err = experienceRows.Scan(&id, &job.StartDate, &job.EndDate); err != nil {
+				return nil, err
+			}
+			jobs[id] = append(jobs[id], job)
+		}
+		if err = experienceRows.Err(); err != nil {
+			return nil, err
+		}
+		for i := range resumes {
+			months, has := resumeExperienceMonths(jobs[resumes[i].ID], time.Now())
+			resumes[i].TotalExperienceMonths = months
+			resumes[i].TotalExperience = experienceLabel(months, has)
+		}
+	}
+	return resumes, nil
 }
 
 func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, error) {
@@ -84,6 +115,7 @@ func (s *PostgresStorage) GetResumeByID(ctx context.Context, id int) (Resume, er
 		r.WorkExperience = workExp
 	}
 
+	r.summarizeExperience()
 	return r, nil
 }
 func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Resume, error) {
@@ -116,6 +148,7 @@ func (s *PostgresStorage) GetResumeByUserID(ctx context.Context, userID int) (Re
 		return Resume{}, err
 	}
 	r.WorkExperience = workExp
+	r.summarizeExperience()
 
 	return r, nil
 }

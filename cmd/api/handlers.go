@@ -7,10 +7,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sinedfq/go-hh/internal/push"
 )
 
 // ====== СТРУКТУРА СЕРВЕРА ======
 type Server struct {
+	pushSender  *push.Sender
 	storage     *PostgresStorage // ← КОНКРЕТНЫЙ ТИП, без интерфейса
 	mlClient    *MLClient
 	pool        *pgxpool.Pool

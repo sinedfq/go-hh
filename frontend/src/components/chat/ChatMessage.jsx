@@ -1,5 +1,10 @@
+import { useState } from 'react'
+
 function ChatMessage({ message, currentUser }) {
-    const isMine = message.sender_id === currentUser.id
+    const isMine = message.sender_id === currentUser?.id
+    const [failedPhoto,setFailedPhoto]=useState(null)
+    const photo=message.sender_photo||(isMine?currentUser?.photo_url:'')
+    const name=message.sender_name||(isMine?currentUser?.email:'Собеседник')
 
     const formatTime = (dateString) => {
         const date = new Date(dateString)
@@ -24,19 +29,18 @@ function ChatMessage({ message, currentUser }) {
 
     return (
         <div className={`chat-message ${isMine ? 'mine' : ''}`}>
-            {!isMine && (
-                <div className="chat-message-avatar">
-                    {message.sender_photo ? (
-                        <img src={message.sender_photo} alt="" />
+                <div className="chat-message-avatar" aria-label={`Аватар: ${name}`}>
+                    {photo && failedPhoto!==photo ? (
+                        <img src={photo} alt="" onError={()=>setFailedPhoto(photo)} />
                     ) : (
-                        getInitial(message.sender_name)
+                        getInitial(name)
                     )}
                 </div>
-            )}
 
             <div className="chat-message-content">
                 <div className="chat-message-bubble">
-                    {message.content}
+                    <div className="chat-sender-name">{isMine?'Вы':name}</div>
+                    <div className="chat-message-text">{message.content}</div>
                 </div>
 
                 <div className="chat-message-meta">

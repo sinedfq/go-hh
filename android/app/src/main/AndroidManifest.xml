@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:name=".TrudomixApp"
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/launcher_09_dark_waves"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/launcher_09_dark_waves"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Trudomix"
+        android:usesCleartextTraffic="${cleartextTraffic}">
+        <service android:name=".push.TrudomixMessagingService" android:exported="false"><intent-filter><action android:name="com.google.firebase.MESSAGING_EVENT" /></intent-filter></service>
+        <meta-data android:name="com.google.firebase.messaging.default_notification_channel_id" android:value="trudomix_events" />
+        <meta-data android:name="com.google.firebase.messaging.default_notification_icon" android:resource="@drawable/ic_notification" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Trudomix"
+            android:windowSoftInputMode="adjustResize">
+        </activity>
+        <activity-alias android:name=".Launcher1" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_01_dark_blue_purple" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher2" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_02_light_blue" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher3" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_03_dark_pink_orbit" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher4" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_04_light_multicolor" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher5" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_05_dark_sunset" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher6" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_06_light_sunset" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher7" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_07_dark_blue_dot" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher8" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_08_light_blue_dot" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher9" android:targetActivity=".MainActivity" android:enabled="true" android:exported="true" android:icon="@drawable/launcher_09_dark_waves" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher10" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_10_light_waves" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher11" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_11_dark_orbit" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher12" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_12_light_pink_waves" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher13" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_13_tm_dark_classic" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher14" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_14_tm_light_classic" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher15" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_15_tm_dark_orbit" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher16" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_16_tm_light_pastel" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher17" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_17_tm_dark_sunset" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher18" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_18_tm_light_pink" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher19" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_19_tm_dark_cyan" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher20" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_20_tm_light_blue" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher21" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_21_tm_dark_violet" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher22" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_22_tm_light_gradient" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher23" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_23_tm_dark_cosmic" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+        <activity-alias android:name=".Launcher24" android:targetActivity=".MainActivity" android:enabled="false" android:exported="true" android:icon="@drawable/launcher_24_tm_light_coral" android:label="@string/app_name"><intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter></activity-alias>
+    </application>
+
+</manifest>

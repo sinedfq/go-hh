@@ -28,7 +28,8 @@ func (s *Server) geocodeHandler(w http.ResponseWriter, r *http.Request) {
 	// Получаем ключ из окружения или используем константу
 	apiKey := os.Getenv("YANDEX_GEOCODER_API_KEY")
 	if apiKey == "" {
-		apiKey = "2878ed4b-0ffb-4a5c-b4eb-79b1a1fc641d"
+		http.Error(w, "geocoder is not configured", http.StatusServiceUnavailable)
+		return
 	}
 
 	// Запрос к Яндекс Geocoder API
@@ -112,7 +113,8 @@ func (s *Server) geocodeSuggestHandler(w http.ResponseWriter, r *http.Request) {
 
 	apiKey := os.Getenv("YANDEX_GEOCODER_API_KEY")
 	if apiKey == "" {
-		apiKey = "2878ed4b-0ffb-4a5c-b4eb-79b1a1fc641d"
+		http.Error(w, "geocoder is not configured", http.StatusServiceUnavailable)
+		return
 	}
 
 	geocodeURL := fmt.Sprintf(

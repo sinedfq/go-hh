@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/jackc/pgx/v5"
@@ -15,7 +16,7 @@ func (s *PostgresStorage) GetAllCompanies(ctx context.Context) ([]CompanyWithSta
 		       COALESCE(c.size, ''), COALESCE(c.city, ''), COALESCE(c.website, ''),
 		       COALESCE(c.logo_url, ''), COALESCE(c.photo_url, ''), c.created_at,
 		       COUNT(v.id) AS vacancies_count,
-		       COALESCE(SUM(v.views), 0) AS total_views
+		       COALESCE(SUM(v.views), 0) AS total_views, c.profile
 		FROM companies c
 		LEFT JOIN vacancies v ON v.company_id = c.id
 		GROUP BY c.id
@@ -34,7 +35,7 @@ func (s *PostgresStorage) GetAllCompanies(ctx context.Context) ([]CompanyWithSta
 		err := rows.Scan(
 			&c.ID, &c.Name, &c.Description, &c.Industry,
 			&c.Size, &c.City, &c.Website, &c.LogoURL, &c.PhotoURL, &c.CreatedAt,
-			&c.VacanciesCount, &c.TotalViews,
+			&c.VacanciesCount, &c.TotalViews, &c.CompanyProfile,
 		)
 		if err != nil {
 			return nil, err
@@ -55,7 +56,7 @@ func (s *PostgresStorage) GetCompanyByID(ctx context.Context, id int) (CompanyWi
 		       COALESCE(c.size, ''), COALESCE(c.city, ''), COALESCE(c.website, ''),
 		       COALESCE(c.logo_url, ''), COALESCE(c.photo_url, ''), c.created_at,
 		       COUNT(v.id) AS vacancies_count,
-		       COALESCE(SUM(v.views), 0) AS total_views
+		       COALESCE(SUM(v.views), 0) AS total_views, c.profile
 		FROM companies c
 		LEFT JOIN vacancies v ON v.company_id = c.id
 		WHERE c.id = $1
@@ -66,7 +67,7 @@ func (s *PostgresStorage) GetCompanyByID(ctx context.Context, id int) (CompanyWi
 	err := s.pool.QueryRow(ctx, query, id).Scan(
 		&c.ID, &c.Name, &c.Description, &c.Industry,
 		&c.Size, &c.City, &c.Website, &c.LogoURL, &c.PhotoURL, &c.CreatedAt,
-		&c.VacanciesCount, &c.TotalViews,
+		&c.VacanciesCount, &c.TotalViews, &c.CompanyProfile,
 	)
 
 	if err != nil {
@@ -82,7 +83,8 @@ func (s *PostgresStorage) GetCompanyByID(ctx context.Context, id int) (CompanyWi
 func (s *PostgresStorage) GetVacanciesByCompanyID(ctx context.Context, companyID int) ([]Vacancy, error) {
 	query := `
 		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
-		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0)
+		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0),
+		       COALESCE((SELECT c.logo_url FROM companies c WHERE c.id=vacancies.company_id), ''), COALESCE((SELECT c.profile->>'it_accredited' FROM companies c WHERE c.id=vacancies.company_id),'false')='true', terms
 		FROM vacancies
 		WHERE company_id = $1
 		ORDER BY created_at DESC
@@ -100,7 +102,7 @@ func (s *PostgresStorage) GetVacanciesByCompanyID(ctx context.Context, companyID
 		err := rows.Scan(
 			&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location,
 			&v.Experience, &v.Remote, &v.Skills, &v.Description,
-			&v.Address, &v.Latitude, &v.Longitude, &v.Views,
+			&v.Address, &v.Latitude, &v.Longitude, &v.Views, &v.CompanyLogo, &v.CompanyITAccredited, &v.VacancyTerms,
 		)
 		if err != nil {
 			return nil, err
@@ -119,14 +121,15 @@ func (s *PostgresStorage) GetVacanciesByCompanyID(ctx context.Context, companyID
 
 func (s *PostgresStorage) CreateCompany(ctx context.Context, req CreateCompanyRequest, ownerUserID int) (int, error) {
 	query := `
-		INSERT INTO companies (name, description, industry, size, city, website)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO companies (name, description, industry, size, city, website, profile)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 
 	var companyID int
+	profile, _ := json.Marshal(map[string]interface{}{"team_story": req.TeamStory, "benefits": req.Benefits, "hiring_process": req.HiringProcess, "it_accredited": req.ITAccredited})
 	err := s.pool.QueryRow(ctx, query,
-		req.Name, req.Description, req.Industry, req.Size, req.City, req.Website,
+		req.Name, req.Description, req.Industry, req.Size, req.City, req.Website, profile,
 	).Scan(&companyID)
 	if err != nil {
 		return 0, err
@@ -143,13 +146,16 @@ func (s *PostgresStorage) CreateCompany(ctx context.Context, req CreateCompanyRe
 
 func (s *PostgresStorage) GetMyVacancies(ctx context.Context, companyID int) ([]Vacancy, error) {
 	query := `
-		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote, skills, description,
-		       COALESCE(address, ''), COALESCE(latitude, 0), COALESCE(longitude, 0), COALESCE(views, 0)
+		SELECT id, title, company, COALESCE(company_id, 0), location, experience, remote,
+		       skills, description, COALESCE(address, ''),
+		       COALESCE(latitude, 0), COALESCE(longitude, 0),
+		       COALESCE(views, 0), COALESCE(author_user_id, 0),
+		       COALESCE(is_archived, FALSE), created_at, updated_at,
+		       COALESCE((SELECT c.logo_url FROM companies c WHERE c.id=vacancies.company_id), ''), COALESCE((SELECT c.profile->>'it_accredited' FROM companies c WHERE c.id=vacancies.company_id),'false')='true', terms
 		FROM vacancies
 		WHERE company_id = $1
-		ORDER BY created_at DESC
+		ORDER BY is_archived ASC, created_at DESC
 	`
-
 	rows, err := s.pool.Query(ctx, query, companyID)
 	if err != nil {
 		return nil, err
@@ -160,19 +166,17 @@ func (s *PostgresStorage) GetMyVacancies(ctx context.Context, companyID int) ([]
 	for rows.Next() {
 		var v Vacancy
 		err := rows.Scan(
-			&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location,
-			&v.Experience, &v.Remote, &v.Skills, &v.Description,
-			&v.Address, &v.Latitude, &v.Longitude, &v.Views,
+			&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location, &v.Experience, &v.Remote,
+			&v.Skills, &v.Description, &v.Address, &v.Latitude, &v.Longitude,
+			&v.Views, &v.AuthorUserID, &v.IsArchived, &v.CreatedAt, &v.UpdatedAt, &v.CompanyLogo, &v.CompanyITAccredited, &v.VacancyTerms,
 		)
 		if err != nil {
 			return nil, err
 		}
 		vacancies = append(vacancies, v)
 	}
-
 	if vacancies == nil {
 		vacancies = []Vacancy{}
 	}
-
 	return vacancies, rows.Err()
 }

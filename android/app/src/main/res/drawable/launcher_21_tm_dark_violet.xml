@@ -1,0 +1,1 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:insetTop="-5%" android:insetBottom="-5%" android:insetLeft="-1%" android:insetRight="-1%"><bitmap android:src="@mipmap/app_21_tm_dark_violet" android:gravity="fill" /></inset>

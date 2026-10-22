@@ -1,3 +1,4 @@
+import ITAccreditationBadge from '../common/ITAccreditationBadge'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 
@@ -67,7 +68,7 @@ function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
                     )}
                 </div>
                 <div className="company-header-info">
-                    <h1>{company.name}</h1>
+                    <h1 className="company-name-with-badge">{company.name} <ITAccreditationBadge accredited={company.it_accredited}/></h1>
                     <div className="company-meta-badges">
                         {company.industry && <span className="meta-badge">{company.industry}</span>}
                         {company.size && <span className="meta-badge">{company.size}</span>}
@@ -105,6 +106,10 @@ function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
             )}
 
             {/* Вакансии компании */}
+            {company.team_story&&<section className="company-description-card"><h3>Наша команда</h3><p className="preserve-text">{company.team_story}</p></section>}
+            {company.benefits?.length>0&&<section className="company-description-card"><h3>Что мы предлагаем</h3><ul>{company.benefits.map((benefit,index)=><li key={index}>{benefit}</li>)}</ul></section>}
+            {company.hiring_process&&<section className="company-description-card"><h3>Как проходит найм</h3><p className="preserve-text">{company.hiring_process}</p></section>}
+            {company.photos?.length>0&&<section className="company-description-card"><h3>Жизнь команды</h3><div className="company-gallery">{company.photos.map(photo=><img key={photo} src={photo} alt={`Команда ${company.name}`} loading="lazy"/>)}</div></section>}
             <div className="company-vacancies-section">
                 <h3>
                     Вакансии компании

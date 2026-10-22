@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import ApplicationHistory from '../../components/common/ApplicationHistory'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import './CandidatePages.css'
 
@@ -172,7 +173,16 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                         const isCancelling = cancelling === app.id
 
                         return (
-                            <div key={app.id} className={`my-app-card ${statusInfo.className}`}>
+                            <div key={app.id} className={`my-app-card ${statusInfo.className} ${app.vacancy_archived ? 'vacancy-archived' : ''}`}>
+                                {app.vacancy_archived && (
+                                    <div className="archived-badge-top">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polyline points="21 8 21 21 3 21 3 8" />
+                                            <rect x="1" y="3" width="22" height="5" />
+                                        </svg>
+                                        Вакансия в архиве
+                                    </div>
+                                )}
                                 <div className="my-app-card-top">
                                     <div className="my-app-vacancy-info">
                                         <h3 className="my-app-vacancy-title">{app.vacancy_title}</h3>
@@ -189,6 +199,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                                     </span>
                                 </div>
 
+                                <ApplicationHistory application={app}/>
                                 <div className="my-app-actions">
                                     <button
                                         className="btn btn-secondary btn-small"
@@ -258,7 +269,8 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                         )
                     })}
                 </div>
-            )}
+            )
+            }
         </div>
     )
 }

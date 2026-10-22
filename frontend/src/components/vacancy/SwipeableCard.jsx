@@ -1,3 +1,4 @@
+import MarkdownContent from '../common/MarkdownContent'
 import { useState, useRef } from 'react'
 import { motion, useMotionValue, useTransform } from 'framer-motion'
 
@@ -162,7 +163,7 @@ function SwipeableCard({ vacancy, onSwipe, isTop, matchScore, onOpenVacancy, onO
                 {vacancy.description && (
                     <div className="card-section">
                         <h3>Описание</h3>
-                        <p className="description">{vacancy.description}</p>
+                        <MarkdownContent>{vacancy.description}</MarkdownContent>
                     </div>
                 )}
             </div>

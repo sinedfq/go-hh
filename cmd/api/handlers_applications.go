@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // POST /api/vacancies/{id}/apply — откликнуться на вакансию
@@ -37,6 +38,11 @@ func (s *Server) applyToVacancyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Защита от самоотклика — автор вакансии
+	if vacancy.IsArchived {
+		w.WriteHeader(http.StatusConflict)
+		json.NewEncoder(w).Encode(map[string]string{"error": "vacancy archived"})
+		return
+	}
 	if vacancy.AuthorUserID == claims.UserID {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(map[string]string{"error": "cannot apply to your own vacancy"})
@@ -44,7 +50,11 @@ func (s *Server) applyToVacancyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Защита от самоотклика — сотрудник той же компании
-	user, _ := s.storage.GetUserByID(ctx, claims.UserID)
+	user, userErr := s.storage.GetUserByID(ctx, claims.UserID)
+	if userErr != nil {
+		http.Error(w, "failed to get user", http.StatusInternalServerError)
+		return
+	}
 	if user.CompanyID != nil && vacancy.CompanyID > 0 && *user.CompanyID == vacancy.CompanyID {
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(map[string]string{"error": "cannot apply to your company's vacancy"})
@@ -224,10 +234,8 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	var req struct {
-		Status string `json:"status"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	var req ApplicationUpdateRequest
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16384)).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
 		return
@@ -263,7 +271,7 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if employer.CompanyID == nil {
+	if employer.CompanyID == nil || (employer.Role != "employer" && employer.Role != "admin") {
 		log.Printf("⚠️ Employer has no company")
 		w.WriteHeader(http.StatusForbidden)
 		json.NewEncoder(w).Encode(map[string]string{"error": "forbidden"})
@@ -279,8 +287,22 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	// Обновляем статус
-	if err := s.storage.UpdateApplicationStatus(ctx, appID, req.Status); err != nil {
+	var interview *time.Time
+	if req.Feedback != nil && len(*req.Feedback) > 4000 {
+		http.Error(w, "feedback too long", 400)
+		return
+	}
+	if req.InterviewAt != nil && *req.InterviewAt != "" {
+		parsed, err := time.Parse(time.RFC3339, *req.InterviewAt)
+		if err != nil {
+			http.Error(w, "invalid interview date", 400)
+			return
+		}
+		interview = &parsed
+	}
+	// Status, candidate-visible feedback and meeting time change atomically.
+	changed, err := s.storage.updateApplicationDetails(ctx, appID, req, interview)
+	if err != nil {
 		log.Printf("⚠️ UpdateApplicationStatus error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to update"})
@@ -288,9 +310,13 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 	}
 
 	log.Printf("   ✅ Статус обновлён")
+	if changed && app.Status != req.Status {
+		go s.sendPush(app.CandidateUserID, "Статус отклика изменён", app.VacancyTitle+": "+req.Status,
+			map[string]string{"type": "application_status", "application_id": strconv.Itoa(appID), "vacancy_id": strconv.Itoa(app.VacancyID)})
+	}
 
 	// ====== УВЕДОМЛЕНИЕ КАНДИДАТУ ======
-	if req.Status == "accepted" {
+	if changed && req.Status == "accepted" && app.Status != req.Status {
 		log.Printf("   📬 Отправляем уведомление о принятии кандидату %d", app.CandidateUserID)
 		err := s.storage.CreateNotification(ctx, CreateNotificationRequest{
 			UserID:  app.CandidateUserID,
@@ -308,7 +334,7 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 		} else {
 			log.Printf("   ✅ Уведомление создано")
 		}
-	} else if req.Status == "rejected" {
+	} else if changed && req.Status == "rejected" && app.Status != req.Status {
 		log.Printf("   📬 Отправляем уведомление об отклонении кандидату %d", app.CandidateUserID)
 		err := s.storage.CreateNotification(ctx, CreateNotificationRequest{
 			UserID:  app.CandidateUserID,
@@ -328,6 +354,12 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	if changed && app.Status == req.Status && (req.Feedback != nil || req.InterviewAt != nil) {
+		message := app.CompanyName + ": обновлены комментарий или время собеседования по вакансии «" + app.VacancyTitle + "»"
+		if err := s.storage.CreateNotification(ctx, CreateNotificationRequest{UserID: app.CandidateUserID, Type: "application_updated", Title: "Обновлены детали отклика", Message: message, Data: map[string]interface{}{"vacancy_id": app.VacancyID, "application_id": appID}}); err != nil {
+			log.Printf("application details notification: %v", err)
+		}
+	}
 	json.NewEncoder(w).Encode(map[string]string{"status": "updated"})
 }
 
@@ -472,9 +504,13 @@ func (s *Server) startChatHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Проверяем что пользователь имеет право создавать чат для этого отклика
 	// Это может быть либо кандидат, либо работодатель компании
-	user, _ := s.storage.GetUserByID(ctx, claims.UserID)
+	user, userErr := s.storage.GetUserByID(ctx, claims.UserID)
+	if userErr != nil {
+		http.Error(w, "failed to get user", http.StatusInternalServerError)
+		return
+	}
 	isCandidate := application.CandidateUserID == claims.UserID
-	isEmployer := user.CompanyID != nil && application.VacancyCompanyID == *user.CompanyID
+	isEmployer := (user.Role == "employer" || user.Role == "admin") && user.CompanyID != nil && application.VacancyCompanyID == *user.CompanyID
 
 	if !isCandidate && !isEmployer {
 		w.WriteHeader(http.StatusForbidden)

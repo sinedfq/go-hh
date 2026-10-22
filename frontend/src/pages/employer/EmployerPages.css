@@ -2169,3 +2169,114 @@
         font-size: 1.5rem;
     }
 }
+
+/* ====== КНОПКИ ДЕЙСТВИЙ ВАКАНСИИ ====== */
+.my-vacancy-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+.my-vacancy-actions .btn-small {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid;
+}
+
+.btn-danger-outline {
+    background: transparent;
+    color: #dc3545;
+    border-color: #dc3545 !important;
+}
+
+.btn-danger-outline:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* ====== АРХИВНЫЕ ВАКАНСИИ ====== */
+.archived-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px dashed var(--border);
+}
+
+.archived-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+}
+
+.archived-toggle:hover {
+    color: var(--accent);
+}
+
+.toggle-arrow {
+    transition: transform 0.2s ease;
+}
+
+.toggle-arrow.open {
+    transform: rotate(90deg);
+}
+
+.archived-grid {
+    opacity: 0.85;
+}
+
+.my-vacancy-card.archived {
+    background: var(--bg);
+    opacity: 0.75;
+    position: relative;
+}
+
+.archived-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(134, 142, 150, 0.15);
+    color: #868e96;
+    padding: 0.25rem 0.625rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Тёмная тема */
+[data-theme="dark"] .btn-danger-outline {
+    color: #f85149;
+    border-color: #f85149 !important;
+}
+
+[data-theme="dark"] .btn-danger-outline:hover {
+    background: #da3633;
+    color: white;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .my-vacancy-actions {
+        flex-direction: column;
+    }
+    .my-vacancy-actions .btn-small {
+        width: 100%;
+        justify-content: center;
+    }
+}

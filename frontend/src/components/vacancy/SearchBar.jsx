@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './SearchBar.css'
 
-function SearchBar({ value, onChange, placeholder = 'Поиск вакансий...' }) {
+function SearchBar({ value, onChange, onSubmit, placeholder = 'Поиск вакансий...' }) {
     const [localValue, setLocalValue] = useState(value || '')
+    const changeRef=useRef(onChange)
+    useEffect(()=>{changeRef.current=onChange},[onChange])
 
     useEffect(() => {
         setLocalValue(value || '')
@@ -11,12 +13,12 @@ function SearchBar({ value, onChange, placeholder = 'Поиск вакансий
     useEffect(() => {
         const timer = setTimeout(() => {
             if (localValue !== value) {
-                onChange(localValue)
+                changeRef.current(localValue)
             }
         }, 300) // debounce 300ms
 
         return () => clearTimeout(timer)
-    }, [localValue])
+    }, [localValue,value])
 
     const handleClear = () => {
         setLocalValue('')
@@ -31,13 +33,15 @@ function SearchBar({ value, onChange, placeholder = 'Поиск вакансий
             </svg>
             <input
                 type="text"
+                aria-label="Поиск вакансий"
+                onKeyDown={event=>{if(event.key==='Enter')onSubmit?.(localValue)}}
                 className="search-input"
                 value={localValue}
                 onChange={(e) => setLocalValue(e.target.value)}
                 placeholder={placeholder}
             />
             {localValue && (
-                <button className="search-clear" onClick={handleClear}>
+                <button type="button" aria-label="Очистить поиск" className="search-clear" onClick={handleClear}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="18" y1="6" x2="6" y2="18" />
                         <line x1="6" y1="6" x2="18" y2="18" />

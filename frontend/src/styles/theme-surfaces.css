@@ -1,0 +1,58 @@
+/* Shared surfaces follow the same palette as the Android application. */
+.it-accreditation { display:inline-flex;align-items:center;position:relative;vertical-align:middle;font:inherit; }
+.it-accreditation-badge { display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;flex:0 0 19px;padding:0;border:1px solid color-mix(in srgb,var(--accent) 35%,var(--border));border-radius:50%;background:var(--accent-light);color:var(--accent);font-size:9px;font-weight:750;line-height:1;vertical-align:middle;letter-spacing:0;cursor:pointer; }
+.it-accreditation-note { position:fixed;z-index:10030;padding:16px;background:var(--surface);color:var(--text-primary);border:1px solid var(--border);box-shadow:0 8px 32px #0003;border-radius:14px;font-size:13px;line-height:1.6;text-align:left;font-weight:400;white-space:normal; }
+.it-accreditation-note strong,.it-accreditation-note>span,.it-accreditation-note small { display:block; }
+.it-accreditation-note small { color:var(--text-secondary);margin-top:8px; }
+.total-experience { margin:12px 0;color:var(--text-secondary); }
+.markdown-content { line-height:1.7;overflow-wrap:anywhere;color:var(--text-primary); }
+.markdown-content :is(h1,h2,h3,h4) { margin:20px 0 12px;font-size:1.2em;line-height:1.35; }
+.markdown-content p { margin:0 0 14px;white-space:normal; }
+.markdown-content :is(ul,ol) { padding-left:24px;margin:12px 0; }
+.markdown-content img { max-width:100%;height:auto;max-height:520px;object-fit:contain;border-radius:16px;display:block;margin:16px 0; }
+.markdown-content blockquote { border-left:3px solid var(--accent);padding:8px 16px;background:var(--accent-light);margin:16px 0; }
+.markdown-content a { color:var(--accent);text-decoration:underline; }
+.markdown-content pre { overflow-x:auto;padding:16px;background:var(--bg);border:1px solid var(--border);border-radius:12px; }
+.markdown-content table { display:block;overflow-x:auto;border-collapse:collapse; }
+.markdown-content :is(th,td) { padding:8px 12px;border:1px solid var(--border); }
+.markdown-toolbar { display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px; }
+.markdown-toolbar button { font-size:.8rem;padding:8px 12px; }
+.markdown-editor textarea { width:100%;background:var(--bg);color:var(--text-primary);border:1px solid var(--border);border-radius:14px;padding:16px;font:inherit; }
+.markdown-editor small { display:block;color:var(--text-secondary);margin-top:12px; }
+.company-name-with-badge { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+.company-accreditation-option { display:flex;align-items:center;gap:12px;padding:16px;margin-bottom:24px;border:1px solid var(--border);border-radius:16px;background:var(--bg);cursor:pointer; }
+.company-accreditation-option input { width:20px;min-width:20px;height:20px;accent-color:var(--accent); }
+.company-accreditation-option>span:not(.it-accreditation-badge) { flex:1; }
+.company-accreditation-option small { display:block;color:var(--text-secondary);margin-top:6px;line-height:1.5; }
+.export-error { color:var(--danger);margin:12px 0; }
+.profile-section .section-header { flex-wrap:wrap;gap:12px; }
+.details-modal-overlay,.resume-modal-overlay { z-index:10020; }
+
+:root[data-theme="dark"] :is(.company-card,.company-header-card,.company-description-card,.company-vacancy-card,.empty-vacancies,.company-info-card,.company-form,.vacancy-form,.employer-card,.application-card,.favorite-card,.resume-card,.profile-section,.details-modal,.resume-modal,.resume-view-modal,.notification-dropdown) {
+    background:var(--surface);color:var(--text-primary);border-color:var(--border);box-shadow:none;
+}
+:root[data-theme="dark"] :is(.details-modal,.resume-modal,.resume-view-modal) { box-shadow:0 24px 72px #0007; }
+:root[data-theme="dark"] :is(.company-card-info h3,.company-header-info h1,.company-description-card h3,.company-vacancies-section h3,.company-vacancy-title,.details-info h2,.section-title,.resume-modal h2,.resume-modal h3) { color:var(--text-primary); }
+:root[data-theme="dark"] :is(.company-city,.vacancies-count,.company-description-card p,.company-vacancy-location,.header-stat .stat-label,.details-about,.details-meta,.work-exp-description,.company-info-label) { color:var(--text-secondary); }
+:root[data-theme="dark"] :is(.company-card-stats,.details-header,.details-section,.details-actions,.work-exp-header) { border-color:var(--border); }
+:root[data-theme="dark"] :is(.vacancy-card-top h4,.company-info-value) { color:var(--text-primary); }
+:root[data-theme="dark"] :is(.vacancy-card-location,.vacancy-views) { color:var(--text-secondary); }
+:root[data-theme="dark"] .vacancy-card-footer { border-color:var(--border); }
+:root[data-theme="dark"] :is(.back-btn,.details-modal-close,.resume-modal-close,.modal-close-btn,.contact-link,.work-exp-item,.work-exp-form,.details-contact,.resume-empty-state,.notification-item) { background:var(--bg);color:var(--text-primary);border-color:var(--border);box-shadow:none; }
+:root[data-theme="dark"] :is(.back-btn,.details-modal-close,.resume-modal-close,.modal-close-btn,.notification-item):hover { background:var(--border-light);color:var(--text-primary); }
+:root[data-theme="dark"] :is(.meta-badge,.badge,.badge.remote,.skill-tag,.details-badges .badge,.details-badges .badge.remote) { background:var(--accent-light);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,var(--border));box-shadow:none; }
+:root[data-theme="dark"] :is(.company-industry,.company-website,.company-info-link,.header-stat .stat-value,.details-position,.contact-link) { color:var(--accent); }
+:root[data-theme="dark"] .btn-primary { background:var(--accent);color:#fff; }
+:root[data-theme="dark"] .btn-primary.btn-small { border-color:var(--accent); }
+:root[data-theme="dark"] .btn-primary:hover { background:var(--accent-hover); }
+:root[data-theme="dark"] .btn-secondary { background:var(--border-light);color:var(--text-primary);border-color:var(--border); }
+:root[data-theme="dark"] :is(.company-form,.vacancy-form,.resume-form,.work-exp-form,.details-modal,.resume-modal,.application-history) :is(input:not([type=checkbox]):not([type=radio]),select,textarea) { background:var(--bg);color:var(--text-primary);border-color:var(--border); }
+:root[data-theme="dark"] :is(.details-modal-overlay,.resume-modal-overlay,.resume-view-overlay) { background:#0009; }
+:root[data-theme="dark"] * { scrollbar-color:var(--border) transparent !important; }
+:root[data-theme="dark"] *::-webkit-scrollbar-thumb { background:var(--border) !important;border-radius:8px !important; }
+:root[data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background:var(--text-muted) !important; }
+@media(max-width:600px) {
+    .companies-grid,.company-vacancies-grid { grid-template-columns:minmax(0,1fr); }
+    .company-header-card { flex-wrap:wrap;padding:20px; }
+    .company-header-stats { width:100%;justify-content:flex-start; }
+}

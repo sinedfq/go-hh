@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import './NotificationBell.css'
 
-function NotificationBell() {
+function NotificationBell({onOpenVacancy}) {
     const [notifications, setNotifications] = useState([])
     const [unreadCount, setUnreadCount] = useState(0)
     const [isOpen, setIsOpen] = useState(false)
@@ -107,6 +107,34 @@ function NotificationBell() {
                         <line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                 )
+            case 'vacancy_updated':
+                return (
+                    <div className="notification-icon vacancy-updated">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                        </svg>
+                    </div>
+                )
+            case 'vacancy_archived':
+                return (
+                    <div className="notification-icon vacancy-archived">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="21 8 21 21 3 21 3 8" />
+                            <rect x="1" y="3" width="22" height="5" />
+                            <line x1="10" y1="12" x2="14" y2="12" />
+                        </svg>
+                    </div>
+                )
+            case 'vacancy_deleted':
+                return (
+                    <div className="notification-icon vacancy-deleted">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                    </div>
+                )
             default:
                 return (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -159,6 +187,9 @@ function NotificationBell() {
                                 <div
                                     key={notif.id}
                                     className={`notification-item ${!notif.is_read ? 'unread' : ''}`}
+                                    onClick={()=>{if(notif.data?.vacancy_id){onOpenVacancy?.(notif.data.vacancy_id);setIsOpen(false)}}}
+                                    role={notif.data?.vacancy_id?'button':undefined} tabIndex={notif.data?.vacancy_id?0:undefined}
+                                    onKeyDown={event=>{if(event.key==='Enter'&&notif.data?.vacancy_id){onOpenVacancy?.(notif.data.vacancy_id);setIsOpen(false)}}}
                                 >
                                     <div className={`notification-icon notification-icon-${notif.type}`}>
                                         {getNotificationIcon(notif.type)}

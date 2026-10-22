@@ -1,24 +1,29 @@
 import { useState, useRef, useEffect } from 'react'
 import VacancyMapPicker from './VacancyMapPicker'
+import MarkdownEditor from '../../components/vacancy/MarkdownEditor'
+import { VacancyTermsFields } from '../../components/vacancy/VacancyTerms'
 import './EmployerPages.css'
 
-function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], allPositions = [] }) {
+function CreateVacancyPage({ onCreate, onUpdate, onCancel, cities = [], allSkills = [], allPositions = [], editVacancy = null }) {
+    const isEditMode = !!editVacancy
+
     const [form, setForm] = useState({
-        title: '',
-        location: '',
-        experience: '',
-        remote: false,
-        skills: [],
-        description: '',
-        address: '',
-        latitude: '',
-        longitude: ''
+        title: editVacancy?.title || '',
+        location: editVacancy?.location || '',
+        experience: editVacancy?.experience || '',
+        remote: editVacancy?.remote || false,
+        skills: editVacancy?.skills || [],
+        description: editVacancy?.description || '',
+        address: editVacancy?.address || '',
+        latitude: editVacancy?.latitude ? editVacancy.latitude.toString() : '',
+        longitude: editVacancy?.longitude ? editVacancy.longitude.toString() : ''
     })
     const [loading, setLoading] = useState(false)
+    const [terms,setTerms]=useState({salary_from:editVacancy?.salary_from||'',salary_to:editVacancy?.salary_to||'',currency:editVacancy?.currency||'RUB',salary_gross:editVacancy?.salary_gross||false,employment:editVacancy?.employment||'',schedule:editVacancy?.schedule||''})
     const [error, setError] = useState('')
 
-    // ====== НАЗВАНИЕ ВАКАНСИИ (автодополнение из /api/positions) ======
-    const [titleInput, setTitleInput] = useState('')
+    // ====== НАЗВАНИЕ ВАКАНСИИ ======
+    const [titleInput, setTitleInput] = useState(editVacancy?.title || '')
     const [showTitleSuggestions, setShowTitleSuggestions] = useState(false)
     const titleInputRef = useRef(null)
 
@@ -45,7 +50,7 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
 
     // ====== ГОРОД ======
     const [showCityDropdown, setShowCityDropdown] = useState(false)
-    const [citySearch, setCitySearch] = useState('')
+    const [citySearch, setCitySearch] = useState(editVacancy?.location || '')
     const cityDropdownRef = useRef(null)
 
     useEffect(() => {
@@ -136,7 +141,6 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
         }
     }
 
-    // ====== ОТПРАВКА ======
     const handleChange = (field, value) => {
         setForm(prev => ({ ...prev, [field]: value }))
     }
@@ -161,6 +165,7 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
         setLoading(true)
         try {
             const vacancyData = {
+                ...terms,salary_from:Number(terms.salary_from)||0,salary_to:Number(terms.salary_to)||0,
                 title: form.title,
                 location: form.location,
                 experience: form.experience,
@@ -172,14 +177,19 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
                 longitude: form.longitude ? parseFloat(form.longitude) : 0
             }
 
-            await onCreate(vacancyData)
+            if (isEditMode) {
+                await onUpdate(editVacancy.id, vacancyData)
+            } else {
+                await onCreate(vacancyData)
+            }
         } catch (err) {
-            const rawMessage = err.response?.data?.error || 'Ошибка при создании вакансии'
+            const rawMessage = err.response?.data?.error || 'Ошибка'
             const errorMap = {
                 'title, location and experience required': 'Заполните обязательные поля',
                 'you must create a company first': 'Сначала создайте компанию',
                 'unauthorized': 'Требуется авторизация',
-                'forbidden: insufficient role': 'Недостаточно прав'
+                'forbidden: insufficient role': 'Недостаточно прав',
+                'vacancy not found or access denied': 'Вакансия не найдена'
             }
             setError(errorMap[rawMessage] || rawMessage)
         } finally {
@@ -190,10 +200,10 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
     return (
         <div className="employer-page">
             <div className="employer-header">
-                <div>
-                    <h1>Создать вакансию</h1>
-                    <p className="employer-subtitle">Заполните информацию о вакансии</p>
-                </div>
+                <h1>{isEditMode ? 'Редактировать вакансию' : 'Создать вакансию'}</h1>
+                <p className="employer-subtitle">
+                    {isEditMode ? 'Обновите информацию о вакансии' : 'Заполните информацию о вакансии'}
+                </p>
                 {onCancel && (
                     <button className="btn btn-secondary" onClick={onCancel}>
                         Отмена
@@ -202,6 +212,7 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
             </div>
 
             <form className="vacancy-form" onSubmit={handleSubmit}>
+                <VacancyTermsFields value={terms} onChange={setTerms}/>
                 {error && <div className="employer-error">{error}</div>}
 
                 {/* ====== НАЗВАНИЕ ВАКАНСИИ С АВТОДОПОЛНЕНИЕМ ====== */}
@@ -414,12 +425,7 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
                 {/* ====== ОПИСАНИЕ ====== */}
                 <div className="form-field">
                     <label>Описание вакансии</label>
-                    <textarea
-                        value={form.description}
-                        onChange={(e) => handleChange('description', e.target.value)}
-                        placeholder="Расскажите о обязанностях, требованиях и условиях..."
-                        rows={6}
-                    />
+                    <MarkdownEditor value={form.description} onChange={value=>handleChange('description',value)}/>
                 </div>
 
                 {/* ====== РАСПОЛОЖЕНИЕ С КАРТОЙ ====== */}
@@ -448,7 +454,7 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
                         Отмена
                     </button>
                     <button type="submit" className="btn btn-primary" disabled={loading}>
-                        {loading ? 'Создание...' : 'Создать вакансию'}
+                        {loading ? (isEditMode ? 'Сохранение...' : 'Создание...') : (isEditMode ? 'Сохранить изменения' : 'Создать вакансию')}
                     </button>
                 </div>
             </form>
@@ -456,4 +462,4 @@ function CreateVacancyPage({ onCreate, onCancel, cities = [], allSkills = [], al
     )
 }
 
-export default CreateVacancyPage    
+export default CreateVacancyPage

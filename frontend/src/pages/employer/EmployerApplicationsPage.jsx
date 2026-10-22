@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import ApplicationHistory from '../../components/common/ApplicationHistory'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import './EmployerPages.css'
 
@@ -293,6 +294,7 @@ function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, onOpenChatWith,
                                     </div>
                                 )}
 
+                                <ApplicationHistory application={app} employer onUpdated={loadApplications}/>
                                 <div className="application-meta">
                                     <span className="application-date">{formatDate(app.created_at)}</span>
                                 </div>

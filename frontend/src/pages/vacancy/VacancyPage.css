@@ -595,3 +595,65 @@
     background: #da3633;
     color: white;
 }
+
+/* ====== УВЕДОМЛЕНИЕ ОБ АРХИВЕ ====== */
+.archived-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.05) 100%);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    color: #b45309;
+    margin-bottom: 0.75rem;
+}
+
+.archived-notice svg {
+    flex-shrink: 0;
+    color: #d97706;
+    margin-top: 2px;
+}
+
+.archived-notice h4 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #92400e;
+}
+
+.archived-notice p {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+/* Тёмная тема */
+[data-theme="dark"] .archived-notice {
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.12) 0%, rgba(245, 158, 11, 0.06) 100%);
+    border-color: rgba(251, 191, 36, 0.35);
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .archived-notice svg {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .archived-notice h4 {
+    color: #fcd34d;
+}
+
+/* Мобильная адаптация */
+@media (max-width: 768px) {
+    .archived-notice {
+        padding: 1rem;
+        gap: 0.75rem;
+    }
+    .archived-notice h4 {
+        font-size: 0.9375rem;
+    }
+    .archived-notice p {
+        font-size: 0.8125rem;
+    }
+}

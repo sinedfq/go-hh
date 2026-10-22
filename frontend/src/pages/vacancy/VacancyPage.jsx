@@ -1,5 +1,8 @@
+import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
+import MarkdownContent from '../../components/common/MarkdownContent'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import VacancyTerms from '../../components/vacancy/VacancyTerms'
 import { useAuth } from '../../contexts/AuthContext'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import './VacancyPage.css'
@@ -103,12 +106,12 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
     const handleApplySuccess = (data) => {
         setHasApplied(true)
         setShowApplyModal(false)
-        
+
         // ✅ СОХРАНЯЕМ ID отклика из ответа бэкенда
         if (data?.id) {
             setApplicationId(data.id)
         }
-        
+
         // Уведомление об отклике
         if (showToast) {
             showToast(`✨ Отклик отправлен! Компания "${vacancy?.company}" скоро свяжется с вами`)
@@ -124,7 +127,7 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
     const doCancelApplication = async () => {
         // Если ID нет — попробуем получить его через API
         let idToCancel = applicationId
-        
+
         if (!idToCancel) {
             try {
                 const res = await axios.get(`/api/vacancies/${vacancy.id}/application`)
@@ -148,7 +151,7 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
             setHasApplied(false)
             setApplicationId(null)
             setConfirmCancel(false)
-            
+
             // ✅ УВЕДОМЛЕНИЕ ОБ ОТМЕНЕ
             if (showToast) {
                 showToast('🗑️ Отклик отменён')
@@ -228,16 +231,17 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                             {vacancy.remote && <span className="badge remote-badge">Удалённо</span>}
                         </div>
 
+                        <VacancyTerms vacancy={vacancy}/>
                         <div className="vacancy-company-row">
                             {company ? (
                                 <button
                                     className="company-link"
                                     onClick={() => onOpenCompany && onOpenCompany(company.id)}
                                 >
-                                    {company.name}
+                                    {company.name} <ITAccreditationBadge accredited={company.it_accredited}/>
                                 </button>
                             ) : (
-                                <span className="company-name">{vacancy.company}</span>
+                                <span className="company-name company-name-with-badge">{vacancy.company} <ITAccreditationBadge accredited={vacancy.company_it_accredited}/></span>
                             )}
                         </div>
 
@@ -262,7 +266,7 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                     {vacancy.description && (
                         <div className="vacancy-section-card">
                             <h3>Описание</h3>
-                            <p className="vacancy-description">{vacancy.description}</p>
+                            <MarkdownContent>{vacancy.description}</MarkdownContent>
                         </div>
                     )}
 
@@ -347,6 +351,18 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                                 </button>
                             ) : hasApplied ? (
                                 <>
+                                    {vacancy.is_archived && (
+                                        <div className="archived-notice">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="21 8 21 21 3 21 3 8" />
+                                                <rect x="1" y="3" width="22" height="5" />
+                                            </svg>
+                                            <div>
+                                                <h4>Вакансия в архиве</h4>
+                                                <p>Эта вакансия больше не активна, но ваш отклик сохранён</p>
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="applied-badge-card">
                                         <div className="applied-badge-icon">
                                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -369,6 +385,17 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
                                         Отменить отклик
                                     </button>
                                 </>
+                            ) : vacancy.is_archived ? (
+                                <div className="archived-notice">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polyline points="21 8 21 21 3 21 3 8" />
+                                        <rect x="1" y="3" width="22" height="5" />
+                                    </svg>
+                                    <div>
+                                        <h4>Вакансия в архиве</h4>
+                                        <p>Эта вакансия больше не активна. Откликнуться невозможно.</p>
+                                    </div>
+                                </div>
                             ) : isOwnVacancy ? (
                                 <div className="own-vacancy-badge">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

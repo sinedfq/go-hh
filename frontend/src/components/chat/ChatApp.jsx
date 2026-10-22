@@ -3,6 +3,7 @@ import axios from 'axios'
 import ChatMessage from './ChatMessage'
 import ConfirmModal from '../common/ConfirmModal'
 import './Chat.css'
+import { userError } from '../../utils/userError'
 
 function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, initialChat = null }) {
     const [conversations, setConversations] = useState([])
@@ -16,6 +17,9 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
     const [showParticipants, setShowParticipants] = useState(false)
     const [otherUserTyping, setOtherUserTyping] = useState(false)
     const [confirmCancel, setConfirmCancel] = useState(false)
+    const [messageError,setMessageError]=useState('')
+    const activeId=useRef(null)
+    useEffect(()=>{activeId.current=activeChat?.conversation_id},[activeChat?.conversation_id])
 
     const messagesEndRef = useRef(null)
     const menuRef = useRef(null)
@@ -48,28 +52,33 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
             return
         }
 
+        let live=true
         const loadMessages = async () => {
             try {
                 setLoadingMessages(true)
                 const res = await axios.get(`/api/conversations/${activeChat.conversation_id}/messages`)
-                setMessages(Array.isArray(res.data) ? res.data : [])
+                if(live){setMessages(Array.isArray(res.data) ? res.data : []);setMessageError('')}
             } catch (err) {
                 console.error('Ошибка загрузки сообщений:', err)
+                if(live)setMessageError(userError(err))
             } finally {
-                setLoadingMessages(false)
+                if(live)setLoadingMessages(false)
             }
         }
         loadMessages()
+        return()=>{live=false}
     }, [activeChat?.conversation_id])
 
     // ====== POLLING СООБЩЕНИЙ ======
     useEffect(() => {
         if (!activeChat?.conversation_id) return
 
+        let live=true
         const interval = setInterval(async () => {
             try {
                 const res = await axios.get(`/api/conversations/${activeChat.conversation_id}/messages`)
                 const newMessages = Array.isArray(res.data) ? res.data : []
+                if(!live)return
 
                 setMessages(prev => {
                     if (newMessages.length !== prev.length) return newMessages
@@ -82,7 +91,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                 console.error('Ошибка polling:', err)
             }
         }, 3000)
-        return () => clearInterval(interval)
+        return () => {live=false;clearInterval(interval)}
     }, [activeChat?.conversation_id])
 
     // ====== POLLING: кто печатает ======
@@ -166,18 +175,19 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
         if (!content || sending || !activeChat) return
 
         setSending(true)
+        setMessageError('')
+        const conversationId=activeChat.conversation_id
         try {
             const res = await axios.post(
                 `/api/conversations/${activeChat.conversation_id}/messages`,
                 { content }
             )
-            setMessages(prev => [...prev, res.data])
-            setInputValue('')
+            if(activeId.current===conversationId){setMessages(prev => [...prev, res.data]);setInputValue('')}
             inputRef.current?.focus()
             loadConversations()
         } catch (err) {
             console.error('Ошибка отправки:', err)
-            alert('Не удалось отправить сообщение')
+            if(activeId.current===conversationId)setMessageError(userError(err))
         } finally {
             setSending(false)
         }
@@ -227,7 +237,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
 
     const doCancelApplication = async () => {
         if (!activeChat || !onCancelApplication) return
-        
+
         try {
             await onCancelApplication(activeChat.application_id)
             setConfirmCancel(false)
@@ -294,11 +304,12 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                 conversations.map(chat => {
                                     const displayName = isEmployer ? chat.candidate_name : chat.company_name
                                     const isActive = activeChat?.conversation_id === chat.conversation_id
+                                    const isArchived = chat.vacancy_archived === true
 
                                     return (
                                         <div
                                             key={chat.conversation_id}
-                                            className={`chat-app-sidebar-item ${isActive ? 'active' : ''}`}
+                                            className={`chat-app-sidebar-item ${isActive ? 'active' : ''} ${isArchived ? 'archived' : ''}`}
                                             onClick={() => handleSelectChat(chat)}
                                         >
                                             <div className="chat-app-sidebar-item-avatar">
@@ -309,22 +320,36 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                                         displayName?.[0]?.toUpperCase() || '?'
                                                     )
                                                 ) : (
-                                                    chat.company_photo ? (
-                                                        <img src={chat.company_photo} alt={displayName} />
-                                                    ) : (
-                                                        displayName?.[0]?.toUpperCase() || '?'
-                                                    )
+                                                    displayName?.[0]?.toUpperCase() || '?'
                                                 )}
                                             </div>
                                             <div className="chat-app-sidebar-item-info">
-                                                <div className="chat-app-sidebar-item-top">
-                                                    <span className="chat-app-sidebar-item-name">{displayName}</span>
+                                                {/* Строка 1: Название вакансии + время */}
+                                                <div className="chat-app-sidebar-item-row-1">
+                                                    <span className="chat-app-sidebar-item-vacancy">{chat.vacancy_title}</span>
                                                     <span className="chat-app-sidebar-item-time">{formatTime(chat.last_message_at)}</span>
                                                 </div>
-                                                <div className="chat-app-sidebar-item-bottom">
-                                                    <span className="chat-app-sidebar-item-preview">
-                                                        {chat.last_message || chat.vacancy_title || 'Нет сообщений'}
-                                                    </span>
+
+                                                {/* Строка 2: Имя собеседника */}
+                                                <div className="chat-app-sidebar-item-row-2">
+                                                    <span className="chat-app-sidebar-item-name">{displayName}</span>
+                                                </div>
+
+                                                {/* Строка 3: Сообщение ИЛИ "В архиве" + счётчик */}
+                                                <div className="chat-app-sidebar-item-row-3">
+                                                    {isArchived ? (
+                                                        <span className="chat-app-sidebar-archived-hint">
+                                                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                                <polyline points="21 8 21 21 3 21 3 8" />
+                                                                <rect x="1" y="3" width="22" height="5" />
+                                                            </svg>
+                                                            В архиве
+                                                        </span>
+                                                    ) : (
+                                                        <span className="chat-app-sidebar-item-preview">
+                                                            {chat.last_message || 'Нет сообщений'}
+                                                        </span>
+                                                    )}
                                                     {chat.unread_count > 0 && (
                                                         <span className="chat-app-sidebar-item-unread">{chat.unread_count}</span>
                                                     )}
@@ -397,38 +422,76 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                 </div>
 
                                 {/* ВАКАНСИЯ */}
-                                <div className="chat-vacancy-bar" onClick={() => { onClose(); onOpenVacancy(activeChat.vacancy_id) }}>
+                                <div
+                                    className={`chat-vacancy-bar ${activeChat.vacancy_archived ? 'archived' : ''}`}
+                                    onClick={() => {
+                                        if (!activeChat.vacancy_archived) {
+                                            onClose()
+                                            onOpenVacancy(activeChat.vacancy_id)
+                                        }
+                                    }}
+                                >
                                     <div className="chat-vacancy-bar-icon">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-                                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-                                        </svg>
+                                        {activeChat.vacancy_archived ? (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <polyline points="21 8 21 21 3 21 3 8" />
+                                                <rect x="1" y="3" width="22" height="5" />
+                                            </svg>
+                                        ) : (
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                                            </svg>
+                                        )}
                                     </div>
                                     <div className="chat-vacancy-bar-info">
                                         <h4 className="chat-vacancy-bar-title">{activeChat.vacancy_title}</h4>
-                                        <p className="chat-vacancy-bar-hint">Открыть вакансию</p>
+                                        <p className="chat-vacancy-bar-hint">
+                                            {activeChat.vacancy_archived ? 'Вакансия в архиве' : 'Открыть вакансию'}
+                                        </p>
                                     </div>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polyline points="9 18 15 12 9 6" />
-                                    </svg>
+                                    {!activeChat.vacancy_archived && (
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polyline points="9 18 15 12 9 6" />
+                                        </svg>
+                                    )}
                                 </div>
-
                                 {/* СООБЩЕНИЯ */}
                                 <div className="chat-messages">
                                     {loadingMessages ? (
                                         <div className="loading"><div className="spinner"></div></div>
-                                    ) : messages.length === 0 ? (
-                                        <div className="chat-empty">
-                                            <div className="chat-empty-icon">💬</div>
-                                            <p>Сообщений пока нет</p>
-                                            <p className="chat-empty-hint">Начните диалог!</p>
-                                        </div>
                                     ) : (
-                                        messages.map(msg => (
-                                            <ChatMessage key={msg.id} message={msg} currentUser={currentUser} />
-                                        ))
+                                        <>
+                                            {/* ====== СОПРОВОДИТЕЛЬНОЕ ПИСЬМО КАНДИДАТА ====== */}
+                                            {activeChat.cover_letter && (
+                                                <div className="cover-letter-block">
+                                                    <div className="cover-letter-header">
+                                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                            <polyline points="14 2 14 8 20 8" />
+                                                            <line x1="16" y1="13" x2="8" y2="13" />
+                                                            <line x1="16" y1="17" x2="8" y2="17" />
+                                                        </svg>
+                                                        Сопроводительное письмо
+                                                    </div>
+                                                    <p className="cover-letter-text">{activeChat.cover_letter}</p>
+                                                </div>
+                                            )}
+
+                                            {messages.length === 0 ? (
+                                                <div className="chat-empty">
+                                                    <div className="chat-empty-icon">💬</div>
+                                                    <p>Сообщений пока нет</p>
+                                                    <p className="chat-empty-hint">Начните диалог!</p>
+                                                </div>
+                                            ) : (
+                                                messages.map(msg => (
+                                                    <ChatMessage key={msg.id} message={msg} currentUser={currentUser} />
+                                                ))
+                                            )}
+                                            <div ref={messagesEndRef} />
+                                        </>
                                     )}
-                                    <div ref={messagesEndRef} />
                                 </div>
 
                                 {/* ИНДИКАТОР ПЕЧАТИ */}
@@ -444,10 +507,13 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                 )}
 
                                 {/* ПОЛЕ ВВОДА */}
+                                {messageError&&<p className="chat-error-banner" role="alert">{messageError}</p>}
                                 <div className="chat-input-area">
                                     <textarea
                                         ref={inputRef}
                                         className="chat-input"
+                                        aria-label="Сообщение"
+                                        maxLength={4000}
                                         value={inputValue}
                                         onChange={handleInputChange}
                                         onKeyDown={handleKeyDown}
@@ -459,6 +525,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                         onClick={handleSend}
                                         disabled={!inputValue.trim() || sending}
                                         title="Отправить"
+                                        aria-label="Отправить сообщение"
                                     >
                                         {sending ? (
                                             <div className="spinner-small"></div>

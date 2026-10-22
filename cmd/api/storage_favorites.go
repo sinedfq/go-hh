@@ -23,7 +23,8 @@ func (s *PostgresStorage) RemoveFavorite(ctx context.Context, userID, vacancyID 
 func (s *PostgresStorage) GetFavorites(ctx context.Context, userID int) ([]Vacancy, error) {
 	query := `
 		SELECT v.id, v.title, v.company, COALESCE(v.company_id, 0), v.location, v.experience, v.remote, v.skills, v.description,
-		       COALESCE(v.address, ''), COALESCE(v.latitude, 0), COALESCE(v.longitude, 0)
+		       COALESCE(v.address, ''), COALESCE(v.latitude, 0), COALESCE(v.longitude, 0),
+		       COALESCE((SELECT c.logo_url FROM companies c WHERE c.id=v.company_id), ''), COALESCE((SELECT c.profile->>'it_accredited' FROM companies c WHERE c.id=v.company_id),'false')='true', v.terms
 		FROM favorites f
 		JOIN vacancies v ON f.vacancy_id = v.id
 		WHERE f.user_id = $1
@@ -42,7 +43,7 @@ func (s *PostgresStorage) GetFavorites(ctx context.Context, userID int) ([]Vacan
 		err := rows.Scan(
 			&v.ID, &v.Title, &v.Company, &v.CompanyID, &v.Location,
 			&v.Experience, &v.Remote, &v.Skills, &v.Description,
-			&v.Address, &v.Latitude, &v.Longitude,
+			&v.Address, &v.Latitude, &v.Longitude, &v.CompanyLogo, &v.CompanyITAccredited, &v.VacancyTerms,
 		)
 		if err != nil {
 			return nil, err

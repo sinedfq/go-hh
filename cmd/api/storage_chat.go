@@ -118,34 +118,50 @@ func (s *PostgresStorage) MarkMessagesRead(ctx context.Context, conversationID, 
 	return nil
 }
 
-// Получить все чаты пользователя (кандидат или работодатель)
 func (s *PostgresStorage) GetUserConversations(ctx context.Context, userID int) ([]ChatInfo, error) {
 	query := `
-		SELECT 
-			c.id as conversation_id,
-			c.application_id,
-			COALESCE(comp.name, '') as company_name,
-			v.title as vacancy_title,
-			v.id as vacancy_id,
-			u.email as candidate_name,
-			u.id as candidate_id,
-			u.email as candidate_email,
-			COALESCE(u.photo_url, '') as candidate_photo,
-			COALESCE((SELECT content FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1), '') as last_message,
-			(SELECT created_at FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) as last_message_at,
-			(SELECT COUNT(*) FROM messages WHERE conversation_id = c.id AND sender_id != $1 AND is_read = FALSE) as unread_count
-		FROM conversations c
-		JOIN applications a ON a.id = c.application_id
-		JOIN vacancies v ON v.id = a.vacancy_id
-		LEFT JOIN companies comp ON comp.id = v.company_id
-		JOIN users u ON u.id = a.candidate_user_id
-		WHERE a.candidate_user_id = $1 OR v.author_user_id = $1
-		ORDER BY last_message_at DESC NULLS LAST, c.created_at DESC
-	`
-
+        SELECT
+            c.id AS conversation_id,
+            c.application_id,
+            a.vacancy_id,
+            v.title AS vacancy_title,
+            v.company AS company_name,
+            COALESCE(v.is_archived, FALSE) AS vacancy_archived,
+            COALESCE(a.cover_letter, '') AS cover_letter,
+            CASE
+                WHEN a.candidate_user_id = $1 THEN 'candidate'
+                ELSE 'employer'
+            END AS user_role,
+            a.candidate_user_id,
+            COALESCE(u_candidate.email, '') AS candidate_email,
+            COALESCE(u_candidate.photo_url, '') AS candidate_photo,
+            COALESCE(r.full_name, u_candidate.email) AS candidate_name,
+            COALESCE((
+                SELECT content FROM messages
+                WHERE conversation_id = c.id
+                ORDER BY created_at DESC LIMIT 1
+            ), '') AS last_message,
+            (
+                SELECT created_at FROM messages
+                WHERE conversation_id = c.id
+                ORDER BY created_at DESC LIMIT 1
+            ) AS last_message_at,
+            COALESCE((
+                SELECT COUNT(*) FROM messages
+                WHERE conversation_id = c.id AND sender_id != $1 AND is_read = false
+            ), 0) AS unread_count
+        FROM conversations c
+        JOIN applications a ON a.id = c.application_id
+        JOIN vacancies v ON v.id = a.vacancy_id
+        JOIN users u_candidate ON u_candidate.id = a.candidate_user_id
+        LEFT JOIN resumes r ON r.id = a.resume_id
+        WHERE a.candidate_user_id = $1
+           OR v.company_id IN (SELECT company_id FROM users WHERE id = $1 AND role IN ('employer','admin') AND company_id IS NOT NULL)
+        ORDER BY last_message_at DESC NULLS LAST, c.created_at DESC
+    `
 	rows, err := s.pool.Query(ctx, query, userID)
 	if err != nil {
-		log.Printf("⚠️ GetUserConversations error: %v", err)
+		log.Printf("⚠️ GetUserConversations query error: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -153,31 +169,25 @@ func (s *PostgresStorage) GetUserConversations(ctx context.Context, userID int) 
 	var chats []ChatInfo
 	for rows.Next() {
 		var chat ChatInfo
+		var userRole string
+		var isArchived bool
 		err := rows.Scan(
-			&chat.ConversationID,
-			&chat.ApplicationID,
-			&chat.CompanyName,
-			&chat.VacancyTitle,
-			&chat.VacancyID,
-			&chat.CandidateName,
-			&chat.CandidateID,
-			&chat.CandidateEmail,
-			&chat.CandidatePhoto,
-			&chat.LastMessage,
-			&chat.LastMessageAt,
-			&chat.UnreadCount,
+			&chat.ConversationID, &chat.ApplicationID, &chat.VacancyID,
+			&chat.VacancyTitle, &chat.CompanyName, &isArchived, &chat.CoverLetter,
+			&userRole, &chat.CandidateID, &chat.CandidateEmail,
+			&chat.CandidatePhoto, &chat.CandidateName,
+			&chat.LastMessage, &chat.LastMessageAt, &chat.UnreadCount,
 		)
 		if err != nil {
 			log.Printf("⚠️ GetUserConversations scan error: %v", err)
 			return nil, err
 		}
+		chat.VacancyArchived = isArchived
 		chats = append(chats, chat)
 	}
-
 	if chats == nil {
 		chats = []ChatInfo{}
 	}
-
 	return chats, rows.Err()
 }
 
@@ -190,7 +200,7 @@ func (s *PostgresStorage) GetUnreadMessagesCount(ctx context.Context, userID int
 		JOIN conversations c ON c.id = m.conversation_id
 		JOIN applications a ON a.id = c.application_id
 		JOIN vacancies v ON v.id = a.vacancy_id
-		WHERE (a.candidate_user_id = $1 OR v.author_user_id = $1)
+		WHERE (a.candidate_user_id = $1 OR v.company_id IN (SELECT company_id FROM users WHERE id = $1 AND role IN ('employer','admin') AND company_id IS NOT NULL))
 		  AND m.sender_id != $1
 		  AND m.is_read = FALSE
 	`, userID).Scan(&count)

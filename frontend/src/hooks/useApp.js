@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
+import { userError } from '../utils/userError'
+import { emptySearchFilters, readSearchFilters, searchParams, searchKeys } from '../utils/searchFilters'
 
 export function useApp() {
     const { user, loading: authLoading, logout } = useAuth()
@@ -11,13 +13,24 @@ export function useApp() {
     const [currentIndex, setCurrentIndex] = useState(-1)
     const [loading, setLoading] = useState(true)
 
+    // ====== РЕДАКТИРОВАНИЕ ВАКАНСИИ ======
+    const [editingVacancy, setEditingVacancy] = useState(null)
+
     const [allPositions, setAllPositions] = useState([])
 
     const [toast, setToast] = useState(null)
+    const toastTimer = useRef(null)
+    const searchRequest = useRef(null)
+
+    useEffect(() => () => {
+        clearTimeout(toastTimer.current)
+        searchRequest.current?.abort()
+    }, [])
 
     const showToast = (message, duration = 3000) => {
+        clearTimeout(toastTimer.current)
         setToast(message)
-        setTimeout(() => setToast(null), duration)
+        toastTimer.current = setTimeout(() => setToast(null), duration)
     }
 
     const [selectedVacancyId, setSelectedVacancyId] = useState(() => {
@@ -29,7 +42,7 @@ export function useApp() {
 
     // ====== РЕЖИМЫ И МОДАЛКИ ======
     const [mode, setMode] = useState(() => {
-        return sessionStorage.getItem('currentMode') || 'browse'
+        return sessionStorage.getItem('currentMode') || 'home'
     })
     const [showLoginModal, setShowLoginModal] = useState(false)
 
@@ -49,14 +62,7 @@ export function useApp() {
 
     // ====== ПОИСК И ФИЛЬТРЫ ======
     const [searchFilters, setSearchFilters] = useState(() => {
-        const params = new URLSearchParams(window.location.search)
-        return {
-            query: params.get('q') || '',
-            location: params.get('location') || '',
-            experience: params.get('experience') || '',
-            remote: params.get('remote') === 'true' ? true : null,
-            skills: params.get('skills') ? params.get('skills').split(',').map(s => s.trim()).filter(Boolean) : []
-        }
+        return readSearchFilters(window.location.search)
     })
 
     const [cities, setCities] = useState([])
@@ -224,10 +230,49 @@ export function useApp() {
         return res.data
     }
 
+    const uploadCompanyLogo = async (form) => {
+        const res = await axios.post('/api/my-company/logo', form)
+        setMyCompany(res.data)
+        return res.data
+    }
+
+    const updateCompany = async (data) => {const response=await axios.put('/api/my-company',data);setMyCompany(response.data);return response.data}
+    const uploadCompanyPhoto = async (form) => {const response=await axios.post('/api/my-company/photos',form);setMyCompany(response.data);return response.data}
+    const removeCompanyPhoto = async (url) => {const response=await axios.delete('/api/my-company/photos',{data:{url}});setMyCompany(response.data);return response.data}
+
     const createVacancy = async (vacancyData) => {
         const res = await axios.post('/api/vacancies', vacancyData)
         setMyVacancies(prev => [res.data, ...prev])
         return res.data
+    }
+
+    // ====== НОВОЕ: ОБНОВЛЕНИЕ ВАКАНСИИ ======
+    const updateVacancy = async (vacancyId, vacancyData) => {
+        const res = await axios.put(`/api/vacancies/${vacancyId}`, vacancyData)
+        setMyVacancies(prev => prev.map(v => v.id === vacancyId ? { ...v, ...res.data } : v))
+        return res.data
+    }
+
+    // ====== НОВОЕ: УДАЛЕНИЕ ВАКАНСИИ ======
+    const deleteVacancy = async (vacancyId) => {
+        await axios.delete(`/api/vacancies/${vacancyId}`)
+        setMyVacancies(prev => prev.filter(v => v.id !== vacancyId))
+    }
+
+    // ====== НОВОЕ: АРХИВАЦИЯ ВАКАНСИИ ======
+    const archiveVacancy = async (vacancyId, archive = true) => {
+        await axios.patch(`/api/vacancies/${vacancyId}/archive`, { archive })
+        setMyVacancies(prev => prev.map(v => v.id === vacancyId ? { ...v, is_archived: archive } : v))
+    }
+
+    const startEditVacancy = (vacancy) => {
+        setEditingVacancy(vacancy)
+        setMode('edit-vacancy')
+    }
+
+    const cancelEditVacancy = () => {
+        setEditingVacancy(null)
+        setMode('my-vacancies')
     }
 
     // ====== ИЗБРАННОЕ ======
@@ -344,7 +389,6 @@ export function useApp() {
 
     const clearSearchFromURL = () => {
         const params = new URLSearchParams(window.location.search)
-        const searchKeys = ['q', 'location', 'experience', 'remote', 'skills']
         const hasSearchParams = searchKeys.some(key => params.has(key))
 
         if (hasSearchParams) {
@@ -370,13 +414,13 @@ export function useApp() {
         clearSearchFromURL()
 
         // Для кандидатских режимов нужен логин
-        if ((newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations' || newMode === 'my-applications') && !user) {
+        if ((newMode === 'saved-searches' || newMode === 'swipe' || newMode === 'favorites' || newMode === 'recommendations' || newMode === 'my-applications') && !user) {
             setShowLoginModal(true)
             return
         }
 
         // Для режимов работодателя нужен employer/admin
-        if ((newMode === 'my-vacancies' || newMode === 'create-vacancy' || newMode === 'my-company' || newMode === 'applications' || newMode === 'stats') && !isEmployer) {
+        if ((newMode === 'my-vacancies' || newMode === 'create-vacancy' || newMode === 'edit-vacancy' || newMode === 'my-company' || newMode === 'applications' || newMode === 'stats') && !isEmployer) {
             if (!user) {
                 setShowLoginModal(true)
             }
@@ -393,23 +437,20 @@ export function useApp() {
     }
 
     const applyFilters = async (filters, goToSearch = false) => {
+        searchRequest.current?.abort()
+        const request = new AbortController()
+        searchRequest.current = request
         setSearchFilters(filters)
 
-        const params = new URLSearchParams()
-        if (filters.query) params.set('q', filters.query)
-        if (filters.location) params.set('location', filters.location)
-        if (filters.experience) params.set('experience', filters.experience)
-        if (filters.remote === true) params.set('remote', 'true')
-        if (filters.skills && filters.skills.length > 0) {
-            params.set('skills', filters.skills.join(','))
-        }
+        const params = searchParams(filters)
 
         const newUrl = params.toString() ? `?${params.toString()}` : window.location.pathname
         window.history.replaceState({}, '', newUrl)
 
         try {
             setSearchLoading(true)
-            const res = await axios.get(`/api/vacancies/search?${params.toString()}`)
+            const res = await axios.get(`/api/vacancies/search?${searchParams(filters, true).toString()}`, { signal: request.signal })
+            if (request.signal.aborted) return
             setSearchResults(res.data.vacancies || [])
             setSearchTotal(res.data.total_count || 0)
 
@@ -417,19 +458,15 @@ export function useApp() {
                 setMode('search')
             }
         } catch (err) {
-            console.error('Ошибка поиска:', err)
+            if (!request.signal.aborted) showToast(userError(err))
         } finally {
-            setSearchLoading(false)
+            if (searchRequest.current === request) setSearchLoading(false)
         }
     }
 
     const resetFilters = () => {
-        const empty = { query: '', location: '', experience: '', remote: null, skills: [] }
-        setSearchFilters(empty)
-        window.history.replaceState({}, '', window.location.pathname)
-        setSearchResults([])
-        setSearchTotal(0)
-        loadVacancies()
+        const empty = emptySearchFilters()
+        applyFilters(empty)
     }
 
     // ====== EFFECTS ======
@@ -451,7 +488,7 @@ export function useApp() {
             setVacancyPageId(id)
         }
 
-        const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
+        const hasSearchFilters = searchKeys
             .some(key => params.get(key))
         if (hasSearchFilters && !vacancyId && !companyId) {
             setMode('search')
@@ -499,7 +536,7 @@ export function useApp() {
         }
 
         const params = new URLSearchParams(window.location.search)
-        const hasSearchFilters = ['q', 'location', 'experience', 'remote', 'skills']
+        const hasSearchFilters = searchKeys
             .some(key => params.get(key))
         if (hasSearchFilters) {
             applyFilters(searchFilters)
@@ -558,6 +595,12 @@ export function useApp() {
         sessionStorage.setItem('currentMode', mode)
     }, [mode])
 
+    useEffect(()=>{
+        if(authLoading)return
+        if(!user&&!['home','browse','search','companies'].includes(mode))setMode('home')
+        if(user?.role==='employer'&&mode==='saved-searches')setMode('home')
+    },[authLoading,user,mode])
+
     const prevPageRef = useRef({ vacancy: null, company: null })
 
     useEffect(() => {
@@ -587,14 +630,7 @@ export function useApp() {
         const params = new URLSearchParams(window.location.search)
 
         if (mode === 'search') {
-            const newParams = new URLSearchParams()
-            if (searchFilters.query) newParams.set('q', searchFilters.query)
-            if (searchFilters.location) newParams.set('location', searchFilters.location)
-            if (searchFilters.experience) newParams.set('experience', searchFilters.experience)
-            if (searchFilters.remote === true) newParams.set('remote', 'true')
-            if (searchFilters.skills && searchFilters.skills.length > 0) {
-                newParams.set('skills', searchFilters.skills.join(','))
-            }
+            const newParams = searchParams(searchFilters)
 
             const newUrl = newParams.toString()
                 ? `?${newParams.toString()}`
@@ -605,7 +641,6 @@ export function useApp() {
                 window.history.replaceState({}, '', newUrl)
             }
         } else {
-            const searchKeys = ['q', 'location', 'experience', 'remote', 'skills']
             const hasSearchParams = searchKeys.some(key => params.has(key))
 
             if (hasSearchParams) {
@@ -666,6 +701,8 @@ export function useApp() {
         loadMyCompany,
         loadMyVacancies,
         createCompany,
+        uploadCompanyLogo,
+        updateCompany,uploadCompanyPhoto,removeCompanyPhoto,
         createVacancy,
         allPositions,
 
@@ -708,5 +745,12 @@ export function useApp() {
 
         toast,
         showToast,
+
+        updateVacancy,
+        deleteVacancy,
+        archiveVacancy,
+        editingVacancy,
+        startEditVacancy,
+        cancelEditVacancy,
     }
 }

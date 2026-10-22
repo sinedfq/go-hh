@@ -1,4 +1,6 @@
 import { useApp } from './hooks/useApp'
+import HomePage from './pages/home/HomePage'
+import SavedSearchesPage from './pages/search/SavedSearchesPage'
 import { useState, useEffect } from 'react'
 import Sidebar from './components/layout/Sidebar'
 import SwipeableCard from './components/vacancy/SwipeableCard'
@@ -51,7 +53,7 @@ function App() {
     // ====== ВЫХОД: сброс вкладки + уведомление ======
     const handleLogout = async () => {
         await app.logout()
-        app.handleModeChange('browse')   // уходим с профиля на Просмотр
+        app.handleModeChange('home')
         app.showToast('Вы вышли из аккаунта')  // ← ИЗМЕНЕНО
     }
 
@@ -88,7 +90,11 @@ function App() {
 
             <div className="main-area">
                 <header className="top-header">
+                    <div className="page-heading">
+                    <span className="eyebrow">TRUDOMIX / КАРЬЕРА</span>
                     <h2 className="page-title">
+                        {app.mode === 'home' && 'Главная'}
+                        {app.mode === 'saved-searches' && 'Сохранённые поиски'}
                         {app.mode === 'browse' && 'Просмотр'}
                         {app.mode === 'search' && 'Поиск'}
                         {app.mode === 'swipe' && 'Свайпы'}
@@ -103,10 +109,12 @@ function App() {
                         {app.mode === 'my-applications' && 'Мои отклики'}
                         {app.mode === 'stats' && 'Аналитика'}
                     </h2>
+                    </div>
 
                     <div className="header-actions">
                         <button
                             className="theme-toggle"
+                            aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
                             onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
                             title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
                         >
@@ -128,7 +136,7 @@ function App() {
                                 </svg>
                             )}
                         </button>
-                        {app.user && <NotificationBell />}
+                        {app.user && <NotificationBell onOpenVacancy={handleOpenVacancy}/>}
                         {/* Профиль в шапке — виден только на мобильных */}
                         <div className="header-profile">
                             {app.user ? (
@@ -165,6 +173,8 @@ function App() {
                         />
                     ) : (
                         <>
+                            {app.mode === 'home' && <HomePage key={app.user?.id||'guest'} user={app.user} vacancies={app.vacancies} onNavigate={app.handleModeChange} onVacancy={handleOpenVacancy} onChat={app.openChatApp} onLogin={()=>app.setShowLoginModal(true)}/>}
+                            {app.mode === 'saved-searches' && app.user && <SavedSearchesPage onNavigate={app.handleModeChange} onSearch={filters=>app.applyFilters(filters,true)}/>}
                             {/* ====== ПРОСМОТР (двухколоночный) ====== */}
                             {app.mode === 'browse' && (
                                 <div className="browse-split-view">
@@ -242,6 +252,9 @@ function App() {
                                     onReset={app.resetFilters}
                                     onOpenVacancy={handleOpenVacancy}
                                     cities={app.cities}
+                                    companies={[...new Set(app.vacancies.map(v => v.company).filter(Boolean))].sort()}
+                                    skills={app.allSkills}
+                                    experiences={[...new Set(app.vacancies.map(v => v.experience).filter(Boolean))]}
                                     showToast={app.showToast}
                                 />
                             )}
@@ -336,16 +349,22 @@ function App() {
                                     employerError={app.employerError}
                                     onOpenVacancy={app.openVacancyPage}
                                     onCreateVacancy={() => app.handleModeChange('create-vacancy')}
+                                    onEditVacancy={app.startEditVacancy}
                                     onReload={app.loadMyVacancies}
+                                    onDeleteVacancy={app.deleteVacancy}
+                                    onArchiveVacancy={app.archiveVacancy}
+                                    showToast={app.showToast}
                                 />
                             )}
 
                             {app.mode === 'my-company' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && (
                                 <MyCompanyPage
                                     myCompany={app.myCompany}
+                                    loadingCompany={app.employerLoading}
+                                    onUploadLogo={app.uploadCompanyLogo}
+                                    onUpdateCompany={app.updateCompany} onUploadPhoto={app.uploadCompanyPhoto} onRemovePhoto={app.removeCompanyPhoto}
                                     onCreateCompany={async (data) => {
                                         await app.createCompany(data)
-                                        app.handleModeChange('my-vacancies')
                                     }}
                                 />
                             )}
@@ -362,8 +381,25 @@ function App() {
                                     onCreate={async (data) => {
                                         await app.createVacancy(data)
                                         app.handleModeChange('my-vacancies')
+                                        app.showToast('✨ Вакансия создана')
                                     }}
                                     onCancel={() => app.handleModeChange('my-vacancies')}
+                                />
+                            )}
+
+                            {/* ====== РЕДАКТИРОВАНИЕ ВАКАНСИИ ====== */}
+                            {app.mode === 'edit-vacancy' && app.user && (app.user.role === 'employer' || app.user.role === 'admin') && app.editingVacancy && (
+                                <CreateVacancyPage
+                                    editVacancy={app.editingVacancy}
+                                    cities={app.cities}
+                                    allSkills={app.allSkills}
+                                    allPositions={app.allPositions}
+                                    onUpdate={async (id, data) => {
+                                        await app.updateVacancy(id, data)
+                                        app.cancelEditVacancy()
+                                        app.showToast('✨ Вакансия обновлена')
+                                    }}
+                                    onCancel={app.cancelEditVacancy}
                                 />
                             )}
 
@@ -403,7 +439,7 @@ function App() {
                 )}
             </div>
 
-        
+
 
             {/* ====== ПЛАВАЮЩАЯ КНОПКА ЧАТА ====== */}
             {app.user && (

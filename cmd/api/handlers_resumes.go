@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func (s *Server) resumeHandler(w http.ResponseWriter, r *http.Request) {
@@ -286,6 +287,19 @@ func (s *Server) addWorkExperienceHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	start, dateErr := time.Parse("2006-01-02", req.StartDate[:min(len(req.StartDate), 10)])
+	end := time.Now().UTC()
+	if req.EndDate != nil && *req.EndDate != "" {
+		var endErr error
+		end, endErr = time.Parse("2006-01-02", (*req.EndDate)[:min(len(*req.EndDate), 10)])
+		if endErr != nil {
+			dateErr = endErr
+		}
+	}
+	if dateErr != nil || start.IsZero() || start.After(end) || end.After(time.Now().UTC()) || len(req.Description) > 50000 {
+		http.Error(w, "invalid employment dates", 400)
+		return
+	}
 	_, err = s.storage.CreateWorkExperience(ctx, resume.ID, req)
 	if err != nil {
 		log.Printf("CreateWorkExperience error: %v", err)
@@ -321,12 +335,17 @@ func (s *Server) deleteWorkExperienceHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	if err := s.storage.DeleteWorkExperience(ctx, expID); err != nil {
+	result, err := s.pool.Exec(ctx, `DELETE FROM work_experience WHERE id=$1 AND resume_id IN (SELECT id FROM resumes WHERE user_id=$2)`, expID, claims.UserID)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "failed to delete"})
 		return
 	}
 
+	if result.RowsAffected() != 1 {
+		http.Error(w, "work experience not found", 404)
+		return
+	}
 	updatedResume, _ := s.storage.GetResumeByUserID(ctx, claims.UserID)
 	s.recCache.Invalidate(claims.UserID)
 	json.NewEncoder(w).Encode(updatedResume)

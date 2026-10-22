@@ -105,11 +105,26 @@ func (s *Server) saveUploadedPhoto(r *http.Request, prefix string) (string, erro
 		return "", fmt.Errorf("photo field required")
 	}
 	defer file.Close()
+	if header.Size > 4<<20 {
+		return "", fmt.Errorf("photo must be at most 4 MB")
+	}
+	var sample [512]byte
+	n, readErr := file.Read(sample[:])
+	if readErr != nil && readErr != io.EOF {
+		return "", fmt.Errorf("failed to read photo")
+	}
+	actualType := http.DetectContentType(sample[:n])
+	if actualType != "image/jpeg" && actualType != "image/png" && actualType != "image/webp" {
+		return "", fmt.Errorf("only jpg, png, webp allowed")
+	}
+	if _, err := file.Seek(0, io.SeekStart); err != nil {
+		return "", fmt.Errorf("failed to read photo")
+	}
 
 	log.Printf("📎 Received file: %s, size=%d, content-type=%s",
 		header.Filename, header.Size, header.Header.Get("Content-Type"))
 
-	contentType := header.Header.Get("Content-Type")
+	contentType := actualType
 	allowedTypes := map[string]string{
 		"image/jpeg": ".jpg",
 		"image/png":  ".png",

@@ -1,44 +1,58 @@
-import { useState, useEffect } from 'react'
+import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
+import { useState, useEffect, useRef } from 'react'
 import SearchBar from '../../components/vacancy/SearchBar'
 import FilterPanel from '../../components/vacancy/FilterPanel'
+import VacancyFilterDialog from '../../components/vacancy/VacancyFilterDialog'
 import ApplicationModal from '../../components/common/ApplicationModal'
 import axios from 'axios'
+import VacancyTerms from '../../components/vacancy/VacancyTerms'
+import { useAuth } from '../../contexts/AuthContext'
+import { searchParams } from '../../utils/searchFilters'
+import { userError } from '../../utils/userError'
+import { emptySearchFilters } from '../../utils/searchFilters'
 import './SearchResultsPage.css'
 
 function SearchResultsPage({
-    results,
-    totalCount,
-    loading,
-    filters,
-    onFiltersChange,
-    onApply,
-    onReset,
-    onOpenVacancy,
-    cities,
-    showToast
+    results, totalCount, loading, filters,
+    onApply, onReset, onOpenVacancy, cities, companies, skills, experiences, showToast
 }) {
     const [showFilters, setShowFilters] = useState(false)
+    const {user}=useAuth()
+    const [savingSearch,setSavingSearch]=useState(false),[searchName,setSearchName]=useState(''),[saveError,setSaveError]=useState(''),[saveBusy,setSaveBusy]=useState(false)
+    async function saveSearch(event){event.preventDefault();setSaveBusy(true);setSaveError('');try{await axios.post('/api/saved-searches',{name:searchName.trim(),query:searchParams(filters,true).toString()});setSavingSearch(false);setSearchName('');showToast?.('Поиск сохранён. Уведомления о новых вакансиях включены.')}catch(failure){setSaveError(userError(failure))}finally{setSaveBusy(false)}}
+    const [draft, setDraft] = useState(filters)
+    const [searchHidden,setSearchHidden]=useState(false)
+    const headerRef=useRef(null)
+    useEffect(()=>{
+        const root=headerRef.current?.closest('.content')
+        if(!root)return
+        let last=root.scrollTop,travel=0
+        const scroll=()=>{
+            const delta=root.scrollTop-last;last=root.scrollTop
+            if(Math.sign(delta)!==Math.sign(travel))travel=0
+            travel+=delta
+            if(root.scrollTop<100||showFilters||headerRef.current?.contains(document.activeElement))setSearchHidden(false)
+            else if(Math.abs(travel)>12)setSearchHidden(delta>0)
+        }
+        root.addEventListener('scroll',scroll,{passive:true})
+        return()=>root.removeEventListener('scroll',scroll)
+    },[showFilters])
     const [applyVacancy, setApplyVacancy] = useState(null)
-    const [appliedVacancies, setAppliedVacancies] = useState(new Set())  // ✅ НОВОЕ
+    const [appliedVacancies, setAppliedVacancies] = useState(new Set())
 
-    // ====== ПРОВЕРКА СТАТУСА ОТКЛИКОВ ======
+    // Загружаем список откликнутых вакансий
     useEffect(() => {
-        if (!results || results.length === 0) return
-        
-        const checkAppliedStatuses = async () => {
+        const checkApplied = async () => {
             try {
-                // Загружаем все отклики пользователя
                 const res = await axios.get('/api/my-applications')
                 const apps = Array.isArray(res.data) ? res.data : []
-                const appliedIds = new Set(apps.map(app => app.vacancy_id))
-                setAppliedVacancies(appliedIds)
+                setAppliedVacancies(new Set(apps.map(a => a.vacancy_id)))
             } catch (err) {
                 console.error('Ошибка проверки откликов:', err)
             }
         }
-        
-        checkAppliedStatuses()
-    }, [results])
+        checkApplied()
+    }, [])
 
     useEffect(() => {
         if (results.length === 0 && !loading) {
@@ -52,29 +66,31 @@ function SearchResultsPage({
     }
 
     const handleApplySuccess = (data) => {
-        // ✅ ДОБАВЛЕНО: обновляем список откликнутых вакансий
         if (applyVacancy) {
             setAppliedVacancies(prev => new Set([...prev, applyVacancy.id]))
         }
+        const companyName = applyVacancy?.company || 'Компания'
         setApplyVacancy(null)
         if (showToast) {
-            showToast(`✨ Отклик отправлен! Компания скоро свяжется с вами`)
+            showToast(`✨ Отклик отправлен! ${companyName} скоро свяжется с вами`)
         }
     }
 
     return (
         <div className="search-results-container animate-fade-in">
-            {/* Панель поиска и фильтров */}
-            <div className="search-header">
+            <div className="search-intro"><span className="eyebrow">ВОЗМОЖНОСТИ РЯДОМ</span><h1>Найди свою команду</h1><p>Выбирай подходящий формат работы, сохраняй интересное и знакомься с работодателями.</p></div>
+            <div ref={headerRef} className={`search-header ${searchHidden?'search-hidden':''}`} onFocusCapture={()=>setSearchHidden(false)}>
                 <div className="search-bar-wrapper">
                     <SearchBar
                         value={filters.query || ''}
-                        onChange={(query) => onFiltersChange({ ...filters, query })}
+                        onChange={(query) => onApply({ ...filters, query })}
+                        onSubmit={(query) => onApply({ ...filters, query })}
                         placeholder="Поиск по названию, компании или навыкам..."
                     />
                     <button
                         className={`filter-toggle-button ${showFilters ? 'active' : ''}`}
-                        onClick={() => setShowFilters(!showFilters)}
+                        type="button" aria-label="Фильтры" title="Фильтры" aria-expanded={showFilters} aria-controls="vf-dialog-title" aria-haspopup="dialog"
+                        onClick={() => { if(!showFilters)setDraft(filters); setShowFilters(!showFilters) }}
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <line x1="4" y1="21" x2="4" y2="14" />
@@ -83,29 +99,28 @@ function SearchResultsPage({
                             <line x1="12" y1="8" x2="12" y2="3" />
                             <line x1="20" y1="21" x2="20" y2="16" />
                             <line x1="20" y1="12" x2="20" y2="3" />
-                            <line x1="1" y1="14" x2="7" y2="14" />
-                            <line x1="9" y1="8" x2="15" y2="8" />
-                            <line x1="17" y1="16" x2="23" y2="16" />
                         </svg>
-                        Фильтры
                     </button>
                 </div>
 
                 {showFilters && (
-                    <div className="filter-panel-wrapper animate-slide-down">
+                    <VacancyFilterDialog onClose={() => setShowFilters(false)}>
                         <FilterPanel
-                            filters={filters}
-                            onFiltersChange={onFiltersChange}
-                            onApply={() => onApply(filters)}
-                            onReset={onReset}
+                            filters={draft}
+                            onFiltersChange={setDraft}
+                            onApply={() => { onApply({ ...draft, query: filters.query }); setShowFilters(false) }}
+                            onReset={() => setDraft({ ...emptySearchFilters(), query: filters.query })}
                             cities={cities}
+                            companies={companies}
+                            skills={skills}
+                            experiences={experiences}
                         />
-                    </div>
+                    </VacancyFilterDialog>
                 )}
             </div>
 
-            {/* Счётчик результатов */}
             <div className="results-count animate-fade-in-delayed">
+                {user&&user.role!=='employer'&&<button type="button" className="btn btn-secondary" onClick={()=>{setSearchName(filters.query||filters.location||'Мой поиск');setSavingSearch(value=>!value)}}>Сохранить поиск</button>}
                 {loading ? (
                     <span>Ищем вакансии...</span>
                 ) : (
@@ -120,24 +135,19 @@ function SearchResultsPage({
                 )}
             </div>
 
-            {/* Результаты поиска */}
+            {savingSearch&&<form className="save-search-form" onSubmit={saveSearch}><label>Название поиска<input value={searchName} maxLength={80} onChange={event=>setSearchName(event.target.value)} required/></label><p>Новые совпадения появятся в уведомлениях сайта.</p>{saveError&&<p role="alert">{saveError}</p>}<button className="btn btn-primary" disabled={saveBusy||!searchName.trim()}>{saveBusy?'Сохранение…':'Сохранить и подписаться'}</button><button type="button" className="btn btn-secondary" disabled={saveBusy} onClick={()=>setSavingSearch(false)}>Отмена</button></form>}
             {loading ? (
-                <div className="loading">
-                    <div className="spinner"></div>
-                </div>
+                <div className="loading"><div className="spinner"></div></div>
             ) : results.length === 0 ? (
                 <div className="empty-state">
                     <h2>Ничего не найдено</h2>
                     <p>Попробуйте изменить параметры поиска</p>
-                    <button className="btn btn-secondary" onClick={onReset}>
-                        Сбросить фильтры
-                    </button>
+                    <button className="btn btn-secondary" onClick={onReset}>Сбросить фильтры</button>
                 </div>
             ) : (
                 <div className="search-results-grid">
                     {results.map((vacancy, index) => {
-                        const hasApplied = appliedVacancies.has(vacancy.id)  // ✅ ПРОВЕРКА
-                        
+                        const hasApplied = appliedVacancies.has(vacancy.id)
                         return (
                             <div
                                 key={vacancy.id}
@@ -146,7 +156,8 @@ function SearchResultsPage({
                                 onClick={() => onOpenVacancy(vacancy.id)}
                             >
                                 <h3 className="result-card-title">{vacancy.title}</h3>
-                                <div className="result-card-company">{vacancy.company}</div>
+                                <VacancyTerms vacancy={vacancy}/>
+                                <div className="result-card-company company-name-with-badge">{vacancy.company} <ITAccreditationBadge accredited={vacancy.company_it_accredited}/></div>
 
                                 <div className="result-card-meta">
                                     <span className="meta-item">
@@ -166,27 +177,25 @@ function SearchResultsPage({
                                 </div>
 
                                 <div className="result-card-skills">
-                                    {vacancy.skills.slice(0, 4).map((skill, i) => (
+                                    {vacancy.skills?.slice(0, 4).map((skill, i) => (
                                         <span key={i} className="skill-tag">{skill}</span>
                                     ))}
-                                    {vacancy.skills.length > 4 && (
+                                    {vacancy.skills?.length > 4 && (
                                         <span className="skill-tag skill-more">+{vacancy.skills.length - 4}</span>
                                     )}
                                 </div>
 
                                 {vacancy.description && (
-                                    <p className="result-card-description">
-                                        {truncate(vacancy.description)}
-                                    </p>
+                                    <p className="result-card-description">{truncate(vacancy.description)}</p>
                                 )}
 
                                 <div className="result-card-footer">
-                                    <span className="views-count" title="Просмотров">
+                                    <span className="views-count">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
                                             <circle cx="12" cy="12" r="3" />
                                         </svg>
-                                        <span className="views-count-number">{vacancy.views || 0}</span>
+                                        <span>{vacancy.views || 0}</span>
                                     </span>
 
                                     {hasApplied ? (
@@ -216,6 +225,7 @@ function SearchResultsPage({
                     })}
                 </div>
             )}
+
             {applyVacancy && (
                 <ApplicationModal
                     vacancy={applyVacancy}

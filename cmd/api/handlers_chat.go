@@ -110,13 +110,14 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req CreateMessageRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 16384)).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "invalid json"})
 		return
 	}
 
-	if strings.TrimSpace(req.Content) == "" {
+	req.Content = strings.TrimSpace(req.Content)
+	if req.Content == "" || len([]rune(req.Content)) > 4000 {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "message cannot be empty"})
 		return
@@ -131,6 +132,7 @@ func (s *Server) sendMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("✅ Message %d sent to conversation %d by user %d", messageID, conversationID, claims.UserID)
+	go s.pushNewMessage(conversationID, claims.UserID, req.Content)
 
 	// Возвращаем созданное сообщение с данными отправителя
 	messages, err := s.storage.GetMessages(ctx, conversationID)
