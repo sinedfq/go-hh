@@ -409,7 +409,7 @@ func (s *Server) getResumeByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 		if hasRecent {
 			log.Printf("⏭️ Пропускаем уведомление: HR %d уже смотрел резюме %d за последние 24 часа", claims.UserID, resumeID)
-		} else {
+		} else if err == nil && (claims.Role == "employer" || claims.Role == "admin") {
 			viewer, err := s.storage.GetUserByID(ctx, claims.UserID)
 			if err == nil {
 				companyName := "Неизвестная компания"
@@ -420,10 +420,10 @@ func (s *Server) getResumeByIDHandler(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 
-				notifErr := s.storage.CreateNotification(ctx, CreateNotificationRequest{
+				notifErr := s.createNotification(ctx, CreateNotificationRequest{
 					UserID:  resume.UserID,
 					Type:    "resume_viewed",
-					Title:   "Ваше резюме просмотрено 👀",
+					Title:   "Ваше резюме просмотрели",
 					Message: fmt.Sprintf("Компания \"%s\" просмотрела ваше резюме", companyName),
 					Data: map[string]interface{}{
 						"resume_id":      resumeID,

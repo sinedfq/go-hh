@@ -91,7 +91,7 @@ func (s *Server) applyToVacancyHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Уведомление автору вакансии
 	if vacancy.AuthorUserID > 0 && vacancy.AuthorUserID != claims.UserID {
-		s.storage.CreateNotification(ctx, CreateNotificationRequest{
+		s.createNotification(ctx, CreateNotificationRequest{
 			UserID:  vacancy.AuthorUserID,
 			Type:    "new_application",
 			Title:   "Новый отклик на вакансию",
@@ -311,52 +311,14 @@ func (s *Server) updateApplicationStatusHandler(w http.ResponseWriter, r *http.R
 
 	log.Printf("   ✅ Статус обновлён")
 	if changed && app.Status != req.Status {
-		go s.sendPush(app.CandidateUserID, "Статус отклика изменён", app.VacancyTitle+": "+req.Status,
-			map[string]string{"type": "application_status", "application_id": strconv.Itoa(appID), "vacancy_id": strconv.Itoa(app.VacancyID)})
-	}
-
-	// ====== УВЕДОМЛЕНИЕ КАНДИДАТУ ======
-	if changed && req.Status == "accepted" && app.Status != req.Status {
-		log.Printf("   📬 Отправляем уведомление о принятии кандидату %d", app.CandidateUserID)
-		err := s.storage.CreateNotification(ctx, CreateNotificationRequest{
-			UserID:  app.CandidateUserID,
-			Type:    "application_accepted",
-			Title:   "Ваш отклик принят! 🎉",
-			Message: fmt.Sprintf("Компания \"%s\" приняла ваш отклик на вакансию \"%s\"", app.CompanyName, app.VacancyTitle),
-			Data: map[string]interface{}{
-				"vacancy_id":    app.VacancyID,
-				"vacancy_title": app.VacancyTitle,
-				"company_name":  app.CompanyName,
-			},
-		})
-		if err != nil {
-			log.Printf("   ❌ Ошибка создания уведомления: %v", err)
-		} else {
-			log.Printf("   ✅ Уведомление создано")
-		}
-	} else if changed && req.Status == "rejected" && app.Status != req.Status {
-		log.Printf("   📬 Отправляем уведомление об отклонении кандидату %d", app.CandidateUserID)
-		err := s.storage.CreateNotification(ctx, CreateNotificationRequest{
-			UserID:  app.CandidateUserID,
-			Type:    "application_rejected",
-			Title:   "Отклик отклонён",
-			Message: fmt.Sprintf("К сожалению, компания \"%s\" отклонила ваш отклик на вакансию \"%s\"", app.CompanyName, app.VacancyTitle),
-			Data: map[string]interface{}{
-				"vacancy_id":    app.VacancyID,
-				"vacancy_title": app.VacancyTitle,
-				"company_name":  app.CompanyName,
-			},
-		})
-		if err != nil {
-			log.Printf("   ❌ Ошибка создания уведомления: %v", err)
-		} else {
-			log.Printf("   ✅ Уведомление создано")
+		if err := s.createNotification(ctx, applicationNotification(app, appID, req.Status)); err != nil {
+			log.Printf("application notification: %v", err)
 		}
 	}
 
 	if changed && app.Status == req.Status && (req.Feedback != nil || req.InterviewAt != nil) {
 		message := app.CompanyName + ": обновлены комментарий или время собеседования по вакансии «" + app.VacancyTitle + "»"
-		if err := s.storage.CreateNotification(ctx, CreateNotificationRequest{UserID: app.CandidateUserID, Type: "application_updated", Title: "Обновлены детали отклика", Message: message, Data: map[string]interface{}{"vacancy_id": app.VacancyID, "application_id": appID}}); err != nil {
+		if err := s.createNotification(ctx, CreateNotificationRequest{UserID: app.CandidateUserID, Type: "application_updated", Title: "Обновлены детали отклика", Message: message, Data: map[string]interface{}{"vacancy_id": app.VacancyID, "application_id": appID}}); err != nil {
 			log.Printf("application details notification: %v", err)
 		}
 	}

@@ -258,7 +258,7 @@ func (s *Server) updateVacancyHandler(w http.ResponseWriter, r *http.Request) {
 			if candID == claims.UserID {
 				continue // не уведомляем самого себя
 			}
-			s.storage.CreateNotification(ctx, CreateNotificationRequest{
+			s.createNotification(ctx, CreateNotificationRequest{
 				UserID:  candID,
 				Type:    "vacancy_updated",
 				Title:   "Вакансия обновлена 📝",
@@ -353,7 +353,7 @@ func (s *Server) deleteVacancyHandler(w http.ResponseWriter, r *http.Request) {
 			if candID == claims.UserID {
 				continue
 			}
-			s.storage.CreateNotification(ctx, CreateNotificationRequest{
+			s.createNotification(ctx, CreateNotificationRequest{
 				UserID:  candID,
 				Type:    "vacancy_deleted",
 				Title:   "Вакансия удалена 🗑️",
@@ -445,7 +445,7 @@ func (s *Server) archiveVacancyHandler(w http.ResponseWriter, r *http.Request) {
 				if candID == claims.UserID {
 					continue
 				}
-				s.storage.CreateNotification(ctx, CreateNotificationRequest{
+				s.createNotification(ctx, CreateNotificationRequest{
 					UserID:  candID,
 					Type:    "vacancy_archived",
 					Title:   "Вакансия в архиве 📦",

@@ -1,176 +1,86 @@
-import ITAccreditationBadge from '../common/ITAccreditationBadge'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import axios from 'axios'
+import ITAccreditationBadge from '../common/ITAccreditationBadge'
+import VacancyTerms from '../vacancy/VacancyTerms'
+import { userError } from '../../utils/userError'
+import './CompanyDetails.css'
 
-function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
+function websiteUrl(value) {
+    if (!value) return null
+    try {
+        const url = new URL(/^https?:\/\//i.test(value) ? value : `https://${value}`)
+        return ['http:', 'https:'].includes(url.protocol) ? url.href : null
+    } catch { return null }
+}
+
+export default function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
     const [company, setCompany] = useState(null)
     const [vacancies, setVacancies] = useState([])
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState('')
+    const [retry, setRetry] = useState(0)
+    const [logoFailed, setLogoFailed] = useState(false)
 
     useEffect(() => {
-        loadCompanyData()
-    }, [companyId])
+        const controller = new AbortController()
+        setLoading(true)
+        setCompany(null)
+        setError('')
+        setLogoFailed(false)
+        Promise.all([
+            axios.get(`/api/companies/${companyId}`, { signal: controller.signal }),
+            axios.get(`/api/companies/${companyId}/vacancies`, { signal: controller.signal })
+        ]).then(([details, jobs]) => {
+            setCompany(details.data)
+            setVacancies(Array.isArray(jobs.data) ? jobs.data : [])
+        }).catch(err => {
+            if (!controller.signal.aborted) setError(userError(err))
+        }).finally(() => {
+            if (!controller.signal.aborted) setLoading(false)
+        })
+        return () => controller.abort()
+    }, [companyId, retry])
 
-    const loadCompanyData = async () => {
-        try {
-            setLoading(true)
-            const [companyRes, vacanciesRes] = await Promise.all([
-                axios.get(`/api/companies/${companyId}`),
-                axios.get(`/api/companies/${companyId}/vacancies`)
-            ])
-            setCompany(companyRes.data)
-            setVacancies(vacanciesRes.data || [])
-        } catch (err) {
-            console.error('Ошибка загрузки компании:', err)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    if (loading) {
-        return (
-            <div className="company-details">
-                <div className="loading">
-                    <div className="spinner"></div>
-                    <p>Загрузка компании...</p>
+    const website = websiteUrl(company?.website)
+    return <article className="company-profile" aria-busy={loading}>
+        <button type="button" className="company-profile-back" onClick={onBack}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            К компаниям
+        </button>
+        {loading ? <div className="company-profile-panel company-profile-state" role="status"><div className="spinner"/><p>Загружаем компанию…</p></div>
+        : error || !company ? <div className="company-profile-panel company-profile-state" role="alert"><h2>Не удалось открыть компанию</h2><p>{error || 'Компания не найдена'}</p><button className="btn btn-primary" onClick={() => setRetry(value => value + 1)}>Попробовать ещё раз</button></div>
+        : <>
+            <header className="company-profile-panel company-profile-hero">
+                <div className="company-profile-identity">
+                    <div className="company-profile-logo">{company.logo_url && !logoFailed ? <img src={company.logo_url} alt="" onError={() => setLogoFailed(true)}/> : <span>{company.name?.charAt(0).toUpperCase() || 'К'}</span>}</div>
+                    <div className="company-profile-heading"><span className="eyebrow">РАБОТОДАТЕЛЬ</span><h1>{company.name}<ITAccreditationBadge accredited={company.it_accredited}/></h1>
+                        <div className="company-profile-tags">{[company.industry, company.size, company.city].filter(Boolean).map((text, index) => <span key={index}>{text}</span>)}</div>
+                        {website && <a className="company-profile-website" href={website} target="_blank" rel="noopener noreferrer">Сайт компании <span aria-hidden="true">↗</span></a>}
+                    </div>
                 </div>
+                <div className="company-profile-stats"><div><strong>{vacancies.length}</strong><span>Активные вакансии</span></div><div><strong>{company.total_views || 0}</strong><span>Просмотры вакансий</span></div></div>
+                {vacancies.length > 0 && <a className="btn btn-primary company-profile-jobs-link" href="#company-open-jobs">Смотреть вакансии <span aria-hidden="true">↓</span></a>}
+            </header>
+            <div className="company-profile-layout">
+                <div className="company-profile-story">
+                    <section className="company-profile-panel"><h2>О компании</h2><p className="company-profile-copy">{company.description || 'Работодатель пока не добавил описание компании.'}</p></section>
+                    {company.team_story && <section className="company-profile-panel"><h2>Наша команда</h2><p className="company-profile-copy">{company.team_story}</p></section>}
+                    {company.photos?.length > 0 && <section className="company-profile-panel"><h2>Жизнь команды</h2><div className="company-profile-gallery">{company.photos.map(photo => <img key={photo} src={photo} alt={`Команда ${company.name}`} loading="lazy"/>)}</div></section>}
+                </div>
+                <aside className="company-profile-sidebar">
+                    {company.benefits?.length > 0 && <section className="company-profile-panel"><h2>Что мы предлагаем</h2><ul className="company-profile-benefits">{company.benefits.map((benefit, index) => <li key={index}>{benefit}</li>)}</ul></section>}
+                    {company.hiring_process && <section className="company-profile-panel"><h2>Как проходит найм</h2><p className="company-profile-copy">{company.hiring_process}</p></section>}
+                </aside>
             </div>
-        )
-    }
-
-    if (!company) {
-        return (
-            <div className="company-details">
-                <div className="empty-state">
-                    <h2>Компания не найдена</h2>
-                    <button className="btn btn-primary" onClick={onBack}>Назад к списку</button>
-                </div>
-            </div>
-        )
-    }
-
-    return (
-        <div className="company-details">
-            <button className="back-btn" onClick={onBack}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <polyline points="15 18 9 12 15 6" />
-                </svg>
-                Назад к компаниям
-            </button>
-
-            {/* Шапка компании */}
-            <div className="company-header-card">
-                <div className="company-logo-large">
-                    {company.logo_url ? (
-                        <img src={company.logo_url} alt={company.name} />
-                    ) : (
-                        <span>{company.name.charAt(0).toUpperCase()}</span>
-                    )}
-                </div>
-                <div className="company-header-info">
-                    <h1 className="company-name-with-badge">{company.name} <ITAccreditationBadge accredited={company.it_accredited}/></h1>
-                    <div className="company-meta-badges">
-                        {company.industry && <span className="meta-badge">{company.industry}</span>}
-                        {company.size && <span className="meta-badge">{company.size}</span>}
-                        {company.city && <span className="meta-badge">{company.city}</span>}
-                    </div>
-                    {company.website && (
-                        <a
-                            href={company.website.startsWith('http') ? company.website : `https://${company.website}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="company-website"
-                        >
-                            {company.website.replace(/^https?:\/\//, '')}
-                        </a>
-                    )}
-                </div>
-                <div className="company-header-stats">
-                    <div className="header-stat">
-                        <span className="stat-value">{company.vacancies_count}</span>
-                        <span className="stat-label">вакансий</span>
-                    </div>
-                    <div className="header-stat">
-                        <span className="stat-value">{company.total_views}</span>
-                        <span className="stat-label">просмотров</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Описание компании */}
-            {company.description && (
-                <div className="company-description-card">
-                    <h3>О компании</h3>
-                    <p>{company.description}</p>
-                </div>
-            )}
-
-            {/* Вакансии компании */}
-            {company.team_story&&<section className="company-description-card"><h3>Наша команда</h3><p className="preserve-text">{company.team_story}</p></section>}
-            {company.benefits?.length>0&&<section className="company-description-card"><h3>Что мы предлагаем</h3><ul>{company.benefits.map((benefit,index)=><li key={index}>{benefit}</li>)}</ul></section>}
-            {company.hiring_process&&<section className="company-description-card"><h3>Как проходит найм</h3><p className="preserve-text">{company.hiring_process}</p></section>}
-            {company.photos?.length>0&&<section className="company-description-card"><h3>Жизнь команды</h3><div className="company-gallery">{company.photos.map(photo=><img key={photo} src={photo} alt={`Команда ${company.name}`} loading="lazy"/>)}</div></section>}
-            <div className="company-vacancies-section">
-                <h3>
-                    Вакансии компании
-                    <span className="vacancies-count-badge">{vacancies.length}</span>
-                </h3>
-
-                {vacancies.length === 0 ? (
-                    <div className="empty-vacancies">
-                        <p>У компании пока нет активных вакансий</p>
-                    </div>
-                ) : (
-                    <div className="company-vacancies-grid">
-                        {vacancies.map(vacancy => (
-                            <div
-                                key={vacancy.id}
-                                className="company-vacancy-card clickable"
-                                onClick={() => onSelectVacancy && onSelectVacancy(vacancy.id)}
-                            >
-                                <div className="vacancy-card-top">
-                                    <h4>{vacancy.title}</h4>
-                                    <div className="vacancy-badges">
-                                        <span className="badge">{vacancy.experience}</span>
-                                        {vacancy.remote && <span className="badge remote">Удалённо</span>}
-                                    </div>
-                                </div>
-
-                                <div className="vacancy-card-location">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                        <circle cx="12" cy="10" r="3"/>
-                                    </svg>
-                                    {vacancy.location}
-                                </div>
-
-                                {vacancy.skills && vacancy.skills.length > 0 && (
-                                    <div className="vacancy-card-skills">
-                                        {vacancy.skills.slice(0, 5).map((skill, i) => (
-                                            <span key={i} className="skill-tag">{skill}</span>
-                                        ))}
-                                        {vacancy.skills.length > 5 && (
-                                            <span className="skill-tag more">+{vacancy.skills.length - 5}</span>
-                                        )}
-                                    </div>
-                                )}
-
-                                <div className="vacancy-card-footer">
-                                    <span className="vacancy-views">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                            <circle cx="12" cy="12" r="3"/>
-                                        </svg>
-                                        {vacancy.views || 0}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    )
+            <section id="company-open-jobs" className="company-profile-jobs"><div className="company-profile-section-heading"><div><span className="eyebrow">ПРИСОЕДИНЯЙТЕСЬ К КОМАНДЕ</span><h2>Вакансии компании</h2></div><span className="company-profile-count">{vacancies.length}</span></div>
+                {vacancies.length === 0 ? <div className="company-profile-panel company-profile-state"><h3>Открытых вакансий пока нет</h3><p>Вернитесь позже — здесь появятся новые предложения.</p></div>
+                : <div className="company-profile-job-grid">{vacancies.map(vacancy => <button type="button" key={vacancy.id} className="company-profile-job" onClick={() => onSelectVacancy?.(vacancy.id)}>
+                    <h3>{vacancy.title}</h3><VacancyTerms vacancy={vacancy}/>
+                    <div className="company-profile-job-meta">{[vacancy.location, vacancy.experience, vacancy.remote ? 'Удалённо' : 'В офисе'].filter(Boolean).map((label, index) => <span key={index}>{label}</span>)}</div>
+                    {vacancy.skills?.length > 0 && <div className="company-profile-tags">{vacancy.skills.slice(0, 4).map((skill, index) => <span key={index}>{skill}</span>)}{vacancy.skills.length > 4 && <span>+{vacancy.skills.length - 4}</span>}</div>}
+                    <span className="company-profile-job-link">Подробнее о вакансии <span aria-hidden="true">↗</span></span>
+                </button>)}</div>}
+            </section>
+        </>}
+    </article>
 }
-
-export default CompanyDetails

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/sinedfq/go-hh/internal/push"
 	"log"
 	"net/http"
@@ -10,6 +11,36 @@ import (
 	"strings"
 	"time"
 )
+
+// Persist the event before delivering it. A delivery failure must not lose the inbox event.
+func (s *Server) createNotification(ctx context.Context, req CreateNotificationRequest) error {
+	if err := s.storage.CreateNotification(ctx, req); err != nil {
+		return err
+	}
+	data := map[string]string{"type": req.Type}
+	for key, value := range req.Data {
+		if value != nil {
+			data[key] = fmt.Sprint(value)
+		}
+	}
+	go s.sendPush(req.UserID, req.Title, req.Message, data)
+	return nil
+}
+
+func applicationNotification(app *Application, appID int, status string) CreateNotificationRequest {
+	title := "Отклик просмотрен"
+	message := app.CompanyName + " просмотрела ваш отклик на вакансию «" + app.VacancyTitle + "»"
+	switch status {
+	case "accepted":
+		title = "Вас пригласили"
+		message = app.CompanyName + " приглашает вас по вакансии «" + app.VacancyTitle + "»"
+	case "rejected":
+		title = "Ответ на отклик"
+		message = app.CompanyName + ": по вакансии «" + app.VacancyTitle + "» пока отказ. Продолжайте поиск — впереди новые возможности."
+	}
+	return CreateNotificationRequest{UserID: app.CandidateUserID, Type: "application_" + status, Title: title, Message: message,
+		Data: map[string]interface{}{"application_id": appID, "vacancy_id": app.VacancyID, "vacancy_title": app.VacancyTitle, "company_name": app.CompanyName}}
+}
 
 func (s *Server) registerDeviceHandler(w http.ResponseWriter, r *http.Request) {
 	claims := getUserFromContext(r.Context())
@@ -105,7 +136,21 @@ func (s *Server) pushNewMessage(conversationID, senderID int, content string) {
 	if err != nil {
 		return
 	}
+	senderName := "Собеседник"
+	if sender, err := s.storage.GetUserByID(ctx, senderID); err == nil {
+		if sender.CompanyID != nil {
+			if company, err := s.storage.GetCompanyByID(ctx, *sender.CompanyID); err == nil {
+				senderName = company.Name
+			}
+		} else if resume, err := s.storage.GetResumeByUserID(ctx, senderID); err == nil && resume.FullName != "" {
+			senderName = resume.FullName
+		}
+	}
+	preview := []rune(strings.Join(strings.Fields(content), " "))
+	if len(preview) > 180 {
+		preview = append(preview[:180], '…')
+	}
 	for _, id := range ids {
-		s.sendPush(id, "Новое сообщение", "Вам пришло новое сообщение. Нажмите, чтобы открыть чат.", map[string]string{"conversation_id": strconv.Itoa(conversationID), "type": "message"})
+		s.sendPush(id, senderName, string(preview), map[string]string{"conversation_id": strconv.Itoa(conversationID), "sender_name": senderName, "type": "message"})
 	}
 }

@@ -58,6 +58,20 @@ func TestExpandedVacancySearch(t *testing.T) {
 	if _, err := pool.Exec(ctx, `ALTER TABLE vacancies ADD COLUMN terms JSONB NOT NULL DEFAULT '{}';`); err != nil {
 		t.Fatal(err)
 	}
+	t.Run("public company page excludes archived vacancies", func(t *testing.T) {
+		items, err := storage.GetVacanciesByCompanyID(ctx, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(items) != 3 {
+			t.Fatalf("expected 3 active vacancies, got %d", len(items))
+		}
+		for _, vacancy := range items {
+			if vacancy.ID == 4 {
+				t.Fatal("archived vacancy is visible on the public company page")
+			}
+		}
+	})
 	t.Run("logos in every vacancy response", func(t *testing.T) {
 		check := func(items []Vacancy, err error) {
 			t.Helper()
