@@ -22,6 +22,6 @@ fun CompanyAvatar(logo: String?, name: String, size: Dp = 48.dp) {
     var failed by remember(url) { mutableStateOf(false) }
     Box(Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),contentAlignment=Alignment.Center) {
         if(url==null || failed) Icon(Icons.Default.Business,contentDescription="Компания: $name",tint=MaterialTheme.colorScheme.onPrimaryContainer,modifier=Modifier.size(size/2))
-        else AsyncImage(url,contentDescription="Логотип: $name",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Crop,onError={failed=true})
+        else AsyncImage(url,contentDescription="Логотип: $name",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Fit,alignment=Alignment.Center,onError={failed=true})
     }
 }

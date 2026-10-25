@@ -57,6 +57,10 @@ class SocialExperienceTest {
             compose.waitUntil(10000){compose.onAllNodes(hasText("Подписаться") and isEnabled()).fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Подписаться").performScrollTo().performClick()
             waitText("Вы подписаны");assertTrue(following.get())
+            val preview=compose.onNodeWithTag("story-preview-99",useUnmergedTree=true).fetchSemanticsNode().boundsInRoot
+            val logo=compose.onNode(hasContentDescription("Компания: Команда") and hasAnyAncestor(hasTestTag("story-preview-99")),useUnmergedTree=true).fetchSemanticsNode().boundsInRoot
+            assertEquals("Story logo is horizontally centered",preview.center.x,logo.center.x,1f)
+            assertEquals("Story logo is vertically centered",preview.center.y,logo.center.y,1f)
             compose.onNodeWithText("Написать пост").performScrollTo().performClick()
             compose.onNode(hasSetTextAction() and hasText("Текст публикации")).performTextInput("Мой новый пост")
             compose.onNodeWithText("Опубликовать").performScrollTo().performClick()

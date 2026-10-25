@@ -33,7 +33,7 @@ export default function HomePage({ user, vacancies, onNavigate, onVacancy, onCha
         <section className="home-hero">
             <div><span className="eyebrow">ТВОЙ СЛЕДУЮЩИЙ ШАГ</span><h1>{employer?'Собери свою команду':user?`С возвращением${resume?.full_name?', '+resume.full_name.split(' ')[0]:''}`:'Работа, с которой хочется начать день'}</h1><p>{employer?'Вакансии, кандидаты и общение — всё под рукой.':'Подходящие возможности, история откликов и новые знакомства — в одном месте.'}</p>
                 <div className="home-actions"><button className="btn btn-primary" onClick={()=>onNavigate(employer?'create-vacancy':'search')}>{employer?'Создать вакансию':'Найти работу'} →</button><button className="btn btn-secondary" onClick={()=>user?onNavigate(employer?'my-company':'profile'):onLogin()}>{employer?'Моя компания':user?'Мой профиль':'Создать профиль'}</button></div>
-            </div><div className="home-brand" aria-hidden="true"><img src="/brand-dark-waves.png" alt=""/><span>Люди. Работа. Возможности.</span></div>
+            </div><div className="home-brand" aria-hidden="true"><img src="/brand-trudomix.png" alt=""/><span>Люди. Работа. Возможности.</span></div>
         </section>
         {Object.keys(errors).length>0&&<div className="profile-status" role="status">Часть данных не загрузилась. <button className="auth-switch" onClick={()=>setRetry(value=>value+1)}>Повторить</button></div>}
         {user&&<div className="home-stats">

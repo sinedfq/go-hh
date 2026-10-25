@@ -103,7 +103,7 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("С возвращением", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("Войди в свой аккаунт", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
-            OutlinedTextField(email, { email = it }, label = { Text("Почта") }, leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true,
+            OutlinedTextField(email, { email = it }, label = { Text("Почта") }, placeholder={Text("you@example.com")}, leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true,
                 enabled = !busy, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(password, { password = it }, label = { Text("Пароль") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, singleLine = true, enabled = !busy,
                 trailingIcon = { IconButton(onClick = { visible = !visible }) { Icon(if (visible) Icons.Default.VisibilityOff else Icons.Default.Visibility, if (visible) "Скрыть пароль" else "Показать пароль") } },

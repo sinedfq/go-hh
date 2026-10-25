@@ -6,6 +6,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,8 +18,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImage
@@ -28,6 +32,7 @@ import com.example.trudomix.data.local.SessionIdentity
 import com.example.trudomix.data.models.*
 import com.example.trudomix.data.repository.*
 import com.example.trudomix.ui.components.CompanyAvatar
+import com.example.trudomix.ui.components.VideoPreview
 import com.example.trudomix.ui.screens.companies.CompanyStory
 import com.example.trudomix.ui.screens.companies.CompanyStoryViewer
 import kotlinx.coroutines.*
@@ -100,7 +105,17 @@ fun TimedStoriesBar(stories:List<TimedCompanyStory>,onRefresh:()->Unit={}){
         if(groups.isEmpty())Text("Новые истории компаний из подписок появятся здесь.",color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodyMedium)
         LazyRow(horizontalArrangement=Arrangement.spacedBy(14.dp)){
             items(groups.entries.toList(),key={it.key}){group->val first=group.value.first();OutlinedCard(onClick={opened=group.key},modifier=Modifier.width(112.dp),shape=RoundedCornerShape(22.dp),border=BorderStroke(2.dp,MaterialTheme.colorScheme.primary)){
-                Column(Modifier.padding(12.dp),verticalArrangement=Arrangement.spacedBy(8.dp),horizontalAlignment=Alignment.CenterHorizontally){CompanyAvatar(first.company_logo,first.company_name,52.dp);Text(first.company_name,maxLines=2,style=MaterialTheme.typography.labelMedium);Text("${group.value.size} историй",style=MaterialTheme.typography.labelSmall)}
+                Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(8.dp),horizontalAlignment=Alignment.CenterHorizontally){
+                    Box(Modifier.fillMaxWidth().height(120.dp).testTag("story-preview-${group.key}"),contentAlignment=Alignment.Center){
+                        val preview=group.value.maxBy{it.id}
+                        if(preview.media_type=="video")VideoPreview(preview.media_url,null,Modifier.fillMaxSize(),showPlay=false)
+                        else AsyncImage(ApiClient.mediaUrl(preview.media_url),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
+                        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.22f)))
+                        CompanyAvatar(first.company_logo,first.company_name,48.dp)
+                    }
+                    Text(first.company_name,Modifier.padding(horizontal=8.dp),maxLines=2,style=MaterialTheme.typography.labelMedium)
+                    Text("Историй: ${group.value.size}",Modifier.padding(bottom=12.dp),style=MaterialTheme.typography.labelSmall)
+                }
             }}
         }
         error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
@@ -110,6 +125,7 @@ fun TimedStoriesBar(stories:List<TimedCompanyStory>,onRefresh:()->Unit={}){
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun SocialPostCard(post:SocialPost,busy:Boolean,onLike:()->Unit,onDelete:()->Unit,onCommentCount:(Int)->Unit){
     var comments by remember{mutableStateOf(false)};var confirm by remember{mutableStateOf(false)};var media by remember{mutableStateOf(false)}
     OutlinedCard(Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp),colors=CardDefaults.outlinedCardColors(containerColor=MaterialTheme.colorScheme.surface)){
@@ -121,13 +137,13 @@ fun SocialPostCard(post:SocialPost,busy:Boolean,onLike:()->Unit,onDelete:()->Uni
             }
             if(post.body.isNotBlank())Text(post.body,style=MaterialTheme.typography.bodyLarge)
             if(post.media_url.isNotBlank())OutlinedCard(onClick={media=true},shape=RoundedCornerShape(16.dp)){
-                if(post.media_type=="video")Row(Modifier.fillMaxWidth().padding(24.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)){Icon(Icons.Default.PlayCircle,null);Text("Смотреть видео")}
+                if(post.media_type=="video")VideoPreview(post.media_url,"Смотреть видео",Modifier.fillMaxWidth().height(200.dp))
                 else AsyncImage(ApiClient.mediaUrl(post.media_url),"Фото публикации",Modifier.fillMaxWidth().heightIn(min=120.dp,max=320.dp))
             }
             HorizontalDivider()
-            Row(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically){
-                FilterChip(post.liked,onLike,enabled=!busy,label={Text(post.likes.toString())},leadingIcon={Icon(if(post.liked)Icons.Default.Favorite else Icons.Default.FavoriteBorder,"Нравится")})
-                TextButton(onClick={comments=true}){Icon(Icons.Default.ChatBubbleOutline,null,Modifier.size(18.dp));Spacer(Modifier.width(6.dp));Text("Комментарии · ${post.comments}")}
+            FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
+                OutlinedButton(onClick=onLike,enabled=!busy,contentPadding=PaddingValues(horizontal=12.dp),modifier=Modifier.height(44.dp)){Icon(if(post.liked)Icons.Default.Favorite else Icons.Default.FavoriteBorder,"Нравится",Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text(post.likes.toString())}
+                OutlinedButton(onClick={comments=true},contentPadding=PaddingValues(horizontal=12.dp),modifier=Modifier.height(44.dp)){Icon(Icons.Default.ChatBubbleOutline,null,Modifier.size(20.dp));Spacer(Modifier.width(8.dp));Text("Комментарии · ${post.comments}")}
             }
         }
     }
@@ -157,7 +173,7 @@ fun SocialEditor(story:Boolean,companyAllowed:Boolean,onClose:()->Unit,onPublish
             item{Text(if(story)"История компании"else "Новая публикация",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)}
             item{Text(if(story)"Фото или видео будет доступно 24 часа."else "Расскажи о работе, опыте или новостях команды.",color=MaterialTheme.colorScheme.onSurfaceVariant)}
             if(companyAllowed&&!story)item{Row(verticalAlignment=Alignment.CenterVertically){Switch(company,{company=it},enabled=!busy);Spacer(Modifier.width(12.dp));Text("От имени компании")}}
-            item{OutlinedTextField(body,{body=it.take(if(story)500 else 5000)},Modifier.fillMaxWidth(),label={Text(if(story)"Подпись"else "Текст публикации")},minLines=3,maxLines=8,enabled=!busy,shape=RoundedCornerShape(16.dp),supportingText={Text("${body.length}/${if(story)500 else 5000}")})}
+            item{OutlinedTextField(body,{body=it.take(if(story)500 else 5000)},Modifier.fillMaxWidth(),label={Text(if(story)"Подпись"else "Текст публикации")},placeholder={Text(if(story)"Один день из жизни команды"else "Расскажи о работе, опыте или новостях")},minLines=3,maxLines=8,enabled=!busy,shape=RoundedCornerShape(16.dp),supportingText={Text("${body.length}/${if(story)500 else 5000}")})}
             item{OutlinedButton(onClick={picker.launch(arrayOf("image/jpeg","image/png","image/webp","video/mp4","video/webm"))},enabled=!busy,modifier=Modifier.fillMaxWidth()){Text(if(uri==null)"Добавить фото или видео"else "Заменить вложение")}}
             if(uri!=null)item{if(context.contentResolver.getType(uri!!)?.startsWith("image/")==true)AsyncImage(uri,"Вложение",Modifier.fillMaxWidth().height(160.dp));TextButton(onClick={uri=null},enabled=!busy){Text("Убрать вложение")}}
             error?.let{item{Text(it,color=MaterialTheme.colorScheme.error)}}

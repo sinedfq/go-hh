@@ -1,1 +1,1 @@
-<inset xmlns:android="http://schemas.android.com/apk/res/android" android:insetTop="-5%" android:insetBottom="-5%" android:insetLeft="-1%" android:insetRight="-1%"><bitmap android:src="@drawable/brand_dark_waves" android:gravity="fill" /></inset>
+<bitmap xmlns:android="http://schemas.android.com/apk/res/android" android:src="@drawable/brand_06_black" android:gravity="fill" />

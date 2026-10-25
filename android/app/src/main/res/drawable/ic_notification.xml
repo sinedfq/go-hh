@@ -1,4 +1,4 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="24dp" android:height="24dp" android:viewportWidth="24" android:viewportHeight="24">
-    <!-- Monochrome Trudomix T with a wave across the top, on a transparent background. -->
-    <path android:fillColor="#FFFFFFFF" android:pathData="M3,4.2C5.7,2.7 8.9,3.1 12,4C15.1,4.9 18.3,5.3 21,3.8L21,8.1C18.4,9.5 15.3,9.1 12,8.2C8.7,7.3 5.6,6.9 3,8.4Z M9.4,9.2C11,9.3 12.7,9.9 14.6,10.3L14.6,20.5C12.7,21.4 11.2,21.2 9.4,20.3Z"/>
+    <!-- Monochrome ribbon T matching the supplied brand artwork. -->
+    <path android:fillColor="#FFFFFFFF" android:pathData="M5,4C3,4 2,6 2,9L13,9C17,9 20,7 21,3L9,3C7,3 6,3 5,4Z M8,10L8,21C12,21 14,18 14,15L14,9C12,10 10,10 8,10Z M15,12C17,10 20,11 21,14C22,17 20,20 17,20C14,20 13,17 14,15Z"/>
 </vector>
