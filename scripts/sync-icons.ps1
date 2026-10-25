@@ -1,4 +1,4 @@
-﻿# Copy the supplied, already-sized PNGs. Preserve existing launcher IDs on upgrades.
+﻿# Preserve launcher IDs and legacy PNG fallbacks, then import the supplied SVG vectors.
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
 $utf8=[Text.UTF8Encoding]::new($false)
@@ -39,3 +39,6 @@ $defaultIcon=Join-Path $root 'icons/icon_06/black/icon_512.png'
 foreach($relative in @('frontend/public/brand-dark-waves.png','frontend/public/brand-trudomix.png','android/app/src/main/res/drawable-nodpi/brand_dark_waves.png','android/app/src/main/res/drawable-nodpi/trudomix_logo.png')){Copy-Item -LiteralPath $defaultIcon -Destination (Join-Path $root $relative) -Force}
 Copy-Item -LiteralPath (Join-Path $root 'icons/icon_06/transparent/icon_512.png') -Destination (Join-Path $root 'android/app/src/main/res/drawable-nodpi/brand_transparent.png') -Force
 Write-Host "Updated $($entries.Count) launcher choices, brand images and manifest aliases."
+
+& node (Join-Path $PSScriptRoot "sync-svg-icons.mjs")
+if ($LASTEXITCODE -ne 0) { throw "SVG import failed" }
