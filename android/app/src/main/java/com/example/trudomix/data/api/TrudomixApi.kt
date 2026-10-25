@@ -5,6 +5,20 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface TrudomixApi {
+    @GET("api/companies/{id}/subscription") suspend fun companySubscription(@Path("id") id:Int):Response<CompanySubscription>
+    @PUT("api/companies/{id}/subscription") suspend fun followCompany(@Path("id") id:Int):Response<CompanySubscription>
+    @DELETE("api/companies/{id}/subscription") suspend fun unfollowCompany(@Path("id") id:Int):Response<CompanySubscription>
+    @GET("api/feed") suspend fun socialFeed(@Query("scope") scope:String="all",@Query("before") before:Long?=null,@Query("company_id") companyId:Int?=null):Response<SocialFeedPage>
+    @Multipart @POST("api/posts") suspend fun publishPost(@Part("body") body:okhttp3.RequestBody,@Part("as_company") asCompany:okhttp3.RequestBody,@Part media:okhttp3.MultipartBody.Part?=null):Response<SocialCreated>
+    @Multipart @POST("api/stories") suspend fun publishStory(@Part("body") body:okhttp3.RequestBody,@Part media:okhttp3.MultipartBody.Part):Response<SocialCreated>
+    @GET("api/stories") suspend fun timedStories(@Query("company_id") companyId:Int?=null):Response<List<TimedCompanyStory>>
+    @DELETE("api/stories/{id}") suspend fun deleteStory(@Path("id") id:Long):Response<Unit>
+    @DELETE("api/posts/{id}") suspend fun deletePost(@Path("id") id:Long):Response<Unit>
+    @PUT("api/posts/{id}/like") suspend fun likePost(@Path("id") id:Long):Response<SocialLike>
+    @DELETE("api/posts/{id}/like") suspend fun unlikePost(@Path("id") id:Long):Response<SocialLike>
+    @GET("api/posts/{id}/comments") suspend fun postComments(@Path("id") id:Long,@Query("before") before:Long?=null):Response<SocialCommentsPage>
+    @POST("api/posts/{id}/comments") suspend fun addPostComment(@Path("id") id:Long,@Body body:SocialBody):Response<SocialCreated>
+    @DELETE("api/comments/{id}") suspend fun deletePostComment(@Path("id") id:Long):Response<Unit>
     @GET("api/saved-searches") suspend fun getSavedSearches():Response<List<SavedSearch>>
     @POST("api/saved-searches") suspend fun saveSearch(@Body request:SavedSearchRequest):Response<SavedSearch>
     @DELETE("api/saved-searches/{id}") suspend fun deleteSavedSearch(@Path("id") id:Int):Response<Unit>

@@ -1,6 +1,7 @@
 export function userError(error, { login = false } = {}) {
     const status = error?.response?.status
     const message = error?.response?.data?.error || (typeof error?.response?.data==='string'?error.response.data.trim():'')
+    if(status>=400&&status<500&&message.length<=250&&/[А-Яа-яЁё]/.test(message)&&!/[<>]/.test(message))return message
     if(message==='gallery limit reached')return 'В галерее можно хранить до 6 фотографий и 4 видео. Удали ненужный файл.'
     if(message==='video must be at most 50 MB'||message==='media too large or invalid multipart')return 'Видео должно быть не больше 50 МБ, фото — не больше 4 МБ.'
     if(message==='only mp4 and webm videos allowed')return 'Поддерживаются видео MP4 и WebM.'

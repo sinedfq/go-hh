@@ -17,11 +17,13 @@ export function VideoPlayer({src,onFullscreen}) {
     </div>
 }
 
-export default function MediaViewer({items,initial=0,title='Медиа компании',onClose}) {
+export default function MediaViewer({items,initial=0,title='Медиа компании',onRemove,onClose}) {
     const [index,setIndex]=useState(Math.min(initial,items.length-1)),[failed,setFailed]=useState(false),[fullscreenError,setFullscreenError]=useState('')
     const viewer=useRef(null),close=useRef(null),touch=useRef(null)
-    const item=items[index]
-    useEffect(()=>{setFailed(false)},[index])
+    const [confirmDelete,setConfirmDelete]=useState(false)
+    const item=items[Math.min(index,items.length-1)]
+    useEffect(()=>{setIndex(value=>Math.min(value,items.length-1))},[items.length])
+    useEffect(()=>{setFailed(false)},[index,item.url])
     useEffect(()=>{
         const element=viewer.current,previous=document.activeElement,overflow=document.body.style.overflow
         document.body.style.overflow='hidden';close.current?.focus()
@@ -38,10 +40,11 @@ export default function MediaViewer({items,initial=0,title='Медиа комп�
     },[items.length,onClose])
     async function fullscreen(){try{if(document.fullscreenElement)await document.exitFullscreen();else if(viewer.current.requestFullscreen)await viewer.current.requestFullscreen();else setFullscreenError('Полноэкранный режим недоступен в этом браузере.')}catch{setFullscreenError('Не удалось включить полноэкранный режим.')}}
     return <ModalPortal><div className="media-viewer" ref={viewer} role="dialog" aria-modal="true" aria-label={title} onClick={event=>{if(event.target===viewer.current)onClose()}}>
-        <header className="media-viewer-header"><div><strong>{title}</strong><span>{index+1} / {items.length} · {item.type==='video'?'Видео':'Фото'}</span></div><button type="button" onClick={fullscreen} aria-label="Развернуть просмотр">⛶</button><button type="button" ref={close} onClick={onClose} aria-label="Закрыть просмотр">×</button></header>
+        <header className="media-viewer-header"><div><strong>{title}</strong><span>{index+1} / {items.length} · {item.type==='video'?'Видео':'Фото'}</span>{item.caption&&<p className="media-story-caption">{item.caption}</p>}</div><button type="button" onClick={fullscreen} aria-label="Развернуть просмотр">⛶</button><button type="button" ref={close} onClick={onClose} aria-label="Закрыть просмотр">×</button></header>
         <div className="media-viewer-stage" onTouchStart={event=>{touch.current=event.changedTouches[0].clientX}} onTouchEnd={event=>{if(item.type==='video'||event.target.closest('button'))return;const delta=event.changedTouches[0].clientX-touch.current;if(Math.abs(delta)>50)setIndex(value=>(value+(delta<0?1:-1)+items.length)%items.length)}}>
             {item.type==='video'?<VideoPlayer key={item.url} src={item.url} onFullscreen={fullscreen}/>:failed?<div className="media-video-error" role="alert"><p>Не удалось загрузить фото.</p><button type="button" onClick={()=>setFailed(false)}>Повторить</button></div>:<img key={item.url} src={item.url} alt={`${title}, фото ${index+1}`} onError={()=>setFailed(true)}/>}
         </div>
-        <footer className="media-viewer-footer"><button type="button" onClick={()=>setIndex(value=>(value-1+items.length)%items.length)} disabled={items.length<2} aria-label="Предыдущее медиа">← Назад</button><p>{fullscreenError||'Esc — закрыть · ← → — перелистнуть'}</p><button type="button" onClick={()=>setIndex(value=>(value+1)%items.length)} disabled={items.length<2} aria-label="Следующее медиа">Далее →</button></footer>
+        {onRemove&&item.canDelete&&<div className="media-story-delete">{confirmDelete?<><span>Удалить историю?</span><button type="button" onClick={()=>{setConfirmDelete(false);onRemove(item)}}>Удалить</button><button type="button" onClick={()=>setConfirmDelete(false)}>Отмена</button></>:<button type="button" onClick={()=>setConfirmDelete(true)}>Удалить историю</button>}</div>}
+        <footer className="media-viewer-footer"><button type="button" onClick={()=>{setConfirmDelete(false);setIndex(value=>(value-1+items.length)%items.length)}} disabled={items.length<2} aria-label="Предыдущее медиа">← Назад</button><p>{fullscreenError||'Esc — закрыть · ← → — перелистнуть'}</p><button type="button" onClick={()=>{setConfirmDelete(false);setIndex(value=>(value+1)%items.length)}} disabled={items.length<2} aria-label="Следующее медиа">Далее →</button></footer>
     </div></ModalPortal>
 }

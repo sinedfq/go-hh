@@ -14,3 +14,7 @@ test('registration conflict and photo size are actionable',()=>{
     assert.match(userError({response:{status:409}}),/уже существует/)
     assert.match(userError({response:{status:413}}),/меньшего размера/)
 })
+test('social validation explains the limit without rendering server HTML',()=>{
+    assert.equal(userError({response:{status:409,data:{error:'У компании уже 20 активных историй'}}}),'У компании уже 20 активных историй')
+    assert.doesNotMatch(userError({response:{status:400,data:{error:'<b>Ошибка SQL</b>'}}}),/SQL|<b>/)
+})

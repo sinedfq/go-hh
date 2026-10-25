@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { userError } from '../../utils/userError'
 import './HomePage.css'
+import SocialFeed from '../../components/social/SocialFeed'
 import VacancyTerms from '../../components/vacancy/VacancyTerms'
 
 export default function HomePage({ user, vacancies, onNavigate, onVacancy, onChat, onLogin }) {
@@ -40,6 +41,7 @@ export default function HomePage({ user, vacancies, onNavigate, onVacancy, onCha
             <button onClick={()=>onNavigate(employer?'applications':'profile')}><strong>{employer?(data.applications?apps.filter(app=>app.status==='new').length:'—'):(data.views?.total_views??'—')}</strong><span>{employer?'Новые кандидаты':'Просмотры резюме'}</span></button>
             <button onClick={onChat}><strong>{unread??'—'}</strong><span>Непрочитанные сообщения</span></button>
         </div>}
+        <SocialFeed/>
         {user&&!employer&&data.resume!==undefined&&!errors.resume&&<section className="home-resume"><div><span className="eyebrow">МОЁ РЕЗЮМЕ</span><h2>{resume?resume.desired_position||'Расскажи, какую работу ищешь':'Пусть работодатели узнают о тебе'}</h2><p>{completion===100?'Все основные разделы заполнены. Обновляй резюме по мере появления нового опыта.':`Заполнено ${completion}%. Добавь опыт, навыки и контакты, чтобы твой профиль был полезнее работодателям.`}</p></div><button className="btn btn-secondary" onClick={()=>onNavigate('profile')}>{resume?'Дополнить резюме':'Создать резюме'}</button><progress max="100" value={completion} aria-label="Заполненность резюме"/></section>}
         <div className="home-section-title"><div><span className="eyebrow">{employer?'ТВОИ ПУБЛИКАЦИИ':recommended.length?'ПОД ТВОЙ ПРОФИЛЬ':'ВОЗМОЖНОСТИ'}</span><h2>{employer?'Активные вакансии':recommended.length?'Может подойти тебе':'Посмотри свежие вакансии'}</h2></div><button className="auth-switch" onClick={()=>onNavigate(employer?'my-vacancies':recommended.length?'recommendations':'search')}>Смотреть все →</button></div>
         <div className="home-jobs">{jobs.slice(0,4).map(job=><button className="home-job" key={job.id} onClick={()=>onVacancy(job.id)}>{job.company_logo&&<img src={job.company_logo} alt=""/>}<h3>{job.title}</h3><VacancyTerms vacancy={job}/><p className="company-name-with-badge">{job.company} <ITAccreditationBadge accredited={job.company_it_accredited}/></p><span>{job.location} · {job.experience}</span><div>{job.skills?.slice(0,3).map(skill=><small key={skill}>{skill}</small>)}</div></button>)}</div>

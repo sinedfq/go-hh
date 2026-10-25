@@ -17,6 +17,10 @@ import com.example.trudomix.data.repository.*
 import com.example.trudomix.ui.components.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import com.example.trudomix.ui.screens.social.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 
 data class DashboardState(val loading:Boolean=false,val user:User?=null,val resume:Resume?=null,val jobs:List<Vacancy> = emptyList(),val applications:Int?=null,val views:Int?=null,val error:Boolean=false)
 class DashboardViewModel:ViewModel(){
@@ -45,9 +49,12 @@ class DashboardViewModel:ViewModel(){
 @Composable
 fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,onResume:()->Unit,onEmployer:()->Unit,onVacancy:(Int)->Unit){
     val model:DashboardViewModel=viewModel();val state by model.state.collectAsState()
+    val social:SocialViewModel=viewModel();val feed by social.state.collectAsState()
     val employer=(state.user?:SessionIdentity.user.value)?.role in listOf("employer","admin")
     LaunchedEffect(Unit){model.refreshIfStale()}
-    RefreshContent(state.loading,model::load){
+    val lifecycle=LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){social.load();while(true){delay(60000);social.refreshStories()}}}
+    RefreshContent(state.loading||feed.loading,{model.load();social.load()}){
         LazyColumn(Modifier.fillMaxSize().statusBarsPadding(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=16.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(18.dp)){
             item{AppScreenHeader(title={Text(if(employer)"Ваша команда"else "Твоя карьера")},subtitle=if(employer)"Вакансии, кандидаты и работа с командой"else "Возможности и следующие шаги в одном месте",applyInsets=false,contentPadding=PaddingValues(0.dp))}
             item{Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primaryContainer)){
@@ -66,6 +73,9 @@ fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,o
                 item{OutlinedCard(onClick=onSaved,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){Text("Мои поиски",style=MaterialTheme.typography.titleMedium);Text("Сохрани фильтры и возвращайся к подходящим вакансиям.",color=MaterialTheme.colorScheme.onSurfaceVariant)}}}
                 item{OutlinedCard(onClick=onResume,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text(state.resume?.desired_position?.ifBlank{"Моё резюме"}?:"Создай своё резюме",style=MaterialTheme.typography.titleMedium);val count=state.resume?.let(::resumeCompletionCount)?:0;LinearProgressIndicator(progress={count/8f},modifier=Modifier.fillMaxWidth());Text("Заполнено ${resumeCompletionLabel(count)}",color=MaterialTheme.colorScheme.onSurfaceVariant)}}}
             }else item{Button(onClick=onEmployer){Text("Управлять компанией")}}
+            item{SocialHomeHeader(feed,social)}
+            items(feed.posts,key={"post-${it.id}"}){post->SocialPostCard(post,post.id in feed.busy,{social.like(post)},{social.delete(post)},{social.commentCount(post.id,it)})}
+            if(feed.next>0)item{OutlinedButton(onClick={social.load(more=true)},enabled=!feed.loading,modifier=Modifier.fillMaxWidth()){Text("Показать ещё публикации")}}
             item{Text("Свежие возможности",style=MaterialTheme.typography.titleLarge)}
             items(state.jobs,key={it.id}){VacancyCard(it,{onVacancy(it.id)},showFavorite=false)}
         }

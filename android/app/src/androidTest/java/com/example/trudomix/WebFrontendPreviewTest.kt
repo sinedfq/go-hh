@@ -44,6 +44,9 @@ class WebFrontendPreviewTest {
                 }
                 if(!path.startsWith("/api/")&&request.url.host=="10.0.2.2")return null
                 val json=when {
+                    path=="/api/feed"->"""{"posts":[],"next_cursor":0}"""
+                    path=="/api/stories"->"[]"
+                    path.endsWith("/subscription")->"""{"following":false,"followers":0}"""
                     path=="/api/vacancies/search"->"""{"vacancies":$vacancies,"total_count":16}"""
                     path=="/api/vacancies/1"->detailVacancy
                     path=="/api/vacancies/1/application"->"""{"applied":false}"""
