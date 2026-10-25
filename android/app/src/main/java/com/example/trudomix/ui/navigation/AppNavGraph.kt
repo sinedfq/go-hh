@@ -244,12 +244,18 @@ fun SplashScreen(onAuthCheckComplete: (Boolean) -> Unit) {
 
     LaunchedEffect(attempt) {
         error = false
+        val started = android.os.SystemClock.elapsedRealtime()
+        suspend fun complete(authenticated: Boolean) {
+            val remaining = com.example.trudomix.ui.loading.STARTUP_LOADER_PREVIEW_MS - (android.os.SystemClock.elapsedRealtime() - started)
+            if (remaining > 0) kotlinx.coroutines.delay(remaining)
+            withContext(Dispatchers.Main.immediate) { onAuthCheckComplete(authenticated) }
+        }
         val token = tokenManager.getToken()
-        if (token.isNullOrEmpty()) withContext(Dispatchers.Main.immediate){onAuthCheckComplete(false)}
+        if (token.isNullOrEmpty()) complete(false)
         else try {
             val response = ApiClient.api.getMe()
-            if (response.isSuccessful) {com.example.trudomix.data.local.SessionIdentity.user.value=response.body();withContext(Dispatchers.Main.immediate){onAuthCheckComplete(true)}}
-            else if (response.code() == 401) { tokenManager.clearSession(); withContext(Dispatchers.Main.immediate){onAuthCheckComplete(false)} }
+            if (response.isSuccessful) {com.example.trudomix.data.local.SessionIdentity.user.value=response.body();complete(true)}
+            else if (response.code() == 401) { tokenManager.clearSession(); complete(false) }
             else error = true
         } catch (e: kotlinx.coroutines.CancellationException) { throw e }
         catch (failure: Exception) { android.util.Log.e("TrudomixNavigation","Session startup failed",failure);error = true }

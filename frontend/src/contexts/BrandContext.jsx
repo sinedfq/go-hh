@@ -17,4 +17,4 @@ export function BrandProvider({children}){
     return <BrandContext.Provider value={{selection,theme,image,accent:brandAccent(selection.color),select}}>{children}</BrandContext.Provider>
 }
 export function useBrand(){return useContext(BrandContext)}
-export function BrandLogo(props){const brand=useBrand();return <img {...props} src={brand?.image||brandImage(readBrand(),readTheme())}/>}
+export function BrandLogo(props){const brand=useBrand();return <img {...props} className={`trudomix-brand-image ${props.className||''}`} src={brand?.image||brandImage(readBrand(),readTheme())}/>}

@@ -33,6 +33,12 @@ import BrandPicker from './components/common/BrandPicker'
 
 function App() {
     const app = useApp()
+    // Temporary startup preview. Set to 0 after reviewing the loader animation.
+    const [loaderPreview, setLoaderPreview] = useState(true)
+    useEffect(() => {
+        const timer = setTimeout(() => setLoaderPreview(false), 2200)
+        return () => clearTimeout(timer)
+    }, [])
 
 
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
@@ -65,7 +71,7 @@ function App() {
         app.openVacancyPage(id)
     }
 
-    if (app.authLoading) return <PageLoader fullscreen/>
+    if (app.authLoading || loaderPreview) return <PageLoader fullscreen/>
 
     return (
         <div className="app">

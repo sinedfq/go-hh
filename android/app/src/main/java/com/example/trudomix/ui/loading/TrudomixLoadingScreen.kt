@@ -18,6 +18,9 @@ import androidx.compose.ui.unit.sp
 import com.example.trudomix.ui.components.AppIconImage
 import com.example.trudomix.ui.components.selectedBrand
 
+// Temporary minimum startup duration for reviewing the animation; set to 0 to disable.
+const val STARTUP_LOADER_PREVIEW_MS = 2200L
+
 /** Adapted from loader/android; visibility follows the real request state. */
 @Composable
 fun TrudomixLoadingScreen(modifier:Modifier=Modifier,compact:Boolean=false,label:String="Подбираем возможности для вас"){
