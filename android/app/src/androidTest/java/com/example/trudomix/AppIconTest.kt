@@ -9,8 +9,8 @@ import org.junit.Test
 class AppIconTest {
     @Test fun selectingIconKeepsExactlyOneLauncherAndCanBeRestored() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        val original = AppIcons.current(context)
-        val alternative = AppIcons.choices.first { it.number != original.number }
+        val original = AppIcons.chosen(context)
+        val alternative = AppIcons.choices.first { it.color=="blue"&&it.number != original.number }
         try {
             AppIcons.select(context, alternative)
             assertEquals(alternative, AppIcons.current(context))

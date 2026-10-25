@@ -60,7 +60,7 @@ fun ResumeScreen(viewModel:ResumeViewModel,onNavigateBack:()->Unit={},onEditResu
         Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.TopCenter) {
             LazyColumn(Modifier.widthIn(max=760.dp).fillMaxSize(),contentPadding=PaddingValues(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
                 when(val current=state) {
-                    ResumeUiState.Loading -> item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
+                    ResumeUiState.Loading -> item { com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем резюме") }
                     is ResumeUiState.Error -> item { ResumeSection("Не удалось загрузить резюме") {Text(current.message,color=MaterialTheme.colorScheme.onSurfaceVariant);Button(onClick=viewModel::loadResume){Text("Повторить")}} }
                     is ResumeUiState.Success -> {
                         val resume=current.resume

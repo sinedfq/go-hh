@@ -2,6 +2,7 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/loader.css" />
     <link rel="icon" type="image/png" href="/brand-trudomix.png" />
     <link rel="apple-touch-icon" href="/brand-trudomix.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
@@ -9,7 +10,8 @@
     </title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div class="trudomix-loader trudomix-loader-fullscreen" role="status" aria-label="Загрузка приложения"><div class="trudomix-loader-stage"><div class="trudomix-loader-content"><img class="trudomix-loader-logo" src="/loader-icons/icon_06_white.png" alt="Логотип Трудомикс"/><strong class="trudomix-loader-name">Трудомикс</strong><span class="trudomix-loader-label">Подбираем возможности для вас</span><div class="trudomix-loader-progress" aria-hidden="true"><span></span></div></div></div></div></div>
+    <script src="/loader-bootstrap.js"></script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

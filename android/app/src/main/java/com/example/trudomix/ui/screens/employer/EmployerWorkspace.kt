@@ -36,7 +36,8 @@ fun EmployerWorkspace(state:EmployerState,tab:Int,embedded:Boolean,onTab:(Int)->
                 if(!embedded)item{FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){FilterChip(tab==0,{onTab(0)},label={Text("Вакансии")});FilterChip(tab==1,{onTab(1)},label={Text("Отклики")})}}
                 if(state.error!=null)item{OutlinedCard(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text(state.error,color=colors.error);TextButton(onClick=onRefresh,enabled=!state.busy){Text("Попробовать снова")}}}}
                 if(state.busy)item{LinearProgressIndicator(Modifier.fillMaxWidth())}
-                if(!state.loading&&state.company.id==0)item{WorkspaceEmpty("Начните с вашей компании","Добавьте название и описание, чтобы публиковать вакансии."){Button(onClick=onCompany){Text("Создать компанию")}}}
+                if(state.loading&&state.company.id==0)item{com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем кабинет")}
+                else if(state.company.id==0)item{WorkspaceEmpty("Начните с вашей компании","Добавьте название и описание, чтобы публиковать вакансии."){Button(onClick=onCompany){Text("Создать компанию")}}}
                 else {
                     item{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp),verticalAlignment=Alignment.CenterVertically){CompanyAvatar(state.company.logo_url,state.company.name,44.dp);Column(Modifier.weight(1f)){Text(state.company.name,style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold);Text(if(tab==0)"Рабочее пространство команды"else "Знакомство с кандидатами",style=MaterialTheme.typography.bodySmall,color=colors.onSurfaceVariant)}}}
                     item{Row(Modifier.height(IntrinsicSize.Min),horizontalArrangement=Arrangement.spacedBy(8.dp)){

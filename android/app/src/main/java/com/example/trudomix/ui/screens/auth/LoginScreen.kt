@@ -81,7 +81,7 @@ internal fun AuthBackdrop(modifier: Modifier) {
 @Composable
 private fun LoginHero(compact: Boolean) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        com.example.trudomix.ui.components.AppIconImage(com.example.trudomix.data.local.AppIcons.default.resource, "Trudomix", Modifier.size(if (compact) 64.dp else 88.dp))
+        com.example.trudomix.ui.components.SelectedBrandImage( "Trudomix", Modifier.size(if (compact) 64.dp else 88.dp))
         Text("Твоя следующая работа", style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium,
             fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Text("Находи возможности. Знакомься с командами.", style = MaterialTheme.typography.bodyMedium,

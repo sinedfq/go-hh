@@ -263,6 +263,6 @@ fun SplashScreen(onAuthCheckComplete: (Boolean) -> Unit) {
             Text("Не удалось подключиться к серверу")
             Button(onClick = { attempt++ }) { Text("Повторить") }
             com.example.trudomix.ui.screens.settings.ServerConnectionButton { attempt++ }
-        } else CircularProgressIndicator()
+        } else com.example.trudomix.ui.loading.TrudomixLoadingScreen()
     }
 }

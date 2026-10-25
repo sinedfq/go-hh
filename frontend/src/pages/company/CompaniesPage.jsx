@@ -1,3 +1,4 @@
+import PageLoader from '../../components/common/PageLoader'
 import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
@@ -48,7 +49,7 @@ function CompaniesPage({ onSelectVacancy }) {
         return (
             <div className="companies-page">
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <PageLoader compact/>
                     <p>Загрузка компаний...</p>
                 </div>
             </div>

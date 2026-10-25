@@ -6,7 +6,7 @@ $iconsFile=Join-Path $root 'android/app/src/main/java/com/example/trudomix/data/
 $source=[IO.File]::ReadAllText($iconsFile)
 $legacy=@{1='01/navy';2='02/white';3='03/black';4='04/blue';5='01/coral';6='02/cream';7='04/navy';8='05/blue';9='06/black';10='06/white';11='07/navy';12='03/coral';13='07/black';14='08/white';15='08/violet';16='09/cream';17='07/coral';18='09/coral';19='04/black';20='04/white';21='01/violet';22='03/mint';23='06/navy';24='08/coral'}
 $legacyResources=@{}
-foreach($match in [regex]::Matches($source,'AppIcon\((\d+),\s*"[^"]+",\s*R.drawable.(\w+)\)')){if([int]$match.Groups[1].Value -le 24){$legacyResources[[int]$match.Groups[1].Value]=$match.Groups[2].Value}}
+foreach($match in [regex]::Matches($source,'AppIcon\((\d+),\s*"[^"]+",\s*R.drawable.(\w+)(?:,[^\r\n]*)?\)')){if([int]$match.Groups[1].Value -le 24){$legacyResources[[int]$match.Groups[1].Value]=$match.Groups[2].Value}}
 $designs=@('Классика','Светлая классика','Волна','Синяя T','Светлая синяя T','Лента','Самолёт','Светлый самолёт','Значок')
 $colors=[ordered]@{black='тёмная';blue='голубая';coral='коралловая';cream='кремовая';mint='мятная';navy='ночная';violet='фиолетовая';white='белая'}
 $entries=[Collections.Generic.List[object]]::new();$nextId=101
@@ -23,10 +23,10 @@ for($design=1;$design -le 9;$design++){
         if(!(Test-Path -LiteralPath $inputFile)){throw "Missing icon: $inputFile"}
         Copy-Item -LiteralPath $inputFile -Destination (Join-Path $root "android/app/src/main/res/drawable-nodpi/$asset.png") -Force
         [IO.File]::WriteAllText((Join-Path $root "android/app/src/main/res/drawable/$resource.xml"),"<bitmap xmlns:android=`"http://schemas.android.com/apk/res/android`" android:src=`"@drawable/$asset`" android:gravity=`"fill`" />`n",$utf8)
-        $entries.Add([pscustomobject]@{id=$id;title=$title;resource=$resource})
+        $entries.Add([pscustomobject]@{id=$id;title=$title;resource=$resource;design=$design;color=$color})
     }
 }
-$list=($entries|Sort-Object @{Expression={if($_.id -eq 9){0}else{1}}},id|ForEach-Object{"        AppIcon($($_.id), `"$($_.title)`", R.drawable.$($_.resource))"}) -join ",`n"
+$list=($entries|Sort-Object @{Expression={if($_.id -eq 9){0}else{1}}},id|ForEach-Object{"        AppIcon($($_.id), `"$($_.title)`", R.drawable.$($_.resource), design=$($_.design), color=`"$($_.color)`")"}) -join ",`n"
 $source=[regex]::Replace($source,'(?s)    val choices = listOf\(.*?\n    \)','    val choices = listOf('+"`n"+$list+"`n    )")
 [IO.File]::WriteAllText($iconsFile,$source,$utf8)
 $manifestFile=Join-Path $root 'android/app/src/main/AndroidManifest.xml'

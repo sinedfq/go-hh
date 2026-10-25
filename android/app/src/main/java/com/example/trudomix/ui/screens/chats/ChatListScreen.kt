@@ -25,7 +25,7 @@ fun ChatListScreen(viewModel:ChatViewModel=viewModel(),onChatClick:(Int)->Unit={
             item { AppScreenHeader(title={Text("Сообщения")},subtitle="Обсуди детали с будущей командой",applyInsets=false,contentPadding=PaddingValues(0.dp),
 ) }
             when(val current=state) {
-                ChatListUiState.Loading->item{LinearProgressIndicator(Modifier.fillMaxWidth())}
+                ChatListUiState.Loading->item{com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем чаты")}
                 is ChatListUiState.Error->item { OutlinedCard { Column(Modifier.padding(20.dp)) { Text(current.message,color=MaterialTheme.colorScheme.error);TextButton(onClick={viewModel.loadConversations()}){Text("Повторить")}} } }
                 is ChatListUiState.Success->{
                     val conversations=current.conversations.filterNotNull()

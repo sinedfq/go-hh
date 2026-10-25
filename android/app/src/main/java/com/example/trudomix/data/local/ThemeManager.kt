@@ -16,23 +16,28 @@ enum class AppThemeMode {
 private val Context.themeDataStore: DataStore<Preferences> by preferencesDataStore(name = "theme_prefs")
 
 class ThemeManager(context: Context) {
+    private val mirror=context.getSharedPreferences("theme_cache",Context.MODE_PRIVATE)
     private val dataStore = context.themeDataStore
 
     companion object {
         private val THEME_KEY = stringPreferencesKey("app_theme_mode")
+        fun cachedMode(context:Context):AppThemeMode=runCatching{AppThemeMode.valueOf(context.getSharedPreferences("theme_cache",Context.MODE_PRIVATE).getString("mode",AppThemeMode.SYSTEM.name)!!)}.getOrDefault(AppThemeMode.SYSTEM)
     }
 
     val themeModeFlow: Flow<AppThemeMode> = dataStore.data.map { prefs ->
-        when (prefs[THEME_KEY]) {
+        val mode=when (prefs[THEME_KEY]) {
             AppThemeMode.LIGHT.name -> AppThemeMode.LIGHT
             AppThemeMode.DARK.name -> AppThemeMode.DARK
             else -> AppThemeMode.SYSTEM
         }
+        mirror.edit().putString("mode",mode.name).apply()
+        mode
     }
 
     suspend fun setThemeMode(mode: AppThemeMode) {
         dataStore.edit { prefs ->
             prefs[THEME_KEY] = mode.name
         }
+        mirror.edit().putString("mode",mode.name).apply()
     }
 }

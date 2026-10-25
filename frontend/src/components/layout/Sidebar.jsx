@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../contexts/BrandContext'
 import { useState } from 'react'
 
 function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
@@ -19,7 +20,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
         <>
             <aside className="sidebar">
                 <div className="sidebar-logo">
-                    <img src="/brand-trudomix.png" width="36" height="36" alt="" />
+                    <BrandLogo width="36" height="36" alt="" />
                     <h1>Trudomix</h1>
                 </div>
 
