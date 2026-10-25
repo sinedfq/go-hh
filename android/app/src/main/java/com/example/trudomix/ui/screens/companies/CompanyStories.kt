@@ -36,7 +36,7 @@ import com.example.trudomix.data.models.Company
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-data class CompanyStory(val url:String,val video:Boolean=false)
+data class CompanyStory(val url:String,val video:Boolean=false,val caption:String="")
 fun companyStories(company:Company)=company.photos.map{CompanyStory(it)}+company.videos.map{CompanyStory(it,true)}
 
 @Composable
@@ -61,7 +61,7 @@ fun CompanyStories(company:Company) {
 }
 
 @Composable
-internal fun CompanyStoryViewer(name:String,stories:List<CompanyStory>,initial:Int,onClose:()->Unit) {
+internal fun CompanyStoryViewer(name:String,stories:List<CompanyStory>,initial:Int,onDelete:((Int)->Unit)?=null,onClose:()->Unit) {
     val pager=rememberPagerState(initialPage=initial.coerceIn(stories.indices),pageCount={stories.size})
     val scope=rememberCoroutineScope()
     var paused by remember{mutableStateOf(false)}
@@ -92,6 +92,8 @@ internal fun CompanyStoryViewer(name:String,stories:List<CompanyStory>,initial:I
                     }
                 }
                 Column(Modifier.align(Alignment.TopCenter).padding(16.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
+                    if(onDelete!=null)TextButton(onClick={onDelete(pager.currentPage)}){Text("Удалить историю",color=Color.White)}
+                    if(stories[pager.currentPage].caption.isNotBlank())Text(stories[pager.currentPage].caption,Modifier.fillMaxWidth().background(Color.Black.copy(alpha=.65f),RoundedCornerShape(12.dp)).padding(12.dp),color=Color.White)
                     Row(horizontalArrangement=Arrangement.spacedBy(4.dp)){stories.indices.forEach{index->LinearProgressIndicator(progress={if(index<pager.currentPage)1f else if(index==pager.currentPage)progress.coerceIn(0f,1f)else 0f},modifier=Modifier.weight(1f),color=Color.White,trackColor=Color.White.copy(alpha=.25f))}}
                     Row(verticalAlignment=Alignment.CenterVertically){Text(name,Modifier.weight(1f),color=Color.White,style=MaterialTheme.typography.titleMedium);Text("${pager.currentPage+1} / ${stories.size}",color=Color.White);IconButton(onClick=onClose){Icon(Icons.Default.Close,"Закрыть истории",tint=Color.White)}}
                 }

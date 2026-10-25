@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import MediaGallery from './MediaGallery'
+import CompanyFollow from '../social/CompanyFollow'
+import SocialFeed from '../social/SocialFeed'
 import ITAccreditationBadge from '../common/ITAccreditationBadge'
 import VacancyTerms from '../vacancy/VacancyTerms'
 import { WorkspaceMetric } from '../common/WorkspaceHeader'
@@ -60,9 +62,10 @@ export default function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
                         {website && <a className="company-profile-website" href={website} target="_blank" rel="noopener noreferrer">Сайт компании <span aria-hidden="true">↗</span></a>}
                     </div>
                 </div>
-                <div className="company-profile-stats"><WorkspaceMetric icon="briefcase" value={vacancies.length} label="Открытые вакансии" hint="Присоединяйтесь к команде"/><WorkspaceMetric icon="eye" value={Number(company.total_views || 0).toLocaleString('ru-RU')} label="Просмотры вакансий" hint="Интерес к предложениям компании"/></div>
+                <CompanyFollow companyId={companyId}/><div className="company-profile-stats"><WorkspaceMetric icon="briefcase" value={vacancies.length} label="Открытые вакансии" hint="Присоединяйтесь к команде"/><WorkspaceMetric icon="eye" value={Number(company.total_views || 0).toLocaleString('ru-RU')} label="Просмотры вакансий" hint="Интерес к предложениям компании"/></div>
                 {vacancies.length > 0 && <a className="btn btn-primary company-profile-jobs-link" href="#company-open-jobs">Смотреть вакансии <span aria-hidden="true">↓</span></a>}
             </header>
+            <SocialFeed companyId={companyId} composer={false}/>
             <div className="company-profile-layout">
                 <div className="company-profile-story">
                     <section className="company-profile-panel"><h2>О компании</h2><p className="company-profile-copy">{company.description || 'Работодатель пока не добавил описание компании.'}</p></section>

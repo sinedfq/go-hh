@@ -4,6 +4,7 @@ import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
 import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
 import FormSelect from '../../components/common/FormSelect'
 import MediaGallery from '../../components/company/MediaGallery'
+import { SocialComposer, TimedStories } from '../../components/social/SocialFeed'
 import CompanyMediaUpload from '../../components/company/CompanyMediaUpload'
 import { userError } from '../../utils/userError'
 import './EmployerPages.css'
@@ -47,6 +48,7 @@ export default function MyCompanyPage({myCompany,onCreateCompany,onUploadLogo,lo
                 <button className="btn btn-secondary" onClick={edit}>Редактировать страницу компании<WorkspaceIcon name="arrow" size={16}/></button>
             </section>
             <div className="workspace-metrics"><WorkspaceMetric icon="check" value={`${Math.round(filled/6*100)}%`} label="Оформление страницы" hint="Описание, логотип и история команды"/><WorkspaceMetric icon="eye" value={company.photos?.length||0} label="Фотографии" hint="Покажите офис и людей"/><WorkspaceMetric icon="briefcase" value={company.benefits?.length||0} label="Преимущества" hint="Что вы предлагаете команде"/></div>
+            <SocialComposer story/><TimedStories companyId={company.id}/>
             <div className="company-content-grid">
                 <section className="company-content-card"><h2>О компании</h2><p className="preserve-text">{company.description||'Расскажите, чем занимается ваша команда и какие задачи решает.'}</p><dl>{[['Сфера',company.industry],['Размер команды',company.size&&`${company.size} человек`],['Город',company.city]].filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl>{/^https?:\/\//i.test(company.website||'')&&<a className="company-website-link" href={company.website} target="_blank" rel="noreferrer">Сайт компании<WorkspaceIcon name="arrow" size={16}/></a>}</section>
                 <section className="company-content-card"><h2>Наша команда</h2><p className="preserve-text">{company.team_story||'Добавьте историю команды, её ценности и подход к работе.'}</p><h3>Как проходит найм</h3><p className="preserve-text">{company.hiring_process||'Расскажите об этапах знакомства с кандидатами.'}</p></section>

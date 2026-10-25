@@ -44,6 +44,8 @@ fun CompanyScreen(id:Int,onBack:()->Unit,onVacancy:(Int)->Unit,bottomPadding:and
             state.error?.let{item{Text(it);Button(onClick={model.load(id)}){Text("Повторить")}}}
             state.company?.let{c->item{Column(verticalArrangement=Arrangement.spacedBy(12.dp)){CompanyAvatar(c.logo_url,c.name,80.dp);Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){Text(c.name,Modifier.weight(1f,fill=false),style=MaterialTheme.typography.headlineMedium);if(c.it_accredited)ITAccreditationBadge()};if(c.city.isNotBlank())Text(c.city);if(c.industry.isNotBlank())Text(c.industry);if(c.description.isNotBlank())Text(c.description);if(c.website.isNotBlank())Text(c.website)}}}
             state.company?.let{company->
+                item{com.example.trudomix.ui.screens.social.CompanyFollowButton(company.id)}
+                item{CompanySocialPanel(company.id,manage)}
                 if(manage)item{CompanyMediaUpload(company){model.load(id)}}
                 if(company.size.isNotBlank())item{Text("Размер команды: ${company.size}")}
                 if(company.team_story.isNotBlank())item{CompanyTextSection("Наша команда",company.team_story)}

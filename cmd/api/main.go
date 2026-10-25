@@ -113,6 +113,7 @@ func main() {
 	mux.HandleFunc("GET /api/companies", server.getAllCompaniesHandler)
 	mux.HandleFunc("GET /api/companies/{id}", server.getCompanyHandler)
 	mux.HandleFunc("GET /api/companies/{id}/vacancies", server.getCompanyVacanciesHandler)
+	server.registerSocialRoutes(mux)
 
 	// ====== КОМПАНИИ РАБОТОДАТЕЛЯ (employer/admin) ======
 	mux.HandleFunc("POST /api/companies", server.authMiddleware(server.RequireRole("employer", "admin")(server.createCompanyHandler)))
@@ -151,13 +152,14 @@ func main() {
 
 	// Статика
 	uploadsFS := http.FileServer(http.Dir("uploads"))
-	mux.Handle("/uploads/", http.StripPrefix("/uploads/", uploadsFS))
+	mux.Handle("/uploads/", protectStoryUploads(http.StripPrefix("/uploads/", uploadsFS)))
 
 	fs := http.FileServer(http.Dir("frontend/dist"))
 	mux.Handle("/", fs)
 
 	handler := corsMiddleware(mux)
 	go server.runSavedSearches(ctx)
+	go server.runStoryCleanup(ctx)
 
 	address := os.Getenv("HTTP_ADDR")
 	if address == "" {
