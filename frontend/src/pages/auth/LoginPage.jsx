@@ -1,3 +1,4 @@
+import { BrandLogo } from '../../contexts/BrandContext'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { userError } from '../../utils/userError'
@@ -44,7 +45,7 @@ export default function LoginPage({ onClose }) {
         <div className="auth-overlay">
             <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title" onKeyDown={onKeyDown} ref={dialog}>
                 <aside className="auth-story">
-                    <img src="/brand-trudomix.png" alt="Trudomix" className="auth-logo" />
+                    <BrandLogo alt="Trudomix" className="auth-logo" />
                     <span className="eyebrow">TRUDOMIX / КАРЬЕРА</span>
                     <h1>Твоя следующая<br />команда — здесь.</h1>
                     <p>Находи работу по своим правилам. Знакомься с людьми, с которыми хочется делать больше.</p>

@@ -185,7 +185,7 @@ class WebFrontendPreviewTest {
         capture("applications-light")
         evaluate("window.previewReloading=true;localStorage.setItem('user',JSON.stringify({...$user,role:'employer'}));sessionStorage.setItem('currentMode','my-company');location.href=location.pathname")
         waitFor("!window.previewReloading&&!!document.querySelector('.company-avatar-editor')")
-        assertEquals("Favicon configured","true",evaluate("!!document.querySelector('link[rel=icon][href=\"/brand-trudomix.png\"]')"))
+        assertEquals("Favicon configured","true",evaluate("document.querySelector('link[rel=icon]').href.includes('/loader-icons/')"))
         evaluate("(()=>{const file=new File([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII='),c=>c.charCodeAt(0))],'company.png',{type:'image/png'});const transfer=new DataTransfer();transfer.items.add(file);const input=document.querySelector('.company-avatar-editor input[type=file]');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()")
         waitFor("!!document.querySelector('.company-avatar-editor img[src*=uploaded]')")
         evaluate("document.documentElement.dataset.theme='dark';localStorage.setItem('theme','dark')")

@@ -30,7 +30,7 @@ fun ProfileScreen(viewModel:ProfileViewModel,onLogout:()->Unit,onNavigateToSetti
         })
         Spacer(Modifier.height(24.dp))
             when(val state=uiState) {
-                ProfileUiState.Loading -> CircularProgressIndicator()
+                ProfileUiState.Loading -> com.example.trudomix.ui.loading.TrudomixLoadingScreen(label="Загружаем профиль")
                 is ProfileUiState.Error -> Column(Modifier.padding(20.dp),horizontalAlignment=Alignment.CenterHorizontally) {
                     Text(state.message,color=MaterialTheme.colorScheme.error)
                     Button(onClick={viewModel.loadUserProfile()}){Text("Повторить")}

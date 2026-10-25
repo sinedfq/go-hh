@@ -95,7 +95,7 @@ fun VacancyDetailScreen(
         ) {
             when (val state = uiState) {
                 is VacancyDetailUiState.Loading -> {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                    com.example.trudomix.ui.loading.TrudomixLoadingScreen(label="Загружаем вакансию")
                 }
 
                 is VacancyDetailUiState.Error -> {

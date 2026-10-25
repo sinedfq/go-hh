@@ -1,3 +1,4 @@
+import PageLoader from '../../components/common/PageLoader'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { useAuth } from '../../contexts/AuthContext'
@@ -171,7 +172,7 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast, onNavigate }) {
         return (
             <div className="profile-page">
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <PageLoader compact/>
                     <p>Загрузка...</p>
                 </div>
             </div>

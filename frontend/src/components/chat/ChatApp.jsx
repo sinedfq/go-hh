@@ -1,3 +1,4 @@
+import PageLoader from '../common/PageLoader'
 import ModalPortal from '../common/ModalPortal'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
@@ -290,7 +291,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
 
                         <div className="chat-app-sidebar-list">
                             {loadingChats ? (
-                                <div className="chat-app-loading"><div className="spinner"></div></div>
+                                <div className="chat-app-loading"><PageLoader compact/></div>
                             ) : conversations.length === 0 ? (
                                 <div className="chat-app-empty">
                                     <div className="chat-app-empty-icon">💬</div>
@@ -460,7 +461,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                 {/* СООБЩЕНИЯ */}
                                 <div className="chat-messages">
                                     {loadingMessages ? (
-                                        <div className="loading"><div className="spinner"></div></div>
+                                        <div className="loading"><PageLoader compact/></div>
                                     ) : (
                                         <>
                                             {/* ====== СОПРОВОДИТЕЛЬНОЕ ПИСЬМО КАНДИДАТА ====== */}

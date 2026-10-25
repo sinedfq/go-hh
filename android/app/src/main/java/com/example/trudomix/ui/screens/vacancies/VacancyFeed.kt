@@ -82,7 +82,7 @@ fun VacancyFeed(
             }
             when (state) {
                 VacancyListUiState.Loading -> item(span = { GridItemSpan(maxLineSpan) }) {
-                    Box(Modifier.fillMaxWidth().heightIn(min = 180.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+                    com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем вакансии")
                 }
                 is VacancyListUiState.Error -> item(span = { GridItemSpan(maxLineSpan) }) {
                     FeedNotice("Не получилось загрузить вакансии", state.message, "Попробовать снова", onRefresh)

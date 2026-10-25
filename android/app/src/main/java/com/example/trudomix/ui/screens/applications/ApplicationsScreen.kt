@@ -58,7 +58,7 @@ fun ApplicationsContent(state:ApplicationsUiState,busy:Set<Int> = emptySet(),onR
                 items(listOf("all" to "Все","active" to "В работе","accepted" to "Приглашения","rejected" to "Отказы")){(key,label)->FilterChip(filter==key,{filter=key},label={Text(label)})}
             } }
             when(state) {
-                ApplicationsUiState.Loading -> item{LinearProgressIndicator(Modifier.fillMaxWidth())}
+                ApplicationsUiState.Loading -> item{com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем отклики")}
                 is ApplicationsUiState.Error -> item { OutlinedCard(Modifier.fillMaxWidth()){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(12.dp)){
                     Text("Не удалось загрузить отклики",style=MaterialTheme.typography.titleMedium);Text(state.message,color=colors.onSurfaceVariant);Button(onClick=onRefresh){Text("Попробовать снова")}
                 }} }

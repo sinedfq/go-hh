@@ -8,6 +8,7 @@ import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import com.example.trudomix.data.local.AppThemeMode
 import com.example.trudomix.data.local.ThemeManager
 import com.example.trudomix.ui.navigation.AppNavGraph
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeManager = remember { ThemeManager(applicationContext) }
-            val themeMode by themeManager.themeModeFlow.collectAsState(initial = AppThemeMode.SYSTEM)
+            val themeMode by themeManager.themeModeFlow.collectAsState(initial = ThemeManager.cachedMode(applicationContext))
 
             val darkTheme = when (themeMode) {
                 AppThemeMode.LIGHT -> false
@@ -38,6 +39,7 @@ class MainActivity : ComponentActivity() {
                 AppThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+            LaunchedEffect(darkTheme){com.example.trudomix.data.local.AppIcons.applyTheme(applicationContext,darkTheme)}
             TrudomixTheme(darkTheme = darkTheme) {
                 AppNavGraph()
             }

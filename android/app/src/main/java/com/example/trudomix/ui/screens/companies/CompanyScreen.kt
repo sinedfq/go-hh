@@ -40,7 +40,7 @@ fun CompanyScreen(id:Int,onBack:()->Unit,onVacancy:(Int)->Unit,bottomPadding:and
     LaunchedEffect(id){model.load(id)}
     Scaffold(topBar={AppScreenHeader(title={Text("О компании")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})}){padding->
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("company-content"),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=20.dp,bottom=bottomPadding),verticalArrangement=Arrangement.spacedBy(16.dp)){
-            if(state.loading)item{CircularProgressIndicator()}
+            if(state.loading)item{com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем компанию")}
             state.error?.let{item{Text(it);Button(onClick={model.load(id)}){Text("Повторить")}}}
             state.company?.let{c->item{Column(verticalArrangement=Arrangement.spacedBy(12.dp)){CompanyAvatar(c.logo_url,c.name,80.dp);Row(verticalAlignment=androidx.compose.ui.Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){Text(c.name,Modifier.weight(1f,fill=false),style=MaterialTheme.typography.headlineMedium);if(c.it_accredited)ITAccreditationBadge()};if(c.city.isNotBlank())Text(c.city);if(c.industry.isNotBlank())Text(c.industry);if(c.description.isNotBlank())Text(c.description);if(c.website.isNotBlank())Text(c.website)}}}
             state.company?.let{company->

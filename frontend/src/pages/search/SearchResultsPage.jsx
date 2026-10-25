@@ -1,3 +1,4 @@
+import PageLoader from '../../components/common/PageLoader'
 import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
 import { useState, useEffect, useRef } from 'react'
 import SearchBar from '../../components/vacancy/SearchBar'
@@ -137,7 +138,7 @@ function SearchResultsPage({
 
             {savingSearch&&<form className="save-search-form" onSubmit={saveSearch}><label>Название поиска<input value={searchName} maxLength={80} onChange={event=>setSearchName(event.target.value)} required/></label><p>Новые совпадения появятся в уведомлениях сайта.</p>{saveError&&<p role="alert">{saveError}</p>}<button className="btn btn-primary" disabled={saveBusy||!searchName.trim()}>{saveBusy?'Сохранение…':'Сохранить и подписаться'}</button><button type="button" className="btn btn-secondary" disabled={saveBusy} onClick={()=>setSavingSearch(false)}>Отмена</button></form>}
             {loading ? (
-                <div className="loading"><div className="spinner"></div></div>
+                <div className="loading"><PageLoader compact/></div>
             ) : results.length === 0 ? (
                 <div className="empty-state">
                     <h2>Ничего не найдено</h2>

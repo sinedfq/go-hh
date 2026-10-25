@@ -28,6 +28,8 @@ import EmployerStatsPage from './pages/employer/EmployerStatsPage'
 import ChatApp from './components/chat/ChatApp'
 import ChatButton from './components/chat/ChatButton'
 import axios from 'axios'
+import PageLoader from './components/common/PageLoader'
+import BrandPicker from './components/common/BrandPicker'
 
 function App() {
     const app = useApp()
@@ -63,16 +65,7 @@ function App() {
         app.openVacancyPage(id)
     }
 
-    if (app.authLoading) {
-        return (
-            <div className="app">
-                <div className="loading">
-                    <div className="spinner"></div>
-                    <p>Загрузка...</p>
-                </div>
-            </div>
-        )
-    }
+    if (app.authLoading) return <PageLoader fullscreen/>
 
     return (
         <div className="app">
@@ -112,6 +105,7 @@ function App() {
                     </div>
 
                     <div className="header-actions">
+                        <BrandPicker/>
                         <button
                             className="theme-toggle"
                             aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}

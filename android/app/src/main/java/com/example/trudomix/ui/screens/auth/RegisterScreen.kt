@@ -50,7 +50,7 @@ fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,on
                     navigationIcon={IconButton(onClick=onLogin,enabled=state !is AuthUiState.Loading){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Ко входу")}})
                 if(wide)Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(48.dp)) {
                     Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(20.dp)) {
-                        AppIconImage(AppIcons.default.resource,"Trudomix",Modifier.size(88.dp))
+                        com.example.trudomix.ui.components.SelectedBrandImage("Trudomix",Modifier.size(88.dp))
                         Text("Знакомься с будущей командой",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
                         Text("Ищи работу или находи людей, с которыми хочется работать.",color=MaterialTheme.colorScheme.onSurfaceVariant)
                     }

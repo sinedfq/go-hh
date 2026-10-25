@@ -1,3 +1,4 @@
+import PageLoader from '../common/PageLoader'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import MediaGallery from './MediaGallery'
@@ -51,7 +52,7 @@ export default function CompanyDetails({ companyId, onBack, onSelectVacancy }) {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
             К компаниям
         </button>
-        {loading ? <div className="company-profile-panel company-profile-state" role="status"><div className="spinner"/><p>Загружаем компанию…</p></div>
+        {loading ? <div className="company-profile-panel company-profile-state" role="status"><PageLoader compact/><p>Загружаем компанию…</p></div>
         : error || !company ? <div className="company-profile-panel company-profile-state" role="alert"><h2>Не удалось открыть компанию</h2><p>{error || 'Компания не найдена'}</p><button className="btn btn-primary" onClick={() => setRetry(value => value + 1)}>Попробовать ещё раз</button></div>
         : <>
             <header className="company-profile-panel company-profile-hero">
