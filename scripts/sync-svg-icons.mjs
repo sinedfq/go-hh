@@ -1,4 +1,4 @@
-﻿// Import the supplied real vectors. EXACT_SVG embeds raster images instead.
+// Import the supplied real vectors. EXACT_SVG embeds raster images instead.
 import { readFileSync, writeFileSync, mkdirSync, copyFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -53,4 +53,3 @@ write('android/app/src/main/res/drawable/brand_vector_transparent.xml',vector(sv
 write('android/app/src/main/res/drawable/ic_launcher_foreground.xml','<inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="18dp" android:drawable="@drawable/brand_vector_transparent"/>\n')
 for(const name of ['brand-trudomix','brand-dark-waves'])copyFileSync(path.join(root,'frontend/public/loader-icons/icon_06_black.svg'),path.join(root,`frontend/public/${name}.svg`))
 console.log(`Imported 81 SVGs and ${count} Android VectorDrawables without raster conversion.`)
-
