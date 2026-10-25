@@ -32,6 +32,12 @@ class CompanyExperienceTest {
         compose.onNodeWithText("Как проходит найм").assertIsDisplayed()
         compose.onNodeWithTag("company-content").performScrollToNode(hasText("Обучение за счёт компании",substring=true))
         compose.onNodeWithTag("company-content").performScrollToNode(hasContentDescription("Фото компании 1"))
+        compose.onNodeWithTag("company-content").performScrollToNode(hasContentDescription("Видео компании 3"))
+        compose.onNodeWithTag("company-gallery").performScrollToIndex(2)
+        compose.waitUntil(20000){compose.onAllNodes(hasContentDescription("Видео компании 3") and SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.StateDescription,"Превью видео готово")).fetchSemanticsNodes().isNotEmpty()}
+        screenshot("company-video-preview.png")
+        compose.onNodeWithTag("company-gallery").performScrollToIndex(0)
+        compose.onNodeWithTag("company-content").performScrollToNode(hasContentDescription("Фото компании 1"))
         compose.onNodeWithContentDescription("Фото компании 1").performClick()
         waitText("1 / 3")
         compose.onNodeWithContentDescription("История 1").performTouchInput{swipeLeft()}
@@ -59,7 +65,7 @@ class CompanyExperienceTest {
         compose.onNodeWithContentDescription("Моя компания").performClick()
         waitText("О компании")
         waitText("Добавить фото или видео")
-        waitText("Жизнь команды")
+        compose.onNodeWithTag("company-content").performScrollToNode(hasText("Жизнь команды"))
         screenshot("employer-bottom-tabs.png")
         compose.onNodeWithContentDescription("Карта вакансий").assertDoesNotExist()
         compose.onNodeWithContentDescription("Поиск").assertDoesNotExist()
@@ -84,6 +90,8 @@ class CompanyExperienceTest {
             }
             if(path.endsWith(".png"))return MockResponse().setHeader("Content-Type","image/png").setBody(okio.Buffer().write(image))
             val body=when(path){
+                "/api/companies/99/subscription"->"""{"following":false,"followers":0}"""
+                "/api/stories"->"[]"
                 "/api/me"->"""{"id":9999,"email":"preview@example.test","role":"${if(employer)"employer"else "candidate"}","company_id":99,"created_at":"2026-01-01T00:00:00Z"}"""
                 "/api/companies/99","/api/my-company"->company
                 "/api/my-vacancies"->"""{"company":$company,"vacancies":[]}"""

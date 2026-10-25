@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -47,10 +48,10 @@ fun CompanyStories(company:Company) {
     Column(verticalArrangement=Arrangement.spacedBy(12.dp)) {
         Text("Жизнь команды",style=MaterialTheme.typography.titleLarge)
         Text("Фото и видео · нажми, чтобы посмотреть",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        LazyRow(horizontalArrangement=Arrangement.spacedBy(12.dp)) {
+        LazyRow(Modifier.testTag("company-gallery"),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
             itemsIndexed(stories,key={_,story->story.url}){index,story->
                 Box(Modifier.width(124.dp).height(180.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.primaryContainer).clickable{opened=index},contentAlignment=Alignment.Center) {
-                    if(story.video)Icon(Icons.Default.PlayCircle,"Видео компании ${index+1}",Modifier.size(44.dp),tint=MaterialTheme.colorScheme.onPrimaryContainer)
+                    if(story.video)com.example.trudomix.ui.components.VideoPreview(story.url,"Видео компании ${index+1}",Modifier.fillMaxSize())
                     else AsyncImage(ApiClient.mediaUrl(story.url),"Фото компании ${index+1}",Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
                     Text("${index+1}",Modifier.align(Alignment.BottomStart).padding(10.dp).background(Color.Black.copy(alpha=.6f),RoundedCornerShape(8.dp)).padding(horizontal=8.dp,vertical=4.dp),color=Color.White,style=MaterialTheme.typography.labelSmall)
                 }

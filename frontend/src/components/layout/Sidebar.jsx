@@ -19,7 +19,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
         <>
             <aside className="sidebar">
                 <div className="sidebar-logo">
-                    <img src="/brand-dark-waves.png" width="36" height="36" alt="" />
+                    <img src="/brand-trudomix.png" width="36" height="36" alt="" />
                     <h1>Trudomix</h1>
                 </div>
 

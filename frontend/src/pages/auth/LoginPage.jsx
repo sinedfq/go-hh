@@ -44,7 +44,7 @@ export default function LoginPage({ onClose }) {
         <div className="auth-overlay">
             <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title" onKeyDown={onKeyDown} ref={dialog}>
                 <aside className="auth-story">
-                    <img src="/brand-dark-waves.png" alt="Trudomix" className="auth-logo" />
+                    <img src="/brand-trudomix.png" alt="Trudomix" className="auth-logo" />
                     <span className="eyebrow">TRUDOMIX / КАРЬЕРА</span>
                     <h1>Твоя следующая<br />команда — здесь.</h1>
                     <p>Находи работу по своим правилам. Знакомься с людьми, с которыми хочется делать больше.</p>
@@ -62,9 +62,9 @@ export default function LoginPage({ onClose }) {
                             </label>)}
                         </fieldset>}
                         <label htmlFor="auth-email">Почта</label>
-                        <input id="auth-email" ref={emailField} type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={event => setEmail(event.target.value)} disabled={busy} required />
+                        <input id="auth-email" ref={emailField} type="email" autoComplete="email" placeholder="Введите почту" value={email} onChange={event => setEmail(event.target.value)} disabled={busy} required />
                         <label htmlFor="auth-password">Пароль</label>
-                        <div className="auth-password"><input id="auth-password" type={visible ? 'text' : 'password'} autoComplete={isLogin ? 'current-password' : 'new-password'} value={password} onChange={event => setPassword(event.target.value)} minLength={isLogin ? undefined : 6} disabled={busy} required />
+                        <div className="auth-password"><input id="auth-password" type={visible ? 'text' : 'password'} placeholder={isLogin?'Введите пароль':'Придумайте пароль'} autoComplete={isLogin ? 'current-password' : 'new-password'} value={password} onChange={event => setPassword(event.target.value)} minLength={isLogin ? undefined : 6} disabled={busy} required />
                             <button type="button" onClick={() => setVisible(value => !value)} aria-label={visible ? 'Скрыть пароль' : 'Показать пароль'}>{visible ? 'Скрыть' : 'Показать'}</button>
                         </div>
                         {error && <p className="auth-error" role="alert">{error}</p>}

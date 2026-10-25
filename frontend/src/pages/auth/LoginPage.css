@@ -27,3 +27,5 @@
 @keyframes auth-appear{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.auth-overlay{padding:16px;align-items:start}.auth-dialog{grid-template-columns:1fr;max-width:480px}.auth-story{padding:28px;gap:12px}.auth-story h1{font-size:1.8rem}.auth-story p,.auth-story-tags{display:none}.auth-logo{width:48px;height:48px;border-radius:14px}.auth-form-panel{padding:32px 24px 24px}.auth-story .eyebrow{font-size:.6rem}.auth-close{top:12px}.auth-form-panel h2{font-size:1.7rem}}
 @media(prefers-reduced-motion:reduce){.auth-dialog{animation:none}}
+
+.auth-form input::placeholder{color:var(--text-muted);opacity:1}

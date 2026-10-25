@@ -25,13 +25,21 @@ class WebSocialExperienceTest {
         val url=InstrumentationRegistry.getArguments().getString("webUrl")?:"http://10.0.2.2:5174/"
         val following=AtomicBoolean(false);val posted=AtomicBoolean(false);val liked=AtomicBoolean(false);val commented=AtomicBoolean(false)
         val user="""{"id":9999,"email":"preview@example.test","role":"candidate"}"""
-        val company="""{"id":99,"name":"Команда Trudomix","description":"Создаём продукты","logo_url":"/brand-dark-waves.png"}"""
+        val company="""{"id":99,"name":"ООО ИКС","description":"Создаём продукты","logo_url":"/brand-dark-waves.png","photos":["/brand-dark-waves.png"],"videos":["/preview-company-story.mp4"]}"""
         val expiry=Instant.now().plusSeconds(86400).toString()
         fun post(id:Int,own:Boolean)="""{"id":$id,"author_name":"${if(own)"Александр"else "Команда Trudomix"}","company_id":${if(own)"null"else "99"},"body":"${if(own)"Мой новый пост"else "Новости команды"}","can_delete":$own,"liked":${liked.get()},"likes":${if(liked.get())1 else 0},"comments":${if(commented.get())1 else 0},"created_at":"2026-10-25T10:00:00Z"}"""
         instrumentation.runOnMainSync{compose.activity.setContentView(WebView(compose.activity).apply{
             web.set(this);settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
             webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse?{
-                val path=request.url.path.orEmpty();if(!path.startsWith("/api/"))return null
+                val path=request.url.path.orEmpty()
+                if(path=="/preview-company-story.mp4"){
+                    val bytes=instrumentation.context.assets.open("company-story.mp4").use{it.readBytes()}
+                    val range=request.requestHeaders.entries.firstOrNull{it.key.equals("Range",true)}?.value?.removePrefix("bytes=")?.split('-')
+                    val start=range?.firstOrNull()?.toIntOrNull()?:0
+                    val end=(range?.getOrNull(1)?.toIntOrNull()?:bytes.lastIndex).coerceAtMost(bytes.lastIndex)
+                    return WebResourceResponse("video/mp4",null,if(range==null)200 else 206,if(range==null)"OK"else "Partial Content",mapOf("Accept-Ranges" to "bytes","Content-Range" to "bytes $start-$end/${bytes.size}"),bytes.copyOfRange(start,end+1).inputStream())
+                }
+                if(!path.startsWith("/api/"))return null
                 val body=when{
                     path=="/api/me"->user
                     path=="/api/companies"->"[$company]"
@@ -57,6 +65,12 @@ class WebSocialExperienceTest {
         fun screenshot(name:String){Thread.sleep(400);val bitmap=instrumentation.uiAutomation.takeScreenshot();File(instrumentation.targetContext.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle();assertEquals("No horizontal overflow","true",js("document.documentElement.scrollWidth<=innerWidth+1"))}
         try{
             waitFor("!!document.querySelector('.top-header')")
+            js("window.loadingPreview=true;localStorage.removeItem('user');localStorage.removeItem('token');location.reload()")
+            waitFor("!window.loadingPreview&&!!document.querySelector('.header-login-btn')")
+            js("document.querySelector('.header-login-btn').click()")
+            waitFor("!!document.querySelector('#auth-email')")
+            assertEquals("Login hints are present","true",js("document.querySelector('#auth-email').placeholder.length>0&&document.querySelector('#auth-password').placeholder.length>0&&getComputedStyle(document.querySelector('#auth-email'),'::placeholder').opacity==='1'"))
+            js("document.querySelector('.auth-close').click()")
             js("window.loadingPreview=true;localStorage.setItem('theme','light');localStorage.setItem('user',JSON.stringify($user));localStorage.setItem('token','preview-token');sessionStorage.setItem('currentMode','companies');location.reload()")
             waitFor("!window.loadingPreview&&!!document.querySelector('.company-card')")
             js("document.querySelector('.company-card').click()")
@@ -64,14 +78,25 @@ class WebSocialExperienceTest {
             js("document.querySelector('.company-follow button').click()")
             waitFor("document.querySelector('.company-follow button').textContent==='Вы подписаны'")
             assertTrue(following.get())
+            waitFor("!!document.querySelector('.company-profile-gallery .video-preview[data-ready=true]')")
             js("window.loadingPreview=true;sessionStorage.setItem('currentMode','home');location.href=location.pathname")
             waitFor("!window.loadingPreview&&document.querySelectorAll('.social-post').length===1&&document.querySelectorAll('.social-story-ring').length===1")
             js("document.querySelector('.social-story-ring').click()")
             waitFor("!!document.querySelector('.media-viewer')&&document.querySelector('.media-story-caption').textContent==='День команды'")
-            js("document.querySelector('[aria-label=\"Закрыть просмотр\"]').click()")
+            waitFor("Number(document.querySelector('.story-progress-track [role=progressbar]').getAttribute('aria-valuenow'))>2")
+            js("document.querySelector('[aria-label=\"Пауза истории\"]').click()")
+            val pausedProgress=js("Number(document.querySelector('.story-progress-track [role=progressbar]').getAttribute('aria-valuenow'))").toDouble()
+            Thread.sleep(350)
+            assertEquals(pausedProgress,js("Number(document.querySelector('.story-progress-track [role=progressbar]').getAttribute('aria-valuenow'))").toDouble(),1.0)
+            screenshot("web-story-progress.png")
+            js("document.querySelector('[aria-label=\"Продолжить историю\"]').click()")
+            waitFor("!document.querySelector('.media-viewer')")
+            assertEquals("Post input hint is present","true",js("document.querySelector('.social-composer textarea').placeholder.length>0"))
             input(".social-composer textarea","Мой новый пост")
             js("document.querySelector('.social-composer .btn-primary').click()")
             waitFor("document.querySelectorAll('.social-post').length===2")
+            assertEquals("Author is not compressed to a letter column","true",js("(()=>{const header=document.querySelector('.social-post-header'),name=header.querySelector('.social-post-identity');return name.getBoundingClientRect().width>90&&header.getBoundingClientRect().height<160})()"))
+            assertEquals("Reaction icons align with counts","true",js("(()=>{const button=document.querySelector('.social-post-reactions button'),icon=button.querySelector('svg').getBoundingClientRect(),count=button.querySelector('span').getBoundingClientRect();return Math.abs(icon.top+icon.height/2-count.top-count.height/2)<1})()"))
             js("document.querySelector('.social-post-reactions button').click()")
             waitFor("document.querySelector('.social-post-reactions button').getAttribute('aria-pressed')==='true'")
             js("document.querySelector('.social-post-reactions button[aria-expanded]').click()")
@@ -79,7 +104,7 @@ class WebSocialExperienceTest {
             input(".social-comments textarea","Спасибо команде")
             js("document.querySelector('.social-comments form button').click()")
             waitFor("document.querySelectorAll('.social-comment').length===1")
-            js("document.querySelector('.social-feed').scrollIntoView()")
+            js("document.querySelector('.social-post').scrollIntoView()")
             screenshot("web-social-light.png")
             js("document.querySelector('.social-comment button').click()")
             waitFor("document.querySelectorAll('.social-comment').length===0")
