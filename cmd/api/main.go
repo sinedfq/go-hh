@@ -41,6 +41,9 @@ func main() {
 	} else {
 		log.Println("FCM disabled: FIREBASE_PROJECT_ID is not set")
 	}
+	if server.phoneVerificationFirebase && server.pushSender == nil {
+		log.Fatal("OTP_MODE=firebase requires Firebase server credentials")
+	}
 
 	mux := http.NewServeMux()
 	server.phoneVerificationRoutes(mux)

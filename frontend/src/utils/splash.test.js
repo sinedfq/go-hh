@@ -8,16 +8,16 @@ const {frame,trajectories,lineWindow}=context.TrudomixSplashMath
 test('HTML contour, orb and impact finish once; reduced motion skips the sequence',()=>{
     assert.ok(frame(.1).trace>0)
     assert.equal(frame(0).trace,0)
-    assert.ok(frame(2).trace>0&&frame(2).trace<1)
-    assert.equal(frame(3).fill,0)
-    assert.equal(frame(4.7).orbTrace,0)
-    assert.ok(frame(5.8).orbTrace>0)
-    assert.equal(frame(5.7).orb,0)
-    assert.equal(frame(6.7).wordmark,0)
-    assert.ok(frame(8).flash>0)
-    assert.ok(frame(8).ringAlpha>0)
-    assert.equal(frame(9.6).done,true)
-    for(const t of [9.6,20]){assert.equal(frame(t).wordmark,1);assert.equal(frame(t).flash,0);assert.equal(frame(t).ringAlpha,0);assert.equal(frame(t).scale,1)}
+    assert.ok(frame(1).trace>0&&frame(1).trace<1)
+    assert.equal(frame(1.5).fill,0)
+    assert.equal(frame(1.1).orbTrace,0)
+    assert.ok(frame(1.5).orbTrace>0)
+    assert.equal(frame(1.5).orb,0)
+    assert.equal(frame(2.6).wordmark,0)
+    assert.ok(frame(2.5).flash>0)
+    assert.ok(frame(2.5).ringAlpha>0)
+    assert.equal(frame(3.7).done,true)
+    for(const t of [3.7,20]){assert.equal(frame(t).wordmark,1);assert.equal(frame(t).flash,0);assert.equal(frame(t).ringAlpha,0);assert.equal(frame(t).scale,1)}
     assert.equal(frame(0,true).wordmark,1);assert.equal(frame(0,true).done,true)
 })
 

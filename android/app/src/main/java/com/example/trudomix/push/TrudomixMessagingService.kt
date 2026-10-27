@@ -16,6 +16,7 @@ import com.google.firebase.messaging.RemoteMessage
 class TrudomixMessagingService:FirebaseMessagingService(){
     override fun onNewToken(token:String){DeviceRegistration.sync(this)}
     override fun onMessageReceived(message:RemoteMessage){
+        if(message.data["type"]=="auth_code"){OtpNotifications.receive(this,message.data);return}
         AppNotifications.show(this, message.notification?.title ?: message.data["title"] ?: "Trudomix",
             message.notification?.body ?: message.data["body"] ?: "Новое уведомление", message.data, message.messageId)
     }

@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"github.com/sinedfq/go-hh/internal/phoneotp"
+	"github.com/sinedfq/go-hh/internal/push"
 	"net"
 	"net/http"
 	"os"
@@ -27,6 +28,13 @@ func TestMobilePhoneFixture(t *testing.T) {
 	s := NewServer(&PostgresStorage{pool: pool}, nil)
 	s.phoneVerification = service
 	s.phoneVerificationTest = true
+	if os.Getenv("TRUDOMIX_MOBILE_PHONE_TEST_FIREBASE") == "1" {
+		s.pushSender, err = push.New(context.Background(), os.Getenv("FIREBASE_PROJECT_ID"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		s.phoneVerificationFirebase = true
+	}
 	mux := http.NewServeMux()
 	s.phoneVerificationRoutes(mux)
 	mux.HandleFunc("GET /health", s.healthHandler)

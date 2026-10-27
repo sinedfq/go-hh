@@ -13,6 +13,13 @@ import com.example.trudomix.data.local.AppIcons
 
 /** User-requested development codes are separate from optional business-event notifications. */
 object OtpNotifications{
+    fun expect(context:Context,id:String){context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().putString("request",id).putLong("expires",System.currentTimeMillis()+300000).commit()}
+    fun receive(context:Context,data:Map<String,String>){
+        val preferences=context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE)
+        val expires=data["expires_at"]?.toLongOrNull()?:return
+        if(data["request_id"]!=preferences.getString("request",null)||System.currentTimeMillis()>=preferences.getLong("expires",0)||expires*1000<=System.currentTimeMillis())return
+        show(context,data["phone"].orEmpty(),data["code"].orEmpty(),((expires*1000-System.currentTimeMillis())/1000).toInt().coerceIn(1,300))
+    }
     const val CHANNEL="trudomix_auth_codes"
     const val ID=0x54524F54
     fun createChannel(context:Context){context.getSystemService(NotificationManager::class.java).createNotificationChannel(NotificationChannel(CHANNEL,"Коды подтверждения",NotificationManager.IMPORTANCE_HIGH).apply{description="Коды регистрации и входа, запрошенные вами"})}
@@ -31,5 +38,5 @@ object OtpNotifications{
             .setCategory(NotificationCompat.CATEGORY_STATUS).setPriority(NotificationCompat.PRIORITY_HIGH).setTimeoutAfter(expiresIn*1000L).build()
         return try{context.getSystemService(NotificationManager::class.java).notify("trudomix-otp",ID,notification);true}catch(_:SecurityException){false}
     }
-    fun clear(context:Context){context.getSystemService(NotificationManager::class.java).cancel("trudomix-otp",ID)}
+    fun clear(context:Context){context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().clear().apply();context.getSystemService(NotificationManager::class.java).cancel("trudomix-otp",ID)}
 }

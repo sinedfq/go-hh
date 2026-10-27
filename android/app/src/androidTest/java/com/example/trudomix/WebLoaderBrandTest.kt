@@ -18,6 +18,37 @@ import java.util.concurrent.atomic.AtomicReference
 class WebLoaderBrandTest {
     @get:Rule val compose=createAndroidComposeRule<ComponentActivity>()
     @android.annotation.SuppressLint("SetJavaScriptEnabled")
+    @Test fun authFormsFitPhoneAndDesktopInBothThemes(){
+        assumeTrue(InstrumentationRegistry.getArguments().getString("liveWeb")=="true")
+        val instrumentation=InstrumentationRegistry.getInstrumentation()
+        val web=AtomicReference<WebView>()
+        val url=InstrumentationRegistry.getArguments().getString("webUrl")?:"http://10.0.2.2:8080/"
+        instrumentation.runOnMainSync{compose.activity.setContentView(WebView(compose.activity).apply{
+            web.set(this);settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.useWideViewPort=true;settings.loadWithOverviewMode=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE;webViewClient=WebViewClient();loadUrl(url)
+        })}
+        fun js(script:String):String{val result=AtomicReference<String>();val latch=CountDownLatch(1);instrumentation.runOnMainSync{web.get().evaluateJavascript(script){result.set(it);latch.countDown()}};check(latch.await(3,TimeUnit.SECONDS));return result.get()}
+        fun waitFor(script:String){val deadline=System.currentTimeMillis()+25000;while(System.currentTimeMillis()<deadline){if(js(script)=="true")return;Thread.sleep(80)};error("Web auth condition failed: $script")}
+        fun shot(name:String){val bitmap=instrumentation.uiAutomation.takeScreenshot();File(instrumentation.targetContext.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()}
+        try{
+            waitFor("!!document.querySelector('.app')&&!document.querySelector('#startup-splash')")
+            js("window.reloading=true;localStorage.removeItem('user');localStorage.removeItem('token');location.reload()")
+            waitFor("!window.reloading&&!!document.querySelector('.login-btn')&&!document.querySelector('#startup-splash')")
+            js("document.querySelector('.login-btn').click()")
+            waitFor("!!document.querySelector('.auth-dialog')")
+            assertEquals("true",js("document.querySelector('#auth-email').placeholder.length>0&&document.querySelector('#auth-password').placeholder.length>0"))
+            js("document.querySelector('.auth-dialog .auth-switch').click()")
+            waitFor("!!document.querySelector('.auth-role-options')")
+            for(width in listOf(360,1280)){
+                js("document.querySelector('meta[name=viewport]').content='width=$width';document.documentElement.dataset.theme='light'")
+                waitFor("Math.abs(innerWidth-$width)<4")
+                assertEquals("Roles must remain on one row","true",js("(()=>{const a=[...document.querySelectorAll('.auth-role-options label')].map(x=>x.getBoundingClientRect());return a.length===2&&Math.abs(a[0].top-a[1].top)<1&&a[1].right<=innerWidth})()"))
+                assertEquals("Form must fit its dialog","true",js("(()=>{const d=document.querySelector('.auth-dialog');return d.scrollWidth<=d.clientWidth+1&&[...document.querySelectorAll('.auth-form input:not([type=radio])')].every(x=>{const r=x.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth})})()"))
+                shot("web-registration-light-$width.png")
+                js("document.documentElement.dataset.theme='dark'");shot("web-registration-dark-$width.png")
+            }
+        }finally{instrumentation.runOnMainSync{web.get().destroy()}}
+    }
+    @android.annotation.SuppressLint("SetJavaScriptEnabled")
     @Test fun criticalSequenceThemesSlowBackendAndReducedMotion(){
         assumeTrue(InstrumentationRegistry.getArguments().getString("liveWeb")=="true")
         val instrumentation=InstrumentationRegistry.getInstrumentation();val web=AtomicReference<WebView>()
@@ -30,6 +61,13 @@ class WebLoaderBrandTest {
             web.set(this);setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null);settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
             webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse?{
                 val path=request.url.path.orEmpty()
+                if(request.isForMainFrame&&path=="/"){
+                    // WebView can reuse a preloaded script across reloads even with LOAD_NO_CACHE.
+                    // Give each test motion mode its own resource URL, including the preload.
+                    val mode=if(reduced.get())"reduced"else if(modulesBlocked.get())"clock"else "normal"
+                    val html=java.net.URL(url).readText().replace("\"/splash.js\"","\"/splash.js?test-motion=$mode\"")
+                    return WebResourceResponse("text/html","UTF-8",html.byteInputStream())
+                }
                 if(path.startsWith("/assets/")&&path.endsWith(".js")){
                     requested.add(path)
                     if(modulesBlocked.get())return WebResourceResponse("application/javascript","UTF-8","".byteInputStream())
@@ -53,7 +91,7 @@ class WebLoaderBrandTest {
             }};loadUrl(url)
         })}
         fun js(script:String):String{val result=AtomicReference<String>();val latch=CountDownLatch(1);instrumentation.runOnMainSync{web.get().evaluateJavascript(script){result.set(it);latch.countDown()}};if(!latch.await(2,TimeUnit.SECONDS))return "null";return result.get()}
-        fun waitFor(script:String){val deadline=System.currentTimeMillis()+25000;while(System.currentTimeMillis()<deadline){if(js(script)=="true")return;Thread.sleep(80)};error("Splash condition failed: $script; ${js("document.body.innerText.slice(0,1000)")}")}
+        fun waitFor(script:String){val deadline=System.currentTimeMillis()+25000;while(System.currentTimeMillis()<deadline){if(js(script)=="true")return;Thread.sleep(80)};error("Splash condition failed: $script; ${js("JSON.stringify({reloading:window.reloading,inspect:window.TrudomixSplash?.inspect(),media:matchMedia('(prefers-reduced-motion: reduce)').matches})")}; ${js("document.body.innerText.slice(0,1000)")}")}
         fun shot(name:String){Thread.sleep(160);val bitmap=instrumentation.uiAutomation.takeScreenshot();File(instrumentation.targetContext.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()}
         try{
             waitFor("!!window.TrudomixSplash")
@@ -63,16 +101,16 @@ class WebLoaderBrandTest {
             assertEquals("Twelve paths start outside four actual viewport corners","true",js("(()=>{const w=innerWidth,h=innerHeight,a=TrudomixSplashMath.trajectories(w,h),groups=[0,0,0,0];for(const l of a){const p=l.points[0];if(!(p.x<0||p.x>w)||!(p.y<0||p.y>h))return false;groups[(p.y>h?2:0)+(p.x>w?1:0)]++}return a.length===12&&groups.every(n=>n===3)})()"))
             js("window.splashTestTime=1800")
             waitFor("window.TrudomixSplash.inspect().elapsed>1.3");shot("web-splash-light-lines.png")
-            js("window.splashTestTime=8000")
-            waitFor("window.TrudomixSplash.inspect().elapsed>7.9")
+            js("window.splashTestTime=2800")
+            waitFor("window.TrudomixSplash.inspect().elapsed>2.7")
             assertEquals("Name and impact follow the outline","true",js("TrudomixSplash.inspect().wordmark>0&&TrudomixSplash.inspect().ringAlpha>0"));shot("web-splash-light-wave.png")
-            js("window.splashTestTime=9800")
+            js("window.splashTestTime=3800")
             waitFor("window.TrudomixSplash.inspect().animationDone")
             assertEquals("Final frame holds until initialization","true",js("!!document.querySelector('#startup-splash')&&!TrudomixSplash.inspect().ready&&TrudomixSplash.inspect().ringAlpha===0"))
             modulesBlocked.set(false)
             js("window.reloading=true;localStorage.setItem('theme','dark');localStorage.setItem('user',JSON.stringify($user));localStorage.setItem('token','preview-token');sessionStorage.setItem('currentMode','companies');location.reload()")
             waitFor("!window.reloading&&!!window.TrudomixSplash&&document.documentElement.dataset.theme==='dark'")
-            waitFor("TrudomixSplash.inspect().elapsed>4.1");shot("web-splash-dark-wave.png")
+            waitFor("TrudomixSplash.inspect().elapsed>2.7");shot("web-splash-dark-wave.png")
             waitFor("TrudomixSplash.inspect().animationDone")
             assertEquals("Slow backend holds the final logo: "+js("JSON.stringify(TrudomixSplash.inspect())")+requested,"true",js("!!document.querySelector('#startup-splash')&&!TrudomixSplash.inspect().ready&&TrudomixSplash.inspect().wordmark===1"))
             companyReady.countDown()

@@ -7,7 +7,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func (s *Server) phoneVerificationRoutes(mux *http.ServeMux) {
@@ -16,6 +18,8 @@ func (s *Server) phoneVerificationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/phone-verification/verify", s.phoneVerificationVerify)
 	mux.HandleFunc("POST /api/auth/phone-login", s.phoneLoginHandler)
 	mux.HandleFunc("POST /api/auth/mobile/register", s.mobileRegisterHandler)
+	mux.HandleFunc("GET /api/account/phone", s.authMiddleware(s.accountPhoneHandler))
+	mux.HandleFunc("PUT /api/account/phone", s.authMiddleware(s.accountPhoneHandler))
 }
 
 func (s *Server) configurePhoneVerification() error {
@@ -30,7 +34,7 @@ func (s *Server) configurePhoneVerification() error {
 	var sender phoneotp.Sender
 	var phones []string
 	switch mode {
-	case "app_notification":
+	case "app_notification", "firebase":
 		if os.Getenv("APP_ENV") != "development" {
 			return errors.New("app-notification OTP requires APP_ENV=development")
 		}
@@ -40,6 +44,7 @@ func (s *Server) configurePhoneVerification() error {
 		}
 		s.phoneVerification = service
 		s.phoneVerificationTest = true
+		s.phoneVerificationFirebase = mode == "firebase"
 		return nil
 	case "development":
 		if os.Getenv("APP_ENV") != "development" {
@@ -80,6 +85,9 @@ func (s *Server) phoneVerificationConfig(w http.ResponseWriter, _ *http.Request)
 	if s.phoneVerification != nil {
 		delivery = s.phoneVerification.DeliveryMode()
 	}
+	if s.phoneVerificationFirebase {
+		delivery = "firebase"
+	}
 	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery})
 }
 func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request) {
@@ -90,6 +98,8 @@ func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request
 	var body struct {
 		Phone     string `json:"phone"`
 		DeviceKey string `json:"device_key"`
+		PushToken string `json:"push_token"`
+		RequestID string `json:"request_id"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body) != nil {
 		phoneVerificationError(w, 400, "Укажите номер телефона")
@@ -97,6 +107,10 @@ func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request
 	}
 	if _, err := phoneotp.NormalizePhone(body.Phone); err != nil {
 		phoneVerificationError(w, 400, "Укажите номер с кодом страны, например +7 999 123-45-67")
+		return
+	}
+	if s.phoneVerificationFirebase && (s.pushSender == nil || len(body.PushToken) < 20 || len(body.PushToken) > 2048 || len(body.RequestID) != 36) {
+		phoneVerificationError(w, 503, "Подключите Firebase-уведомления на устройстве и повторите запрос")
 		return
 	}
 	ip, _, err := net.SplitHostPort(r.RemoteAddr)
@@ -115,6 +129,19 @@ func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		s.phoneVerificationFailure(w, err)
 		return
+	}
+	if s.phoneVerificationFirebase {
+		phone, _ := phoneotp.NormalizePhone(body.Phone)
+		err = s.pushSender.Send(r.Context(), body.PushToken, "Код Trudomix", "Запрошен код подтверждения", map[string]string{
+			"type": "auth_code", "code": result.DevelopmentCode, "phone": phone,
+			"request_id": body.RequestID, "expires_at": strconv.FormatInt(time.Now().Add(time.Duration(result.ExpiresIn)*time.Second).Unix(), 10),
+		})
+		result.DevelopmentCode = ""
+		if err != nil {
+			s.pool.Exec(r.Context(), `DELETE FROM phone_verification_challenges WHERE id=$1 AND verified_at IS NULL`, result.ChallengeID)
+			phoneVerificationError(w, 503, "Firebase не смог доставить код. Проверьте подключение уведомлений и повторите запрос")
+			return
+		}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")

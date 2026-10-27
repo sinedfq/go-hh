@@ -10,6 +10,9 @@ import com.example.trudomix.data.models.*
 import com.example.trudomix.push.OtpNotifications
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.messaging.FirebaseMessaging
+import java.util.UUID
 
 data class PhoneOtpState(val phone:String="+7",val code:String="",val config:PhoneOtpConfig?=null,val configuring:Boolean=true,val busy:Boolean=false,val challenge:String="",val receipt:String="",val retryIn:Int=0,val error:String?=null,val note:String?=null){val verified get()=receipt.isNotBlank()}
 
@@ -40,14 +43,19 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
         operation=viewModelScope.launch{
             state.update{it.copy(busy=true,error=null,receipt="")}
             try{
-                val result=api.requestPhoneOtp(PhoneOtpRequest(phone,deviceKey())).phoneOtpBody()
+                val firebase=state.value.config?.delivery=="firebase"
+                val requestId=if(firebase)UUID.randomUUID().toString()else ""
+                val pushToken=if(firebase)withTimeout(15000){FirebaseMessaging.getInstance().token.await()}else ""
+                if(firebase){OtpNotifications.clear(app);OtpNotifications.expect(app,requestId)}
+                val result=api.requestPhoneOtp(PhoneOtpRequest(phone,deviceKey(),pushToken,requestId)).phoneOtpBody()
                 if(phone!=state.value.phone)return@launch
                 pendingCode=result.development_code
                 val now=SystemClock.elapsedRealtime();nextSend=now+result.retry_after*1000L;expires=now+result.expires_in*1000L;receiptExpires=0
-                state.update{it.copy(challenge=result.challenge_id,code="",retryIn=result.retry_after,note=if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
+                state.update{it.copy(challenge=result.challenge_id,code="",retryIn=result.retry_after,note=if(firebase)"Код отправлен через Firebase. Откройте уведомление Trudomix"else if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
                 if(result.development_code!=null&&!OtpNotifications.show(app,phone,result.development_code,result.expires_in))state.update{it.copy(error="Уведомления Android запрещены. Разрешите их и нажмите «Показать уведомление»")}
                 startClock()
-            }catch(e:CancellationException){throw e}catch(e:Exception){if(e is PhoneOtpException&&e.retryAfter>0){nextSend=SystemClock.elapsedRealtime()+e.retryAfter*1000L;startClock()};state.update{it.copy(error=phoneOtpError(e))}}
+            }catch(e:TimeoutCancellationException){state.update{it.copy(error="Firebase не ответил. Проверьте интернет и повторите получение кода")}}
+            catch(e:CancellationException){throw e}catch(e:Exception){if(e is PhoneOtpException&&e.retryAfter>0){nextSend=SystemClock.elapsedRealtime()+e.retryAfter*1000L;startClock()};state.update{it.copy(error=phoneOtpError(e))}}
             finally{state.update{it.copy(busy=false)}}
         }
     }
