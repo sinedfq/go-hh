@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import com.example.trudomix.ui.loading.AppLoader
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -92,7 +94,7 @@ private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)
                 }
             }
             Button(onClick={submit()},enabled=!busy,shape=RoundedCornerShape(16.dp),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) {
-                if(busy)CircularProgressIndicator(Modifier.size(22.dp),color=colors.onPrimary,strokeWidth=2.dp)else Text("Зарегистрироваться")
+                if(busy)AppLoader(Modifier.size(22.dp),color=colors.onPrimary,strokeWidth=2.dp)else Text("Зарегистрироваться")
             }
             TextButton(onClick=onLogin,enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("Уже есть аккаунт? Войти")}
         }

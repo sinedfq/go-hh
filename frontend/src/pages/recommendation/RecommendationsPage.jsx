@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import VacancyDetail from '../../components/vacancy/VacancyDetail'
 import './RecommendationsPage.css'
 
@@ -23,7 +24,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
     return (
       <div className="recommendations-page">
         <div className="loading">
-          <div className="spinner"></div>
+          <AppLoader inline/>
           <p>AI анализирует вакансии под ваше резюме...</p>
           <p className="loading-subtitle">Это может занять несколько секунд</p>
         </div>
@@ -55,7 +56,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
         <div className="recommendations-list">
           <div className="recommendations-header">
             <div>
-              <h2>AI-рекомендации</h2>
+              <h2>Рекомендации</h2>
               <p className="recommendations-count">
                 {recommendations.length} вакансий
               </p>
@@ -131,7 +132,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
                         <line x1="12" y1="19" x2="12" y2="23" />
                         <line x1="8" y1="23" x2="16" y2="23" />
                       </svg>
-                      <span>AI-анализ</span>
+                      <span>Анализ совпадения</span>
                     </div>
                     <div className="ai-score-badge" style={{ '--score-color': getScoreColor(currentRecommendation.score) }}>
                       Совпадение: {Math.round(currentRecommendation.score * 100)}%
@@ -143,7 +144,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
 
                   <div className="ai-footer">
                     <span className="ai-model-info">
-                      Powered by ML Service
+                      Оценка соответствия профилю
                     </span>
                   </div>
                 </div>

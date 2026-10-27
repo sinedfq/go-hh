@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material3.*
@@ -28,16 +29,19 @@ class ProfileAccess(val open:()->Unit,val photo:String,val headerVisible:(Any,Bo
 val LocalProfileAccess=staticCompositionLocalOf<ProfileAccess?>{null}
 
 @Composable
-fun ProfileAction(modifier:Modifier=Modifier,trackHeader:Boolean=true){
+fun ProfileAction(modifier:Modifier=Modifier,trackHeader:Boolean=true,toolbarStyle:Boolean=false){
     val access=LocalProfileAccess.current?:return
     var photoFailed by remember(access.photo){mutableStateOf(false)}
     val top=with(LocalDensity.current){36.dp.toPx()}
     val identity=remember{Any()}
     if(trackHeader)DisposableEffect(access,identity){onDispose{access.headerVisible(identity,false)}}
-    IconButton(onClick=access.open,modifier=modifier.then(if(trackHeader)Modifier.onGloballyPositioned{access.headerVisible(identity,it.boundsInRoot().bottom>top)}else Modifier)) {
-        if(access.photo.isNotBlank()&&!photoFailed)AsyncImage(ApiClient.mediaUrl(access.photo),"Профиль",Modifier.size(36.dp).clip(CircleShape),contentScale=androidx.compose.ui.layout.ContentScale.Crop,onError={photoFailed=true})
-        else Icon(Icons.Default.PersonOutline,"Профиль",tint=MaterialTheme.colorScheme.primary)
+    val tracked=modifier.then(if(trackHeader)Modifier.onGloballyPositioned{access.headerVisible(identity,it.boundsInRoot().bottom>top)}else Modifier)
+    val icon: @Composable () -> Unit = {
+        if(access.photo.isNotBlank()&&!photoFailed)AsyncImage(ApiClient.mediaUrl(access.photo),"Профиль",Modifier.size(if(toolbarStyle)28.dp else 36.dp).clip(CircleShape),contentScale=androidx.compose.ui.layout.ContentScale.Crop,onError={photoFailed=true})
+        else Icon(Icons.Default.PersonOutline,"Профиль",tint=if(toolbarStyle)LocalContentColor.current else MaterialTheme.colorScheme.primary)
     }
+    if(toolbarStyle)FilledTonalIconButton(onClick=access.open,shape=RoundedCornerShape(18.dp),modifier=tracked.size(56.dp),content=icon)
+    else IconButton(onClick=access.open,modifier=tracked,content=icon)
 }
 
 @Composable

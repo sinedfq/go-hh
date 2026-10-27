@@ -129,7 +129,7 @@
 .application-field textarea:focus {
     border-color: var(--accent);
     background: var(--surface);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .application-counter {

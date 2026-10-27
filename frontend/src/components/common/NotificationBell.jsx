@@ -1,3 +1,4 @@
+import AppLoader from './AppLoader'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import './NotificationBell.css'
@@ -171,7 +172,7 @@ function NotificationBell({onOpenVacancy}) {
 
                     {loading ? (
                         <div className="notification-loading">
-                            <div className="spinner-small"></div>
+                            <AppLoader inline/>
                         </div>
                     ) : notifications.length === 0 ? (
                         <div className="notification-empty">

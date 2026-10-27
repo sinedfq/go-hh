@@ -79,8 +79,8 @@ private fun mapHtml(items: List<Vacancy>, dark: Boolean): String {
     val key = Uri.encode(BuildConfig.YANDEX_MAPS_API_KEY)
     return """
         <!DOCTYPE html><html lang="ru"><head><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-        <style>html,body{margin:0;width:100%;height:100%;background:#f8f9fa}#map{position:fixed;inset:0;width:100vw;height:100vh}
-        .job-pin{width:38px;height:38px;background:#0066cc;color:white;border:3px solid white;border-radius:14px 14px 14px 3px;box-shadow:0 4px 12px #003d7a55;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center}.job-pin svg{transform:rotate(45deg);width:21px;height:21px}</style>
+        <style>html,body{margin:0;width:100%;height:100%;background:#F8F7FC}#map{position:fixed;inset:0;width:100vw;height:100vh}
+        .job-pin{width:38px;height:38px;background:var(--pin-color,#8257E6);color:var(--pin-text,white);border:3px solid white;border-radius:14px 14px 14px 3px;box-shadow:0 4px 12px #19143155;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center}.job-pin svg{transform:rotate(45deg);width:21px;height:21px}</style>
         <script>function mapError(){location.href='trudomix://map-error';}window.addEventListener('error',mapError);
         var ready=false;setTimeout(function(){if(!ready)mapError();},25000);</script>
         <script src="https://api-maps.yandex.ru/2.1/?apikey=$key&lang=ru_RU" onerror="mapError()"></script></head>
@@ -93,7 +93,7 @@ private fun mapHtml(items: List<Vacancy>, dark: Boolean): String {
             window.jobMap=map;
             // JS 2.1 has no native theme. Tint only the documented ground pane;
             // markers, attribution and provider controls retain their original colors.
-            window.jobTheme=function(dark){map.panes.get('ground').getElement().style.filter=dark?'invert(.9) hue-rotate(180deg) brightness(1.15) saturate(.7)':'none';document.body.style.background=dark?'#0d1117':'#f8f9fa';};
+            window.jobTheme=function(dark){document.documentElement.style.setProperty('--pin-color',dark?'#9474ED':'#8257E6');document.documentElement.style.setProperty('--pin-text',dark?'#191431':'white');map.panes.get('ground').getElement().style.filter=dark?'invert(.9) hue-rotate(180deg) brightness(1.15) saturate(.7)':'none';document.body.style.background=dark?'#080816':'#F8F7FC';};
             window.jobTheme(typeof window.pendingDark==='boolean'?window.pendingDark:$dark);
             var userMarker=null;
             window.jobLocate=function(lat,lon,accuracy){

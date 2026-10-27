@@ -144,7 +144,7 @@
     }
 
     .nav-item.active .nav-title {
-        color: #0066cc;
+        color: var(--accent);
     }
 
     .nav-subtitle {
@@ -238,8 +238,7 @@
         width: 36px;
         height: 36px;
         border-radius: 50%;
-        background: var(--accent);
-        color: white;
+        background: var(--accent);color:var(--on-accent);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -250,8 +249,7 @@
 
     .header-login-btn {
         padding: 0.5rem 1rem;
-        background: var(--accent);
-        color: white;
+        background: var(--accent);color:var(--on-accent);
         border: none;
         border-radius: 8px;
         font-size: 0.875rem;
@@ -456,7 +454,7 @@
 
     .card-btn-info:hover {
         background: white;
-        color: #0066cc;
+        color: var(--accent);
     }
 
     .company:hover,

@@ -52,10 +52,9 @@
 
     .browse-filters-btn:hover {
         background: var(--accent);
-        border-color: var(--accent);
-        color: white;
+        border-color: var(--accent);color:var(--on-accent);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 102, 204, 0.2);
+        box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 20%,transparent);
     }
 
     /* Сетка карточек */
@@ -91,7 +90,7 @@
 
     .browse-card:hover {
         transform: translateY(-6px);
-        box-shadow: 0 16px 40px rgba(0, 102, 204, 0.15);
+        box-shadow: 0 16px 40px color-mix(in srgb,var(--accent) 15%,transparent);
         border-color: var(--accent);
     }
 
@@ -218,8 +217,7 @@
     }
 
     .browse-card:hover .browse-open-btn {
-        background: var(--accent);
-        color: white;
+        background: var(--accent);color:var(--on-accent);
     }
 
     .browse-open-btn svg {

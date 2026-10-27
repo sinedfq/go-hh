@@ -23,16 +23,16 @@ class WebFrontendPreviewTest {
         val instrumentation=InstrumentationRegistry.getInstrumentation()
         val web=AtomicReference<WebView>()
         val url=InstrumentationRegistry.getArguments().getString("webUrl")?:"http://10.0.2.2:5174/"
-        val user="""{"id":9999,"email":"preview@example.test","role":"candidate","photo_url":"/brand-dark-waves.png","created_at":"2026-01-01T00:00:00Z"}"""
+        val user="""{"id":9999,"email":"preview@example.test","role":"candidate","photo_url":"/brand/wave-night.png","created_at":"2026-01-01T00:00:00Z"}"""
         val companyLogo=AtomicReference("")
-        fun company()="""{"id":99,"name":"Команда Trudomix","it_accredited":true,"description":"Создаём удобные продукты","city":"Новосибирск","logo_url":"${companyLogo.get()}","team_story":"Небольшая команда инженеров, дизайнеров и исследователей.","benefits":["Обучение и конференции","Гибкий график"],"hiring_process":"Знакомство с HR → разговор с командой → предложение","photos":["/brand-dark-waves.png"],"videos":["/preview-company-story.mp4"]}"""
+        fun company()="""{"id":99,"name":"Команда Trudomix","it_accredited":true,"description":"Создаём удобные продукты","city":"Новосибирск","logo_url":"${companyLogo.get()}","team_story":"Небольшая команда инженеров, дизайнеров и исследователей.","benefits":["Обучение и конференции","Гибкий график"],"hiring_process":"Знакомство с HR → разговор с командой → предложение","photos":["/brand/wave-night.png"],"videos":["/preview-company-story.mp4"]}"""
         val vacancies=(1..16).joinToString(",",prefix="[",postfix="]"){"""{"id":$it,"title":"Android-разработчик $it","company":"Команда Trudomix","salary_from":120000,"salary_to":180000,"currency":"RUB","employment":"full_time","schedule":"flexible","location":"Новосибирск","experience":"Middle","remote":true,"skills":["Kotlin","Compose"],"description":"Создавай удобные продукты вместе с командой. Гибкий график и возможность работать удалённо.","latitude":55.03,"longitude":82.92}"""}
-        val resume="""{"id":99,"user_id":9999,"full_name":"Александр Иванов","desired_position":"Android-разработчик","city":"Новосибирск","experience":"Middle","skills":["Kotlin","React","Go"],"about":"Создаю удобные продукты и люблю работать с сильными командами.","photo_url":"/brand-dark-waves.png","remote":true}"""
+        val resume="""{"id":99,"user_id":9999,"full_name":"Александр Иванов","desired_position":"Android-разработчик","city":"Новосибирск","experience":"Middle","skills":["Kotlin","React","Go"],"about":"Создаю удобные продукты и люблю работать с сильными командами.","photo_url":"/brand/wave-night.png","remote":true}"""
         val employerVacancies=org.json.JSONArray(vacancies).apply { getJSONObject(length()-1).put("is_archived",true) }.toString()
-        val detailVacancy=org.json.JSONArray(vacancies).getJSONObject(0).apply {put("company_it_accredited",true);put("description","## Наша команда\n\n**Создаём** полезные продукты.\n\n- Поддержка\n- Обучение\n\n![Команда](/brand-dark-waves.png)\n\n<script>window.markdownInjected=true</script>")}.toString()
+        val detailVacancy=org.json.JSONArray(vacancies).getJSONObject(0).apply {put("company_it_accredited",true);put("description","## Наша команда\n\n**Создаём** полезные продукты.\n\n- Поддержка\n- Обучение\n\n![Команда](/brand/wave-night.png)\n\n<script>window.markdownInjected=true</script>")}.toString()
         val conversations="""[{"conversation_id":7,"id":7,"application_id":8,"vacancy_id":1,"vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","candidate_id":9999,"candidate_name":"Александр Иванов","last_message":"Давайте обсудим проект","last_message_at":"2026-10-21T10:00:00Z","unread_count":1,"cover_letter":"Здравствуйте! Хочу присоединиться к вашей команде."}]"""
         instrumentation.runOnMainSync { compose.activity.setContentView(WebView(compose.activity).apply {
-            web.set(this);settings.javaScriptEnabled=true;settings.mediaPlaybackRequiresUserGesture=false;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
+            web.set(this);setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null);settings.javaScriptEnabled=true;settings.mediaPlaybackRequiresUserGesture=false;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
             webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse? {
                 val path=request.url.path.orEmpty()
                 if(path=="/preview-company-story.mp4"){
@@ -53,7 +53,7 @@ class WebFrontendPreviewTest {
                     path=="/api/vacancies"&&request.url.getQueryParameter("id")!=null->detailVacancy
                     path=="/api/vacancies"->vacancies
                     path=="/api/me"->user
-                    path=="/api/my-company/logo"->{companyLogo.set("/brand-dark-waves.png?uploaded");company()}
+                    path=="/api/my-company/logo"->{companyLogo.set("/brand/wave-night.png?uploaded");company()}
                     path=="/api/my-company"->company()
                     path=="/api/companies/99"->company()
                     path=="/api/companies/99/vacancies"->vacancies
@@ -61,12 +61,12 @@ class WebFrontendPreviewTest {
                     path=="/api/saved-searches"->if(request.method=="POST")"""{"id":1}""" else """[{"id":1,"name":"Android в Новосибирске","filters":{"query":"Android","location":"Новосибирск","remote":true,"skills":["Kotlin"],"salary_min":100000,"currency":"RUB"}}]"""
                     path=="/api/applications/8/history"->"""[{"id":1,"status":"new","feedback":"","created_at":"2026-10-20T10:00:00Z"},{"id":2,"status":"accepted","feedback":"Приглашаем познакомиться с командой","interview_at":"2026-11-01T10:00:00+07:00","created_at":"2026-10-21T10:00:00Z"}]"""
                     path=="/api/my-vacancies"->"""{"company":${company()},"vacancies":$employerVacancies}"""
-                    path=="/api/employer/applications"->"""[{"id":8,"vacancy_id":1,"candidate_user_id":9999,"candidate_email":"preview@example.test","candidate_photo":"/brand-dark-waves.png","resume_id":99,"resume_full_name":"Александр Иванов","resume_position":"Android-разработчик","resume_experience":"Middle","vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","status":"accepted","feedback":"Приглашаем познакомиться с командой","interview_at":"2026-11-01T10:00:00+07:00","created_at":"2026-10-20T10:00:00Z"}]"""
+                    path=="/api/employer/applications"->"""[{"id":8,"vacancy_id":1,"candidate_user_id":9999,"candidate_email":"preview@example.test","candidate_photo":"/brand/wave-night.png","resume_id":99,"resume_full_name":"Александр Иванов","resume_position":"Android-разработчик","resume_experience":"Middle","vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","status":"accepted","feedback":"Приглашаем познакомиться с командой","interview_at":"2026-11-01T10:00:00+07:00","created_at":"2026-10-20T10:00:00Z"}]"""
                     path=="/api/my-resume"->resume
                     path=="/api/my-resume/stats"->"""{"total_views":28}"""
                     path=="/api/my-applications"->"""[{"id":8,"vacancy_id":1,"vacancy_title":"Android-разработчик","company_name":"Команда Trudomix","status":"accepted","created_at":"2026-10-20T10:00:00Z"}]"""
                     path=="/api/conversations"->conversations
-                    path.endsWith("/messages")->"""[{"id":1,"sender_id":88,"content":"Здравствуйте! Давайте обсудим проект и ваш опыт.","sender_name":"Анна, HR команды","sender_photo":"/brand-dark-waves.png","created_at":"2026-10-21T10:00:00Z"},{"id":2,"sender_id":9999,"content":"Добрый день! Буду рад познакомиться с командой.","sender_name":"Александр","sender_photo":"/brand-dark-waves.png","created_at":"2026-10-21T10:01:00Z","is_read":true}]"""
+                    path.endsWith("/messages")->"""[{"id":1,"sender_id":88,"content":"Здравствуйте! Давайте обсудим проект и ваш опыт.","sender_name":"Анна, HR команды","sender_photo":"/brand/wave-night.png","created_at":"2026-10-21T10:00:00Z"},{"id":2,"sender_id":9999,"content":"Добрый день! Буду рад познакомиться с командой.","sender_name":"Александр","sender_photo":"/brand/wave-night.png","created_at":"2026-10-21T10:01:00Z","is_read":true}]"""
                     path.endsWith("/typing")->"""{"typing_users":[]}"""
                     else->"[]"
                 }
@@ -78,7 +78,7 @@ class WebFrontendPreviewTest {
         fun evaluate(script:String):String {
             val result=AtomicReference<String>();val latch=CountDownLatch(1)
             instrumentation.runOnMainSync{web.get().evaluateJavascript(script){result.set(it);latch.countDown()}}
-            assertTrue(latch.await(10,TimeUnit.SECONDS));return result.get()
+            if(!latch.await(2,TimeUnit.SECONDS))return "null";return result.get()
         }
         fun waitFor(script:String) {val deadline=System.currentTimeMillis()+20000;while(System.currentTimeMillis()<deadline){if(evaluate(script)=="true")return;Thread.sleep(200)};error("Frontend condition failed: $script; ${evaluate("document.body.innerText.slice(0,1500)")}")}
         fun capture(name:String) {
@@ -93,7 +93,7 @@ class WebFrontendPreviewTest {
         try {
         waitFor("!!document.querySelector('.top-header')")
         evaluate("window.previewReloading=true;localStorage.removeItem('user');localStorage.removeItem('token');localStorage.removeItem('theme');sessionStorage.setItem('currentMode','search');location.reload()")
-        waitFor("!window.previewReloading&&!!document.querySelector('.header-login-btn')")
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.header-login-btn')")
         evaluate("document.querySelector('.header-login-btn')?.click()")
         waitFor("!!document.querySelector('.auth-dialog')")
         capture("login")
@@ -101,7 +101,7 @@ class WebFrontendPreviewTest {
         waitFor("!!document.querySelector('.auth-roles')")
         capture("register")
         evaluate("window.previewReloading=true;document.querySelector('.auth-close').click();localStorage.setItem('user',JSON.stringify($user));localStorage.setItem('token','preview-token');sessionStorage.setItem('currentMode','search');location.reload()")
-        waitFor("!window.previewReloading&&!!document.querySelector('.user-profile-btn')&&document.querySelectorAll('.search-result-card').length===16")
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.profile-toggle-button')&&document.querySelectorAll('.search-result-card').length===16")
         capture("search-light")
         evaluate("document.querySelector('.filter-toggle-button').click()")
         waitFor("!!document.querySelector('.vacancy-filters')")
@@ -137,13 +137,13 @@ class WebFrontendPreviewTest {
         assertEquals("Viewer restores focus","true",evaluate("document.activeElement.matches('.markdown-media-open')&&document.body.style.overflow!=='hidden'"))
         evaluate("document.querySelector('.vacancy-page>.back-btn').click()")
         waitFor("document.querySelectorAll('.search-result-card').length===16")
-        evaluate("document.querySelector('.user-profile-btn').click()")
+        evaluate("document.querySelector('.profile-toggle-button').click()")
         waitFor("!!document.querySelector('.profile-header')&&document.body.innerText.includes('Александр Иванов')")
         capture("profile")
         assertEquals("Export is available", "true",evaluate("[...document.querySelectorAll('button')].some(b=>b.textContent==='Скачать PDF')"))
         evaluate("document.querySelector('.resume-card.clickable').click()")
         waitFor("!!document.querySelector('.details-modal')")
-        assertEquals("Dark resume surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.details-modal')).backgroundColor").trim('"'))
+        assertEquals("Dark resume surface","rgb(18, 18, 34)",evaluate("getComputedStyle(document.querySelector('.details-modal')).backgroundColor").trim('"'))
         capture("resume-dark")
         evaluate("document.querySelector('.details-modal-close').click()")
         evaluate("document.querySelector('.chat-fab').click()")
@@ -158,7 +158,7 @@ class WebFrontendPreviewTest {
         evaluate("document.querySelector('.chat-participants-close').click()")
         capture("chat")
         evaluate("window.previewReloading=true;sessionStorage.setItem('currentMode','home');location.href=location.pathname")
-        waitFor("!window.previewReloading&&!!document.querySelector('.home-hero')&&document.body.innerText.includes('Александр')")
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.home-hero')&&document.body.innerText.includes('Александр')")
         capture("home-dark")
         evaluate("document.querySelector('.theme-toggle').click()")
         waitFor("document.documentElement.dataset.theme==='light'")
@@ -184,13 +184,13 @@ class WebFrontendPreviewTest {
         waitFor("document.querySelectorAll('.my-app-card').length===1")
         capture("applications-light")
         evaluate("window.previewReloading=true;localStorage.setItem('user',JSON.stringify({...$user,role:'employer'}));sessionStorage.setItem('currentMode','my-company');location.href=location.pathname")
-        waitFor("!window.previewReloading&&!!document.querySelector('.company-avatar-editor')")
-        assertEquals("Favicon configured","true",evaluate("document.querySelector('link[rel=icon]').href.includes('/loader-icons/')"))
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.company-avatar-editor')")
+        assertEquals("Favicon configured","true",evaluate("document.querySelector('link[rel=icon]').href.includes('/brand/wave-')"))
         evaluate("(()=>{const file=new File([Uint8Array.from(atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII='),c=>c.charCodeAt(0))],'company.png',{type:'image/png'});const transfer=new DataTransfer();transfer.items.add(file);const input=document.querySelector('.company-avatar-editor input[type=file]');input.files=transfer.files;input.dispatchEvent(new Event('change',{bubbles:true}));})()")
         waitFor("!!document.querySelector('.company-avatar-editor img[src*=uploaded]')")
         evaluate("document.documentElement.dataset.theme='dark';localStorage.setItem('theme','dark')")
         assertEquals("Company IT badge", "true",evaluate("!!document.querySelector('.company-avatar-editor .it-accreditation-badge')"))
-        assertEquals("Dark company surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-info-card')).backgroundColor").trim('"'))
+        assertEquals("Dark company surface","rgb(18, 18, 34)",evaluate("getComputedStyle(document.querySelector('.company-info-card')).backgroundColor").trim('"'))
         capture("company-logo")
         assertEquals("Gallery button and image have equal width","true",evaluate("(()=>{const f=document.querySelector('.media-gallery figure');return Math.abs(f.querySelector('.media-tile').getBoundingClientRect().width-f.querySelector('.media-tile-remove').getBoundingClientRect().width)<1})()"))
         evaluate("document.querySelector('.media-tile').click()")
@@ -213,7 +213,7 @@ class WebFrontendPreviewTest {
         capture("company-editor")
         assertEquals("Company editor uses unified size selector","true",evaluate("!!document.querySelector('#company-size[role=combobox]')&&!document.querySelector('.company-editor-form select')"))
         evaluate("window.previewReloading=true;sessionStorage.setItem('currentMode','profile');location.href=location.pathname")
-        waitFor("!window.previewReloading&&!!document.querySelector('.employer-profile-workspace')&&document.querySelectorAll('.employer-profile-shortcuts button').length===4")
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.employer-profile-workspace')&&document.querySelectorAll('.employer-profile-shortcuts button').length===4")
         waitFor("document.querySelector('.employer-profile-workspace .workspace-metric strong').textContent==='15'")
         capture("employer-profile-dark")
         evaluate("document.querySelector('.theme-toggle').click()")
@@ -231,7 +231,7 @@ class WebFrontendPreviewTest {
         capture("employer-applications-dark")
         evaluate("document.querySelector('.application-stage-form .date-picker-trigger').click()")
         waitFor("!!document.querySelector('.date-picker-popup')")
-        assertEquals("Dark calendar surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.date-picker-popup')).backgroundColor").trim('"'))
+        assertEquals("Dark calendar surface","rgb(18, 18, 34)",evaluate("getComputedStyle(document.querySelector('.date-picker-popup')).backgroundColor").trim('"'))
         assertEquals("Calendar fits viewport","true",evaluate("(()=>{const r=document.querySelector('.date-picker-popup').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&r.top>=0&&r.bottom<=innerHeight+1})()"))
         capture("datepicker-dark")
         evaluate("window.calendarHeight=document.querySelector('.date-picker-popup').getBoundingClientRect().height;document.querySelector('.date-picker-popup [aria-label=\"Год\"]').click()")
@@ -301,11 +301,11 @@ class WebFrontendPreviewTest {
         evaluate("document.querySelector('.theme-toggle').click()")
         waitFor("document.documentElement.dataset.theme==='dark'")
         evaluate("window.previewReloading=true;sessionStorage.setItem('currentMode','companies');location.href=location.pathname")
-        waitFor("!window.previewReloading&&!!document.querySelector('.company-card')")
-        assertEquals("Dark public company card","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-card')).backgroundColor").trim('"'))
+        waitFor("!window.previewReloading&&!document.getElementById('startup-splash')&&!!document.querySelector('.company-card')")
+        assertEquals("Dark public company card","rgb(18, 18, 34)",evaluate("getComputedStyle(document.querySelector('.company-card')).backgroundColor").trim('"'))
         evaluate("document.querySelector('.company-card').click()")
         waitFor("!!document.querySelector('.company-profile-hero')")
-        assertEquals("Dark company surface","rgb(22, 27, 34)",evaluate("getComputedStyle(document.querySelector('.company-profile-logo')).backgroundColor").trim('"'))
+        assertEquals("Dark company surface","rgb(18, 18, 34)",evaluate("getComputedStyle(document.querySelector('.company-profile-logo')).backgroundColor").trim('"'))
         assertEquals("IT badge in company profile","true",evaluate("!!document.querySelector('.company-profile-hero .it-accreditation-badge')"))
         assertEquals("Company vacancies include salary","true",evaluate("document.querySelector('.company-profile-job .vacancy-terms').textContent.includes('120')"))
         assertEquals("Job cards support keyboard","BUTTON",evaluate("document.querySelector('.company-profile-job').tagName").trim('"'))

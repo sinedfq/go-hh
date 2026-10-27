@@ -41,7 +41,7 @@
 
 .vacancy-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px rgba(0, 102, 204, 0.15);
+  box-shadow: 0 12px 32px color-mix(in srgb,var(--accent) 15%,transparent);
   border-color: var(--accent);
 }
 
@@ -368,8 +368,8 @@
 
 .vacancy-item.active {
     border-color: var(--accent);
-    background: rgba(0, 102, 204, 0.05);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+    background: color-mix(in srgb,var(--accent) 5%,transparent);
+    box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .vacancy-item-top {
@@ -423,8 +423,7 @@
     width: 100%;
     margin-top: 0.75rem;
     padding: 0.5rem;
-    background: var(--accent);
-    color: white;
+    background: var(--accent);color:var(--on-accent);
     border: none;
     border-radius: 8px;
     font-size: 0.8125rem;
@@ -440,20 +439,20 @@
 
 /* Тёмная тема */
 [data-theme="dark"] .vacancy-list {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .vacancy-item {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .vacancy-item:hover {
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .vacancy-item.active {
-    background: rgba(68, 147, 248, 0.1);
-    border-color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
+    border-color: var(--accent);
 }

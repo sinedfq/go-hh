@@ -74,8 +74,7 @@
 }
 
 .filter-btn.active {
-    background: var(--accent);
-    color: white;
+    background: var(--accent);color:var(--on-accent);
 }
 
 .filter-count {
@@ -110,7 +109,7 @@
 
 .my-app-card:hover {
     border-color: var(--accent);
-    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.08);
+    box-shadow: 0 4px 16px color-mix(in srgb,var(--accent) 8%,transparent);
 }
 
 .my-app-card.status-new {
@@ -173,7 +172,7 @@
 }
 
 .my-app-status-badge.status-new {
-    background: rgba(0, 102, 204, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
     color: var(--accent);
 }
 
@@ -257,35 +256,35 @@
 
 /* Тёмная тема */
 [data-theme="dark"] .my-apps-filters {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .filter-btn {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .filter-btn:hover {
-    background: #21262d;
-    color: #e6edf3;
+    background: var(--surface-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .filter-btn.active {
-    background: #4493f8;
+    background: var(--accent);
 }
 
 [data-theme="dark"] .my-app-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .my-app-card:hover {
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .my-app-status-badge.status-new {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .my-app-status-badge.status-viewed {
@@ -312,8 +311,8 @@
 }
 
 [data-theme="dark"] .my-apps-empty {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 @media (max-width: 600px) {

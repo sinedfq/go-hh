@@ -42,7 +42,7 @@
     width: 64px;
     height: 64px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #00a3ff);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
     color: white;
     display: flex;
     align-items: center;

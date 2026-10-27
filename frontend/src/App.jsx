@@ -1,54 +1,66 @@
 import { useApp } from './hooks/useApp'
-import HomePage from './pages/home/HomePage'
-import SavedSearchesPage from './pages/search/SavedSearchesPage'
-import { useState, useEffect } from 'react'
+const HomePage=lazyScreen(()=>import('./pages/home/HomePage'))
+const SavedSearchesPage=lazyScreen(()=>import('./pages/search/SavedSearchesPage'))
+import { useState, useEffect, useLayoutEffect, useSyncExternalStore } from 'react'
 import Sidebar from './components/layout/Sidebar'
-import SwipeableCard from './components/vacancy/SwipeableCard'
-import VacancyList from './components/vacancy/VacancyList'
-import VacancyDetail from './components/vacancy/VacancyDetail'
-import FavoritesList from './components/favorites/FavoritesList'
-import LoginPage from './pages/auth/LoginPage'
-import ProfilePage from './pages/profile/ProfilePage'
-import RecommendationsPage from './pages/recommendation/RecommendationsPage'
-import CompaniesPage from './pages/company/CompaniesPage'
-import VacancyPage from './pages/vacancy/VacancyPage'
-import CompanyDetails from './components/company/CompanyDetails'
-import SearchBar from './components/vacancy/SearchBar'
-import FilterPanel from './components/vacancy/FilterPanel'
-import SearchResultsPage from './pages/search/SearchResultsPage'
-import VacancyMap from './components/vacancy/VacancyMap'
-import MyVacanciesPage from './pages/employer/MyVacanciesPage'
-import MyCompanyPage from './pages/employer/MyCompanyPage'
-import CreateVacancyPage from './pages/employer/CreateVacancyPage'
+const SwipeableCard=lazyScreen(()=>import('./components/vacancy/SwipeableCard'))
+const FavoritesList=lazyScreen(()=>import('./components/favorites/FavoritesList'))
+const LoginPage=lazyScreen(()=>import('./pages/auth/LoginPage'))
+const ProfilePage=lazyScreen(()=>import('./pages/profile/ProfilePage'))
+const RecommendationsPage=lazyScreen(()=>import('./pages/recommendation/RecommendationsPage'))
+const CompaniesPage=lazyScreen(()=>import('./pages/company/CompaniesPage'))
+const VacancyPage=lazyScreen(()=>import('./pages/vacancy/VacancyPage'))
+const CompanyDetails=lazyScreen(()=>import('./components/company/CompanyDetails'))
+const SearchBar=lazyScreen(()=>import('./components/vacancy/SearchBar'))
+const SearchResultsPage=lazyScreen(()=>import('./pages/search/SearchResultsPage'))
+const VacancyMap=lazyScreen(()=>import('./components/vacancy/VacancyMap'))
+const MyVacanciesPage=lazyScreen(()=>import('./pages/employer/MyVacanciesPage'))
+const MyCompanyPage=lazyScreen(()=>import('./pages/employer/MyCompanyPage'))
+const CreateVacancyPage=lazyScreen(()=>import('./pages/employer/CreateVacancyPage'))
 import NotificationBell from './components/common/NotificationBell'
-import EmployerApplicationsPage from './pages/employer/EmployerApplicationsPage'
-import ResumeViewModal from './components/resume/ResumeViewModal'
-import MyApplicationsPage from './pages/candidate/MyApplicationsPage'
-import EmployerStatsPage from './pages/employer/EmployerStatsPage'
-import ChatApp from './components/chat/ChatApp'
+const EmployerApplicationsPage=lazyScreen(()=>import('./pages/employer/EmployerApplicationsPage'))
+const ResumeViewModal=lazyScreen(()=>import('./components/resume/ResumeViewModal'))
+const MyApplicationsPage=lazyScreen(()=>import('./pages/candidate/MyApplicationsPage'))
+const EmployerStatsPage=lazyScreen(()=>import('./pages/employer/EmployerStatsPage'))
+const ChatApp=lazyScreen(()=>import('./components/chat/ChatApp'))
 import ChatButton from './components/chat/ChatButton'
 import axios from 'axios'
 import PageLoader from './components/common/PageLoader'
 import BrandPicker from './components/common/BrandPicker'
+import {subscribeStartup,startupSnapshot,startupFailure,startupMounted,retryStartup} from './utils/startupLoading'
+import ConnectionBanner from './components/common/ConnectionBanner'
+import StartupBoundary from './components/common/StartupBoundary'
+import {lazyScreen} from './utils/lazyScreen'
+import {flushSync} from 'react-dom'
+import {changeThemeWithWave} from './utils/themeWave'
+import './styles/theme-wave.css'
 
 function App() {
     const app = useApp()
-    // Temporary startup preview. Set to 0 after reviewing the loader animation.
-    const [loaderPreview, setLoaderPreview] = useState(true)
-    useEffect(() => {
-        const timer = setTimeout(() => setLoaderPreview(false), 2200)
-        return () => clearTimeout(timer)
-    }, [])
+    const startupLoading=useSyncExternalStore(subscribeStartup,startupSnapshot)
 
 
-    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light')
+    const [theme, setTheme] = useState(() => document.documentElement.dataset.theme || 'light')
+    const chooseTheme=button=>{
+        changeThemeWithWave(button,()=>{
+            const value=document.documentElement.dataset.theme==='light'?'dark':'light'
+            localStorage.setItem('theme',value)
+            document.documentElement.dataset.theme=value
+            flushSync(()=>setTheme(value))
+        })
+    }
     const [viewResumeId, setViewResumeId] = useState(null)
 
     // Применяем тему
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme)
-        localStorage.setItem('theme', theme)
     }, [theme])
+    useEffect(()=>{
+        const media=matchMedia('(prefers-color-scheme: dark)')
+        const changed=()=>{if(!['light','dark'].includes(localStorage.getItem('theme')))setTheme(media.matches?'dark':'light')}
+        media.addEventListener('change',changed)
+        return()=>media.removeEventListener('change',changed)
+    },[])
 
     useEffect(() => {
         const handleToast = (e) => {
@@ -71,11 +83,15 @@ function App() {
         app.openVacancyPage(id)
     }
 
-    if (app.authLoading || loaderPreview) return <PageLoader fullscreen/>
+    useLayoutEffect(()=>{if(!app.authLoading)startupMounted()},[app.authLoading])
+    useEffect(()=>{
+        if(startupLoading||app.authLoading)return
+        window.TrudomixSplash?.result(startupFailure(),retryStartup)
+    },[startupLoading,app.authLoading])
+    if (app.authLoading) return null
 
     return (
-        <div className="app">
-            {app.showLoginModal && (
+        <StartupBoundary><div className="app">            {app.showLoginModal && (
                 <LoginPage onClose={() => app.setShowLoginModal(false)} />
             )}
 
@@ -88,6 +104,7 @@ function App() {
             />
 
             <div className="main-area">
+                <ConnectionBanner/>
                 <header className="top-header">
                     <div className="page-heading">
                     <span className="eyebrow">TRUDOMIX / КАРЬЕРА</span>
@@ -115,7 +132,7 @@ function App() {
                         <button
                             className="theme-toggle"
                             aria-label={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
-                            onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                            onClick={event => chooseTheme(event.currentTarget)}
                             title={theme === 'light' ? 'Тёмная тема' : 'Светлая тема'}
                         >
                             {theme === 'light' ? (
@@ -139,7 +156,7 @@ function App() {
                         {app.user && <NotificationBell onOpenVacancy={handleOpenVacancy}/>}
                         {/* Профиль в шапке — виден только на мобильных */}
                         <div className="header-profile">
-                            {app.user ? (
+                            {(!app.user || app.mode !== 'search') && (app.user ? (
                                 <button
                                     className={`header-profile-btn ${app.mode === 'profile' ? 'active' : ''}`}
                                     onClick={() => app.handleModeChange('profile')}
@@ -152,7 +169,7 @@ function App() {
                                 <button className="header-login-btn" onClick={() => app.setShowLoginModal(true)}>
                                     Войти
                                 </button>
-                            )}
+                            ))}
                         </div>
                     </div>
                 </header>
@@ -244,6 +261,7 @@ function App() {
                             {app.mode === 'search' && (
                                 <SearchResultsPage
                                     results={app.searchResults}
+                                    onProfile={() => app.user ? app.handleModeChange('profile') : app.setShowLoginModal(true)}
                                     totalCount={app.searchTotal}
                                     loading={app.searchLoading}
                                     filters={app.searchFilters}
@@ -477,7 +495,7 @@ function App() {
                     }}
                 />
             )}
-        </div>
+        </div></StartupBoundary>
     )
 }
 

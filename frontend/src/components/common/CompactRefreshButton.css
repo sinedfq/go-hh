@@ -1,0 +1,4 @@
+.btn.compact-refresh-button{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex:0 0 auto;width:auto;min-height:36px;margin:0;padding:7px 10px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text-secondary);font-size:.8rem;line-height:1.25;box-shadow:none}
+.btn.compact-refresh-button:hover:not(:disabled){background:var(--accent-light);color:var(--accent);border-color:var(--accent)}
+.btn.compact-refresh-button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.btn.compact-refresh-button:disabled{opacity:.55;cursor:default}

@@ -44,7 +44,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #0066cc 0%, #00a3ff 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
     color: white;
     font-weight: 700;
     user-select: none;
@@ -70,9 +70,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #0066cc;
-    background: rgba(0, 102, 204, 0.08);
-    border: 2px dashed rgba(0, 102, 204, 0.3);
+    color: var(--accent);
+    background: color-mix(in srgb,var(--accent) 8%,transparent);
+    border: 2px dashed color-mix(in srgb,var(--accent) 30%,transparent);
     border-radius: inherit;
 }
 

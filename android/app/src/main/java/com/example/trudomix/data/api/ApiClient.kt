@@ -45,6 +45,7 @@ object ApiClient {
 
     private val okHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
+            .eventListenerFactory{com.example.trudomix.startup.StartupReadiness.listener()}
             .addInterceptor { chain ->
                 val destination = serverUrl
                 val original = chain.request()
@@ -79,7 +80,7 @@ object ApiClient {
         // No session token is sent when checking a different server.
         OkHttpClient.Builder().connectTimeout(8, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS)
             .followRedirects(false).build().newCall(Request.Builder().url(url).build()).execute().use {
-                check(it.isSuccessful) { "Сервер ответил HTTP ${it.code}" }
+                if(!it.isSuccessful)throw ServerCheckException(it.code)
                 val body = it.body?.string().orEmpty()
                 check(runCatching { json.parseToJsonElement(body).jsonObject["status"]?.jsonPrimitive?.content == "ok" }.getOrDefault(false)) { "По этому адресу не найден API Trudomix" }
             }
@@ -95,6 +96,8 @@ object ApiClient {
         }
     }
 }
+
+class ServerCheckException(val status:Int):java.io.IOException("Сервер временно недоступен")
 
 fun normalizeServerUrl(address: String): String {
     val url = address.trim().toHttpUrl()

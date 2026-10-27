@@ -1,3 +1,4 @@
+import AppLoader from '../common/AppLoader'
 import PageLoader from '../common/PageLoader'
 import ModalPortal from '../common/ModalPortal'
 import { useState, useEffect, useRef } from 'react'
@@ -276,19 +277,18 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
     return (
         <>
             <div className="chat-app-overlay" onClick={onClose}>
-                <div className="chat-app-container" onClick={(e) => e.stopPropagation()}>
-                    {/* ====== ЛЕВАЯ ПАНЕЛЬ: СПИСОК ЧАТОВ ====== */}
-                    <div className={`chat-app-sidebar ${activeChat ? 'hidden-mobile' : ''}`}>
-                        <div className="chat-app-sidebar-header">
-                            <h2>Чаты</h2>
-                            <button className="chat-app-close-btn" onClick={onClose} title="Закрыть чаты">
+                <div className="chat-app-container" role="dialog" aria-modal="true" aria-labelledby="chat-window-title" onClick={(e) => e.stopPropagation()}>
+                        <div className="chat-app-window-header">
+                            <h2 id="chat-window-title">Чаты</h2>
+                            <button type="button" className="chat-app-close-btn" onClick={onClose} aria-label="Закрыть чат" title="Закрыть чат">
                                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                     <line x1="18" y1="6" x2="6" y2="18" />
                                     <line x1="6" y1="6" x2="18" y2="18" />
                                 </svg>
                             </button>
                         </div>
-
+                    {/* ====== ЛЕВАЯ ПАНЕЛЬ: СПИСОК ЧАТОВ ====== */}
+                    <div className={`chat-app-sidebar ${activeChat ? 'hidden-mobile' : ''}`}>
                         <div className="chat-app-sidebar-list">
                             {loadingChats ? (
                                 <div className="chat-app-loading"><PageLoader compact/></div>
@@ -530,7 +530,7 @@ function ChatApp({ currentUser, onClose, onOpenVacancy, onCancelApplication, ini
                                         aria-label="Отправить сообщение"
                                     >
                                         {sending ? (
-                                            <div className="spinner-small"></div>
+                                            <AppLoader inline/>
                                         ) : (
                                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                 <line x1="22" y1="2" x2="11" y2="13" />

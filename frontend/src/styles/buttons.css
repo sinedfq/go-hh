@@ -22,12 +22,18 @@
 
 .btn-primary {
     background: var(--accent);
-    color: white;
+    color: var(--on-accent);
 }
 
 .btn-primary:hover {
     background: var(--accent-hover);
 }
+
+/* Shared links must be available before the lazy auth stylesheet loads. */
+.auth-switch{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:36px;width:auto;margin:0;padding:6px 10px;border:1px solid transparent;border-radius:var(--radius-md);background:transparent;color:var(--accent);font:inherit;font-size:.875rem;cursor:pointer}
+.auth-switch:hover:not(:disabled){background:var(--accent-light);border-color:var(--border)}
+.btn:disabled,.auth-switch:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.btn:focus-visible,.auth-switch:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 
 .btn-secondary {
     background: var(--surface);
@@ -40,8 +46,7 @@
 }
 
 .btn-success {
-    background: var(--accent);
-    color: white;
+    background: var(--accent);color:var(--on-accent);
 }
 
 .btn-success:hover {

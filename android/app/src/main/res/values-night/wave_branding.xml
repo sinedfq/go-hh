@@ -1,0 +1,4 @@
+<resources>
+    <color name="wave_splash_background">#080816</color>
+    <item name="wave_splash_logo" type="drawable">@drawable/trudomix_wave_night</item>
+</resources>

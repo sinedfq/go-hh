@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.components
 
+import com.example.trudomix.ui.loading.AppLoader
+
 import android.graphics.Bitmap
 import android.graphics.Matrix
 import androidx.compose.foundation.Canvas
@@ -52,7 +54,7 @@ fun AvatarCropDialog(original:Bitmap,busy:Boolean,error:String?,onDismiss:()->Un
                     IconButton(onClick=onDismiss,enabled=!busy){Icon(Icons.Default.Close,"Отмена")}
                     Text("Кадрирование фото",Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,maxLines=2)
                     Button(onClick={onConfirm(bitmap,pose)},enabled=!locked) {
-                        if(busy)CircularProgressIndicator(Modifier.size(20.dp),strokeWidth=2.dp,color=colors.onPrimary)else Text("Сохранить фото",style=MaterialTheme.typography.labelMedium)
+                        if(busy)AppLoader(Modifier.size(20.dp),strokeWidth=2.dp,color=colors.onPrimary)else Text("Сохранить фото",style=MaterialTheme.typography.labelMedium)
                     }
                 }
                 BoxWithConstraints(Modifier.weight(1f).fillMaxWidth(),contentAlignment=Alignment.Center) {
@@ -77,7 +79,7 @@ fun AvatarCropDialog(original:Bitmap,busy:Boolean,error:String?,onDismiss:()->Un
                             drawPath(mask,Color.Black.copy(alpha=.6f))
                             drawCircle(Color.White.copy(alpha=.9f),radius=size.minDimension/2-1.dp.toPx(),style=Stroke(2.dp.toPx()))
                         }
-                        if(rotating)CircularProgressIndicator()
+                        if(rotating)AppLoader()
                     }
                 }
                 Column(Modifier.align(Alignment.CenterHorizontally).widthIn(max=600.dp).fillMaxWidth().padding(horizontal=20.dp,vertical=12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(4.dp)) {

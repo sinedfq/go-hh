@@ -26,8 +26,8 @@
 }
 
 .company-card:hover {
-    border-color: #0066cc;
-    box-shadow: 0 4px 16px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent);
+    box-shadow: 0 4px 16px color-mix(in srgb,var(--accent) 10%,transparent);
     transform: translateY(-2px);
 }
 
@@ -36,7 +36,7 @@
     width: 56px;
     height: 56px;
     border-radius: 12px;
-    background: linear-gradient(135deg, #0066cc 0%, #00a3ff 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -64,7 +64,7 @@
 }
 
 .company-industry {
-    color: #0066cc;
+    color: var(--accent);
     font-size: 0.875rem;
     font-weight: 500;
     margin-bottom: 0.125rem;
@@ -116,8 +116,8 @@
 }
 
 .back-btn:hover {
-    border-color: #0066cc;
-    color: #0066cc;
+    border-color: var(--accent);
+    color: var(--accent);
     background: #f0f7ff;
 }
 
@@ -136,7 +136,7 @@
     width: 88px;
     height: 88px;
     border-radius: 20px;
-    background: linear-gradient(135deg, #0066cc 0%, #00a3ff 100%);
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -178,16 +178,16 @@
 
 .meta-badge {
     background: #f0f7ff;
-    color: #0066cc;
+    color: var(--accent);
     padding: 0.25rem 0.75rem;
     border-radius: 6px;
     font-size: 0.8125rem;
     font-weight: 500;
-    border: 1px solid rgba(0, 102, 204, 0.15);
+    border: 1px solid color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 .company-website {
-    color: #0066cc;
+    color: var(--accent);
     font-size: 0.875rem;
     text-decoration: none;
     font-weight: 500;
@@ -215,7 +215,7 @@
 .header-stat .stat-value {
     font-size: 1.75rem;
     font-weight: 800;
-    color: #0066cc;
+    color: var(--accent);
     line-height: 1;
 }
 
@@ -259,8 +259,7 @@
 }
 
 .vacancies-count-badge {
-    background: #0066cc;
-    color: white;
+    background: var(--accent);color:var(--on-accent);
     font-size: 0.75rem;
     font-weight: 600;
     padding: 0.25rem 0.625rem;
@@ -294,8 +293,8 @@
 }
 
 .company-vacancy-card:hover {
-    border-color: #0066cc;
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.08);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 8%,transparent);
 }
 
 .vacancy-card-top {
@@ -382,5 +381,5 @@
 }
 
 .company-vacancy-card.clickable:hover .vacancy-card-top h4 {
-    color: #0066cc;
+    color: var(--accent);
 }

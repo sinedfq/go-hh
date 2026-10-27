@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { CircularProgress, DonutChart, HorizontalBars } from '../../components/common/Charts'
@@ -29,7 +30,7 @@ function EmployerStatsPage() {
         return (
             <div className="employer-page">
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <AppLoader inline/>
                     <p>Загрузка статистики...</p>
                 </div>
             </div>
@@ -75,7 +76,7 @@ function EmployerStatsPage() {
 
     // Данные для donut chart
     const applicationsData = [
-        { label: 'Новые', value: s.new, color: '#0066cc' },
+        { label: 'Новые', value: s.new, color: 'var(--accent)' },
         { label: 'Просмотрено', value: s.viewed, color: '#d97706' },
         { label: 'Принято', value: s.accepted, color: '#2ea043' },
         { label: 'Отклонено', value: s.rejected, color: '#dc3545' },
@@ -85,8 +86,8 @@ function EmployerStatsPage() {
     const barItems = [
         { label: 'Просмотров вакансий', value: s.vacancyViews, color: '#2ea043' },
         { label: 'Всего откликов', value: s.apps, color: '#d97706' },
-        { label: 'Принятых', value: s.accepted, color: '#0066cc' },
-        { label: 'Просмотров резюме', value: s.resumeViews, color: '#9c27b0' },
+        { label: 'Принятых', value: s.accepted, color: 'var(--accent)' },
+        { label: 'Просмотров резюме', value: s.resumeViews, color: 'var(--accent-secondary)' },
     ]
 
     return (
@@ -101,7 +102,7 @@ function EmployerStatsPage() {
             {/* ====== ОСНОВНЫЕ МЕТРИКИ ====== */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <div className="stat-card-icon" style={{ background: 'rgba(0, 102, 204, 0.1)', color: '#0066cc' }}>
+                    <div className="stat-card-icon" style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />
@@ -139,7 +140,7 @@ function EmployerStatsPage() {
                 </div>
 
                 <div className="stat-card">
-                    <div className="stat-card-icon" style={{ background: 'rgba(156, 39, 176, 0.1)', color: '#9c27b0' }}>
+                    <div className="stat-card-icon" style={{ background: 'rgba(156, 39, 176, 0.1)', color: 'var(--accent-secondary)' }}>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                             <polyline points="14 2 14 8 20 8" />

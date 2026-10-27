@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.profile
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -13,7 +15,7 @@ import com.example.trudomix.data.models.Resume
 
 @Composable
 fun ProfileDashboard(state: ProfileOverview, candidate: Boolean, onResume: () -> Unit, onApplications: () -> Unit, onFavorites: () -> Unit, onRetry: () -> Unit) {
-    if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+    if (state.loading) InlineLoadingState()
     Column(verticalArrangement=Arrangement.spacedBy(12.dp),modifier=Modifier.fillMaxWidth()) {
         Text("Моя активность",style=MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement=Arrangement.spacedBy(12.dp)) {

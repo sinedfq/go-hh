@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { brandAccent, brandImage, readBrand, readTheme } from '../utils/brand'
+import './BrandContext.css'
 
 const BrandContext=createContext(null)
 export function BrandProvider({children}){

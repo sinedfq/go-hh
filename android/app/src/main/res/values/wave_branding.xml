@@ -1,0 +1,6 @@
+<resources>
+    <color name="wave_launcher_night_background">#0B0B1F</color>
+    <color name="wave_launcher_light_background">#FFFFFF</color>
+    <color name="wave_splash_background">#F8F7FC</color>
+    <item name="wave_splash_logo" type="drawable">@drawable/trudomix_wave_light</item>
+</resources>

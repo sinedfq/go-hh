@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import ApplicationHistory from '../../components/common/ApplicationHistory'
@@ -93,7 +94,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
         return (
             <div className="candidate-page">
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <AppLoader inline/>
                     <p>Загрузка откликов...</p>
                 </div>
             </div>
@@ -220,7 +221,7 @@ function MyApplicationsPage({ onOpenVacancy, onOpenChatWith, showToast }) {
                                         >
                                             {isCancelling ? (
                                                 <>
-                                                    <div className="spinner-small"></div>
+                                                    <AppLoader inline/>
                                                     Отмена...
                                                 </>
                                             ) : (

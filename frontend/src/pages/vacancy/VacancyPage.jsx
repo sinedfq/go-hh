@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
 import MarkdownContent from '../../components/common/MarkdownContent'
 import { useState, useEffect, useRef } from 'react'
@@ -189,7 +190,7 @@ function VacancyPage({ vacancyId, onClose, onOpenCompany, showToast }) {
         return (
             <div className="vacancy-page">
                 <div className="loading">
-                    <div className="spinner"></div>
+                    <AppLoader inline/>
                     <p>Загрузка вакансии...</p>
                 </div>
             </div>

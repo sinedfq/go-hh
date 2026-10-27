@@ -256,6 +256,8 @@ local.properties
 *.test
 *.out
 /cmd.zip
+# Original design archive; application graphics and HTML references are versioned separately.
+/icons/Trudomix_With_Wave_Icons.zip
 
 # Runtime uploads; fictional demo assets belong to the source tree
 /uploads/*

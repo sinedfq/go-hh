@@ -2,72 +2,58 @@
    ТЁМНАЯ ТЕМА
    ============================================ */
 
-:root[data-theme="dark"] {
-    color-scheme: dark;
-    --bg: #0d1117;
-    --surface: #161b22;
-    --border: #30363d;
-    --border-light: #21262d;
-    --text-primary: #e6edf3;
-    --text-secondary: #b1bac4;
-    --text-muted: #768390;
-    --accent: #4493f8;
-    --accent-hover: #2f81f7;
-    --accent-light: rgba(68, 147, 248, 0.15);
-    --danger: #f85149;
-    --success: #3fb950;
-}
+/* Theme tokens live in variables.css. */
 
 /* ====== LAYOUT ====== */
 [data-theme="dark"] .sidebar,
 [data-theme="dark"] .top-header {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .sidebar-logo,
 [data-theme="dark"] .sidebar-footer {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .nav-title,
 [data-theme="dark"] .user-profile-title {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .nav-subtitle,
 [data-theme="dark"] .user-profile-email {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .nav-item:hover,
 [data-theme="dark"] .user-profile-btn:hover {
-    background: rgba(68, 147, 248, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 [data-theme="dark"] .nav-bar {
-    background: #30363d;
+    background: var(--border);
 }
 
 /* ====== ПОЛЯ ВВОДА (глобально) ====== */
 [data-theme="dark"] input,
 [data-theme="dark"] textarea,
 [data-theme="dark"] select {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] input::placeholder,
 [data-theme="dark"] textarea::placeholder {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 /* ====== КНОПКИ ====== */
 [data-theme="dark"] .btn-secondary {
-    background: #21262d;
-    color: #e6edf3;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
 }
 
 /* ====== КАРТОЧКИ ====== */
@@ -81,57 +67,57 @@
 [data-theme="dark"] .favorite-card,
 [data-theme="dark"] .profile-card,
 [data-theme="dark"] .empty-state {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .browse-list-item:hover {
-    background: #21262d;
+    background: var(--surface-secondary);
 }
 
 [data-theme="dark"] .browse-list-item-title,
 [data-theme="dark"] .favorite-card-content h3,
 [data-theme="dark"] .detail-header h2,
 [data-theme="dark"] .vacancy-title-row h1 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .browse-list-item-company,
 [data-theme="dark"] .favorite-company {
-    color: #b1bac4;
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .detail-meta,
 [data-theme="dark"] .card-meta {
-    background: #21262d;
+    background: var(--surface-secondary);
 }
 
 [data-theme="dark"] .skill-tag {
-    background: #21262d;
-    border-color: #30363d;
-    color: #b1bac4;
+    background: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--text-secondary);
 }
 
 /* ====== СВАЙПЫ ====== */
 [data-theme="dark"] .swipe-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .card-header-content h2 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .card-btn {
-    background: #21262d;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .card-btn-info {
-    background: rgba(68, 147, 248, 0.1);
-    color: #4493f8;
-    border-color: rgba(68, 147, 248, 0.3);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
+    color: var(--accent);
+    border-color: color-mix(in srgb,var(--accent) 30%,transparent);
 }
 
 /* ====== LOGIN ====== */
@@ -141,7 +127,7 @@
 
 [data-theme="dark"] .login-wide {
     background: rgba(22, 27, 34, 0.7);
-    border-color: #30363d;
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .login-form-side {
@@ -151,94 +137,94 @@
 [data-theme="dark"] .form-header h2,
 [data-theme="dark"] .form-field label,
 [data-theme="dark"] .role-card-content h3 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-header p,
 [data-theme="dark"] .role-card-content p {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .login-tabs {
-    background: #21262d;
+    background: var(--surface-secondary);
 }
 
 [data-theme="dark"] .login-tab.active {
-    background: #30363d;
-    color: #e6edf3;
+    background: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .role-card {
     background: rgba(33, 38, 45, 0.8);
-    border-color: #30363d;
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .role-card:hover {
-    border-color: #4493f8;
-    background: rgba(68, 147, 248, 0.1);
+    border-color: var(--accent);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 [data-theme="dark"] .role-card-icon {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .login-skip {
     background: transparent;
-    color: #4493f8;
-    border-color: #4493f8;
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .login-footer {
-    color: #768390;
-    border-color: #21262d;
+    color: var(--text-muted);
+    border-color: var(--surface-secondary);
 }
 
 /* ====== МОДАЛКИ РЕЗЮМЕ ====== */
 [data-theme="dark"] .resume-modal,
 [data-theme="dark"] .details-modal {
     background: rgba(22, 27, 34, 0.9);
-    border-color: #30363d;
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .details-info h2,
 [data-theme="dark"] .resume-modal h3,
 [data-theme="dark"] .resume-form h3 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 /* ====== ПАНЕЛЬ КАРТЫ ====== */
 [data-theme="dark"] .map-city-panel {
-    background: #161b22;
+    background: var(--surface);
 }
 
 [data-theme="dark"] .map-city-panel-header {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .map-city-panel-header h3 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .map-city-item:hover {
-    background: rgba(68, 147, 248, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 [data-theme="dark"] .map-city-item-title {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 /* ====== МОБИЛЬНОЕ МЕНЮ ====== */
 [data-theme="dark"] .mobile-more-sheet {
-    background: #161b22;
+    background: var(--surface);
 }
 
 [data-theme="dark"] .mobile-more-item {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .mobile-more-handle {
-    background: #30363d;
+    background: var(--border);
 }
 
 /* ============================================
@@ -284,8 +270,8 @@
 /* ====== ПОИСК ====== */
 [data-theme="dark"] .search-result-card,
 [data-theme="dark"] .result-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 /* Просмотры — любой элемент с "views" в классе */
@@ -326,8 +312,8 @@
 [data-theme="dark"] .ai-analysis-card,
 [data-theme="dark"] .rec-loading,
 [data-theme="dark"] .rec-waiting {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     color: var(--text-secondary);
 }
 
@@ -336,8 +322,8 @@
 [data-theme="dark"] .company-details,
 [data-theme="dark"] .company-header,
 [data-theme="dark"] .company-vacancy-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .company-name,
@@ -353,9 +339,9 @@
 
 /* ====== СТРАНИЦА ВАКАНСИИ ====== */
 [data-theme="dark"] .meta-badge {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
-    border-color: rgba(68, 147, 248, 0.3);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
+    border-color: color-mix(in srgb,var(--accent) 30%,transparent);
 }
 
 [data-theme="dark"] .remote-badge {
@@ -378,8 +364,8 @@
 
 /* ====== ПРОФИЛЬ ====== */
 [data-theme="dark"] .profile-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .profile-info h2 {
@@ -391,8 +377,8 @@
 }
 
 [data-theme="dark"] .profile-stats {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .stat-number {
@@ -404,8 +390,8 @@
 }
 
 [data-theme="dark"] .resume-card {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .resume-card h4 {
@@ -422,7 +408,7 @@
 }
 
 [data-theme="dark"] .empty-resume {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: var(--text-secondary);
 }
 
@@ -431,7 +417,7 @@
 }
 
 [data-theme="dark"] .resume-badges .badge {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: var(--text-secondary);
 }
 
@@ -441,12 +427,12 @@
 
 /* ====== ПРОФИЛЬ ====== */
 [data-theme="dark"] .profile-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .profile-header {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .profile-info h2 {
@@ -458,8 +444,8 @@
 }
 
 [data-theme="dark"] .stat-item {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .stat-item:hover {
@@ -476,8 +462,8 @@
 }
 
 [data-theme="dark"] .profile-section {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .profile-section h3 {
@@ -485,8 +471,8 @@
 }
 
 [data-theme="dark"] .resume-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .resume-card.clickable:hover {
@@ -499,9 +485,9 @@
 }
 
 [data-theme="dark"] .resume-badges .badge {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
-    border-color: rgba(68, 147, 248, 0.3);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
+    border-color: color-mix(in srgb,var(--accent) 30%,transparent);
 }
 
 [data-theme="dark"] .resume-badges .badge.remote {
@@ -515,13 +501,13 @@
 }
 
 [data-theme="dark"] .resume-skills .skill-tag {
-    background: #21262d;
-    color: #4493f8;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    color: var(--accent);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .skill-tag.more {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: var(--text-muted);
 }
 
@@ -531,7 +517,7 @@
 
 [data-theme="dark"] .resume-actions,
 [data-theme="dark"] .resume-cta {
-    border-color: #30363d;
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .resume-cta {
@@ -539,8 +525,8 @@
 }
 
 [data-theme="dark"] .empty-resume {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .empty-resume p {
@@ -548,7 +534,7 @@
 }
 
 [data-theme="dark"] .profile-actions {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .profile-actions .btn-danger {
@@ -564,8 +550,8 @@
 
 [data-theme="dark"] .profile-page .empty-state,
 [data-theme="dark"] .profile-page .loading {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     color: var(--text-muted);
 }
 
@@ -574,34 +560,34 @@
 }
 
 [data-theme="dark"] .loading .spinner {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
     border-top-color: var(--accent);
 }
 
 /* ====== КОМПАНИИ ====== */
 [data-theme="dark"] .company-header-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 /* ====== РЕКОМЕНДАЦИИ ====== */
 [data-theme="dark"] .recommendations-list,
 [data-theme="dark"] .recommendation-card,
 [data-theme="dark"] .rec-item {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .ai-reasoning {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
     color: var(--text-secondary);
 }
 
 /* ====== ФИЛЬТРЫ (тёмные) ====== */
 [data-theme="dark"] .filter-panel {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .filter-label {
@@ -609,14 +595,14 @@
 }
 
 [data-theme="dark"] .custom-select-btn {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
     color: var(--text-primary);
 }
 
 [data-theme="dark"] .custom-select-dropdown {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .custom-select-option {
@@ -625,19 +611,19 @@
 
 [data-theme="dark"] .custom-select-option:hover,
 [data-theme="dark"] .custom-select-option.selected {
-    background: rgba(68, 147, 248, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 [data-theme="dark"] .chip {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
     color: var(--text-secondary);
 }
 
 [data-theme="dark"] .chip.active {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
-    border-color: rgba(68, 147, 248, 0.4);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
+    border-color: color-mix(in srgb,var(--accent) 40%,transparent);
 }
 
 /* ============================================
@@ -646,26 +632,26 @@
 
 /* Бейдж совместимости на свайпах */
 [data-theme="dark"] .match-score-badge {
-    background: #161b22;
+    background: var(--surface);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .match-score-badge.unknown {
-    background: #21262d;
-    border-color: #768390;
+    background: var(--surface-secondary);
+    border-color: var(--text-muted);
 }
 
 /* Кнопка "Назад" */
 [data-theme="dark"] .back-btn {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
     color: var(--text-secondary);
 }
 
 [data-theme="dark"] .back-btn:hover {
     border-color: var(--accent);
     color: var(--accent);
-    background: rgba(68, 147, 248, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 /* Назад в логине остаётся прозрачной */
@@ -677,21 +663,21 @@
 
 /* Загрузка и спиннеры — везде */
 [data-theme="dark"] .loading {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     color: var(--text-muted);
 }
 
 [data-theme="dark"] .spinner,
 [data-theme="dark"] .loading .spinner {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
     border-top-color: var(--accent);
 }
 
 /* Пустые состояния — везде */
 [data-theme="dark"] .empty-state {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .empty-state h2 {
@@ -728,9 +714,9 @@
 [data-theme="dark"] .work-exp-form textarea,
 [data-theme="dark"] .contact-input-wrapper input,
 [data-theme="dark"] .skills-input input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 /* Фокус — чуть светлее, но НЕ белый */
@@ -743,9 +729,9 @@
 [data-theme="dark"] .work-exp-form textarea:focus,
 [data-theme="dark"] .contact-input-wrapper input:focus,
 [data-theme="dark"] .skills-input input:focus {
-    background: #161b22;
-    border-color: #4493f8;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    background: var(--surface);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 /* Стеклянные поля из resumeform — убираем белое стекло */
@@ -759,31 +745,31 @@
 }
 
 [data-theme="dark"] .dropdown-trigger {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-menu {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .dropdown-option {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-option:hover,
 [data-theme="dark"] .dropdown-option.selected {
-    background: rgba(68, 147, 248, 0.1);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 /* ====== РЕКОМЕНДАЦИИ ====== */
 [data-theme="dark"] .recommendation-item,
 [data-theme="dark"] .recommendation-items,
 [data-theme="dark"] .recommendations-list {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .recommendation-item:hover {
@@ -792,15 +778,15 @@
 
 [data-theme="dark"] .recommendation-item.active,
 [data-theme="dark"] .recommendation-items.active {
-    background: rgba(68, 147, 248, 0.15);
-    border-color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    border-color: var(--accent);
 }
 
 /* Шапка AI-анализа */
 [data-theme="dark"] .ai-reasoning-header {
-    background: #21262d;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 /* Текст внутри рекомендаций — прозрачный фон */
@@ -822,14 +808,14 @@
 
 /* Карточка описания компании */
 [data-theme="dark"] .company-description-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 /* Пустой список вакансий */
 [data-theme="dark"] .empty-vacancies {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 /* Ошибка в форме логина */
@@ -845,23 +831,23 @@
 
 /* Карта и поиск города */
 [data-theme="dark"] .map-search-input {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
     color: var(--text-primary);
 }
 
 [data-theme="dark"] .map-search-input:focus {
-    background: #161b22;
+    background: var(--surface);
     border-color: var(--accent);
 }
 
 [data-theme="dark"] .vacancy-map-container {
-    border-color: #30363d;
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .city-search-input {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     color: var(--text-primary);
 }
 
@@ -876,116 +862,116 @@
 
 /* Dropdown опыта (Junior/Middle/Senior/Lead) */
 [data-theme="dark"] .dropdown-menu {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .dropdown-option {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-option:hover {
-    background: rgba(68, 147, 248, 0.15);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .dropdown-option.selected {
-    background: rgba(68, 147, 248, 0.2);
+    background: color-mix(in srgb,var(--accent) 20%,transparent);
 }
 
 [data-theme="dark"] .dropdown-option.selected .option-label {
-    color: #4493f8;
+    color: var(--accent);
 }
 
 [data-theme="dark"] .option-label {
-    color: #e6edf3;
+    color: var(--text-primary);
     font-weight: 600;
 }
 
 [data-theme="dark"] .option-description {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .option-check {
-    color: #4493f8;
+    color: var(--accent);
 }
 
 [data-theme="dark"] .dropdown-trigger {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-trigger:hover {
-    background: #161b22;
+    background: var(--surface);
 }
 
 [data-theme="dark"] .dropdown-arrow {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 /* Автодополнение названия вакансии */
 [data-theme="dark"] .position-suggestions {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .position-suggestion-item {
-    color: #e6edf3;
-    border-color: #21262d;
+    color: var(--text-primary);
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .position-suggestion-item:hover {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 /* Автодополнение города */
 [data-theme="dark"] .city-dropdown {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .city-dropdown-item {
-    color: #e6edf3;
-    border-color: #21262d;
+    color: var(--text-primary);
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .city-dropdown-item:hover {
-    background: rgba(68, 147, 248, 0.15);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .city-dropdown-item.selected {
-    background: rgba(68, 147, 248, 0.2);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 20%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .city-dropdown-add {
-    background: rgba(68, 147, 248, 0.08);
-    color: #4493f8;
-    border-color: #30363d;
+    background: color-mix(in srgb,var(--accent) 8%,transparent);
+    color: var(--accent);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .city-dropdown-empty {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .city-picker-input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .city-picker-input:focus {
-    background: #161b22;
-    border-color: #4493f8;
+    background: var(--surface);
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .city-selected-badge {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 /* ============================================
@@ -993,51 +979,51 @@
    ============================================ */
 
 [data-theme="dark"] .skills-suggestions {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .skill-suggestion-item {
-    color: #e6edf3;
+    color: var(--text-primary);
     background: transparent;
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .skill-suggestion-item:hover {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .skills-input input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .skills-input input:focus {
-    background: #161b22;
-    border-color: #4493f8;
+    background: var(--surface);
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .add-skill-btn {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #4493f8;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .add-skill-btn:hover:not(:disabled) {
-    background: #161b22;
+    background: var(--surface);
 }
 
 [data-theme="dark"] .skill-tag-form {
-    background: #21262d;
-    border-color: #30363d;
-    color: #4493f8;
+    background: var(--surface-secondary);
+    border-color: var(--border);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .remove-skill {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .remove-skill:hover {
@@ -1050,17 +1036,17 @@
 
 [data-theme="dark"] .vacancy-map-container .ymaps-2-1-79-searchbox-input,
 [data-theme="dark"] .vacancy-map-container input[class*="search"] {
-    background: #161b22 !important;
-    color: #e6edf3 !important;
-    border-color: #30363d !important;
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border) !important;
 }
 
 [data-theme="dark"] .vacancy-map-container .ymaps-2-1-79-searchbox__input {
-    background: #161b22 !important;
+    background: var(--surface) !important;
 }
 
 [data-theme="dark"] .vacancy-map-container .ymaps-2-1-79-searchbox__input input {
-    color: #e6edf3 !important;
+    color: var(--text-primary) !important;
 }   
 
 /* ============================================
@@ -1068,23 +1054,23 @@
    ============================================ */
 
 [data-theme="dark"] .map-suggestions {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .map-suggestion-item {
-    color: #e6edf3;
-    border-color: #21262d;
+    color: var(--text-primary);
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .map-suggestion-item:hover {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .map-suggestion-item svg {
-    color: #4493f8;
+    color: var(--accent);
 }
 
 /* ============================================
@@ -1092,45 +1078,45 @@
    ============================================ */
 
 [data-theme="dark"] .notification-bell {
-    background: #21262d;
-    color: #768390;
+    background: var(--surface-secondary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .notification-bell:hover {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .notification-badge {
     background: #f85149;
-    border-color: #161b22;
+    border-color: var(--surface);
 }
 
 [data-theme="dark"] .notification-dropdown {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .notification-dropdown-header {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .notification-item {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .notification-item:hover {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 [data-theme="dark"] .notification-item.unread {
-    background: rgba(68, 147, 248, 0.08);
+    background: color-mix(in srgb,var(--accent) 8%,transparent);
 }
 
 [data-theme="dark"] .notification-icon-new_application {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .notification-icon-application_viewed {
@@ -1153,59 +1139,58 @@
    ============================================ */
 
 [data-theme="dark"] .applications-filters {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .filter-btn {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .filter-btn:hover {
-    background: #21262d;
-    color: #e6edf3;
+    background: var(--surface-secondary);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .filter-btn.active {
-    background: #4493f8;
-    color: white;
+    background: var(--accent);color:var(--on-accent);
 }
 
 [data-theme="dark"] .filter-btn:not(.active) .filter-count {
-    background: #21262d;
-    color: #768390;
+    background: var(--surface-secondary);
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .application-card {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .application-card:hover {
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .application-vacancy-row {
-    background: #0d1117;
-    color: #b1bac4;
+    background: var(--bg);
+    color: var(--text-secondary);
 }
 
 [data-theme="dark"] .application-vacancy-link {
-    color: #4493f8;
+    color: var(--accent);
 }
 
 [data-theme="dark"] .application-cover {
-    background: #0d1117;
-    border-color: #4493f8;
+    background: var(--bg);
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .cover-text {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .applications-empty {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .btn-success {
@@ -1226,8 +1211,8 @@
 }
 
 [data-theme="dark"] .application-status-badge.status-new {
-    background: rgba(68, 147, 248, 0.15);
-    color: #4493f8;
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    color: var(--accent);
 }
 
 [data-theme="dark"] .application-status-badge.status-viewed {

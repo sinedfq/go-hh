@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.companies
 
+import com.example.trudomix.ui.loading.AppLoader
+
 import android.net.Uri
 import android.widget.VideoView
 import androidx.compose.foundation.background
@@ -117,6 +119,6 @@ private fun StoryVideo(url:String,playing:Boolean,onProgress:(Float)->Unit,onFin
     Box(Modifier.fillMaxSize().semantics{contentDescription=if(error)"Ошибка видео"else if(!rendered)"Загрузка видео"else if(playing)"Видео воспроизводится"else "Видео на паузе"},contentAlignment=Alignment.Center){
         AndroidView(factory={context->VideoView(context).apply{player=this;setOnPreparedListener{ready=true};setOnInfoListener{_,what,_->if(what==android.media.MediaPlayer.MEDIA_INFO_VIDEO_RENDERING_START)rendered=true;false};setOnCompletionListener{currentFinish()};setOnErrorListener{_,_,_->error=true;true};setVideoURI(Uri.parse(ApiClient.mediaUrl(url))) }},modifier=Modifier.fillMaxSize())
         if(error)Text("Не удалось воспроизвести видео. Попробуй следующую историю.",Modifier.padding(30.dp).background(Color.Black.copy(alpha=.8f)),color=Color.White)
-        else if(!ready)CircularProgressIndicator(color=Color.White)
+        else if(!ready)AppLoader(color=Color.White)
     }
 }

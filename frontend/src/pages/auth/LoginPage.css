@@ -1,6 +1,6 @@
 .auth-overlay{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:28px;background:color-mix(in srgb,var(--bg) 75%,transparent);backdrop-filter:blur(14px);overflow-y:auto}
-.auth-overlay::before{content:'';position:fixed;inset:-30%;pointer-events:none;background:radial-gradient(ellipse at 25% 35%,#137aff22,transparent 52%),radial-gradient(ellipse at 75% 65%,#0066cc18,transparent 50%);animation:auth-color-flow 18s ease-in-out infinite alternate;z-index:-1}
-.auth-story::before{content:'';position:absolute;inset:-35%;pointer-events:none;background:radial-gradient(ellipse at 30% 40%,#0066cc26,transparent 65%);animation:auth-color-flow 16s ease-in-out infinite alternate}
+.auth-overlay::before{content:'';position:fixed;inset:-30%;pointer-events:none;background:radial-gradient(ellipse at 25% 35%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 52%),radial-gradient(ellipse at 75% 65%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 50%);animation:auth-color-flow 18s ease-in-out infinite alternate;z-index:-1}
+.auth-story::before{content:'';position:absolute;inset:-35%;pointer-events:none;background:radial-gradient(ellipse at 30% 40%,color-mix(in srgb,var(--accent) 14%,transparent),transparent 65%);animation:auth-color-flow 16s ease-in-out infinite alternate}
 .auth-story{isolation:isolate;overflow:hidden}.auth-story>*{position:relative}
 @keyframes auth-color-flow{from{transform:translate(-4%,-3%) rotate(-8deg);opacity:.45}to{transform:translate(6%,5%) rotate(10deg);opacity:.95}}
 @media(prefers-reduced-motion:reduce){.auth-overlay::before,.auth-story::before{animation:none;opacity:.5}}
@@ -22,7 +22,7 @@
 .auth-roles label{display:flex;gap:6px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--border);font-size:.8rem;cursor:pointer}.auth-roles label.selected{border-color:var(--accent);background:var(--accent-light);color:var(--accent)}.auth-roles input{accent-color:var(--accent)}
 .auth-error{background:color-mix(in srgb,var(--danger) 9%,var(--surface));border-radius:12px;padding:12px;color:var(--danger);font-size:.85rem}
 .auth-submit{display:flex;justify-content:space-between;gap:16px;min-height:52px;margin-top:14px;border-radius:14px}.auth-submit span{font-size:20px}
-.auth-switch,.auth-guest{width:100%;border:0;background:transparent;padding:12px 0;color:var(--accent);cursor:pointer;font:inherit;font-size:.9rem}.auth-switch{margin-top:16px}.auth-guest{color:var(--text-muted);font-size:.8rem}
+.auth-form-panel .auth-switch,.auth-guest{width:100%;margin-top:16px}.auth-guest{border:0;background:transparent;padding:12px 0;color:var(--text-muted);cursor:pointer;font:inherit;font-size:.8rem}
 .auth-dialog button:disabled{opacity:.55;cursor:wait}.auth-dialog :focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:3px}
 @keyframes auth-appear{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:760px){.auth-overlay{padding:16px;align-items:start}.auth-dialog{grid-template-columns:1fr;max-width:480px}.auth-story{padding:28px;gap:12px}.auth-story h1{font-size:1.8rem}.auth-story p,.auth-story-tags{display:none}.auth-logo{width:48px;height:48px;border-radius:14px}.auth-form-panel{padding:32px 24px 24px}.auth-story .eyebrow{font-size:.6rem}.auth-close{top:12px}.auth-form-panel h2{font-size:1.7rem}}

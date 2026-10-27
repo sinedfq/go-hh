@@ -1,5 +1,9 @@
 package com.example.trudomix.ui.screens.chat
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
+import com.example.trudomix.ui.loading.AppLoader
+
 import com.example.trudomix.ui.components.AppScreenHeader
 
 import androidx.compose.foundation.layout.*
@@ -62,7 +66,7 @@ fun ConversationContent(conversationId:Int,state:ConversationState,onBackClick:(
                 }
             }
             state.contextError?.let { Text(it,style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(12.dp)) }
-            if(state.loading)LinearProgressIndicator(Modifier.fillMaxWidth())
+            if(state.loading)InlineLoadingState()
             if(state.error!=null)Text(state.error!!,color=MaterialTheme.colorScheme.error,modifier=Modifier.padding(12.dp))
             LazyColumn(state=list,modifier=Modifier.weight(1f).fillMaxWidth(),contentPadding=PaddingValues(horizontal=20.dp,vertical=16.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
                 state.conversation?.cover_letter?.takeIf { it.isNotBlank() }?.let { letter ->
@@ -97,7 +101,7 @@ fun ConversationContent(conversationId:Int,state:ConversationState,onBackClick:(
             if(state.failedText!=null)TextButton(onClick={onSend(state.failedText)},enabled=!state.sending){Text("Повторить отправку: "+state.failedText.take(35))}
             Row(Modifier.fillMaxWidth().padding(horizontal=16.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(8.dp)){
                 OutlinedTextField(text,{text=it;if(it.isNotBlank())onTyping()},shape=RoundedCornerShape(24.dp),modifier=Modifier.weight(1f),placeholder={Text("Сообщение…")},maxLines=5,isError=text.length>4000,supportingText=if(text.length>3800){{Text("${text.length} / 4000")}}else null)
-                FilledIconButton(onClick={onSend(text);text=""},modifier=Modifier.size(48.dp),enabled=text.isNotBlank()&&text.length<=4000&&!state.sending){if(state.sending)CircularProgressIndicator(Modifier.size(24.dp))else Icon(Icons.AutoMirrored.Filled.Send,"Отправить")}
+                FilledIconButton(onClick={onSend(text);text=""},modifier=Modifier.size(48.dp),enabled=text.isNotBlank()&&text.length<=4000&&!state.sending){if(state.sending)AppLoader(Modifier.size(24.dp))else Icon(Icons.AutoMirrored.Filled.Send,"Отправить")}
             }
         }
         }

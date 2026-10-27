@@ -53,6 +53,7 @@ object AppNotifications {
     }
 
     fun allowed(context: Context, channel: String? = null): Boolean {
+        if (!NotificationPreferences.isEnabled(context)) return false
         if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false
         if (!NotificationManagerCompat.from(context).areNotificationsEnabled()) return false
         val manager = context.getSystemService(NotificationManager::class.java)

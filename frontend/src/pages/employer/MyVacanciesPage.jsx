@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import { useState } from 'react'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import WorkspaceHeader, { WorkspaceIcon, WorkspaceMetric } from '../../components/common/WorkspaceHeader'
@@ -36,7 +37,7 @@ export default function MyVacanciesPage({ myCompany, myVacancies = [], employerL
         </WorkspaceHeader>
         {confirmation && <ConfirmModal title={confirmation.action === 'delete' ? 'Удалить вакансию?' : 'Переместить в архив?'} message={confirmation.action === 'delete' ? `Вакансия «${confirmation.job.title}» будет удалена вместе с откликами и чатами. Отменить это действие нельзя.` : `Вакансия «${confirmation.job.title}» исчезнет из поиска. Её можно будет восстановить из архива.`} confirmText={confirmation.action === 'delete' ? 'Удалить' : 'В архив'} danger={confirmation.action === 'delete'} onConfirm={() => changeVacancy(confirmation.job, confirmation.action)} onCancel={() => setConfirmation(null)}/>}
         {(employerError || actionError) && <div className="employer-error" role="alert">{actionError || employerError}{employerError && onReload && <button className="btn btn-secondary" onClick={onReload}>Повторить загрузку</button>}</div>}
-        {employerLoading ? <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем вакансии…</p></div>
+        {employerLoading ? <div className="workspace-state" role="status"><AppLoader inline/><p>Загружаем вакансии…</p></div>
         : !myCompany ? <div className="workspace-state"><span className="workspace-state-icon"><WorkspaceIcon name="briefcase" size={28}/></span><h2>Расскажите о компании</h2><p>Создайте страницу работодателя, чтобы публиковать вакансии и получать отклики.</p><button className="btn btn-primary" onClick={onCreateCompany || onCreateVacancy}>Создать компанию</button></div>
         : <>
             <div className="workspace-metrics"><WorkspaceMetric icon="briefcase" value={active.length} label="Опубликовано" hint="Доступны кандидатам в поиске"/><WorkspaceMetric icon="eye" value={views.toLocaleString('ru-RU')} label="Просмотры вакансий" hint="За всё время"/><WorkspaceMetric icon="archive" value={archived.length} label="В архиве" hint="Можно опубликовать снова"/></div>
