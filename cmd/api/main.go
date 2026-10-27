@@ -30,6 +30,9 @@ func main() {
 	mlClient := NewMLClient(mlURL)
 
 	server := NewServer(storage, mlClient)
+	if err := server.configurePhoneVerification(); err != nil {
+		log.Fatal(err)
+	}
 	if projectID := os.Getenv("FIREBASE_PROJECT_ID"); projectID != "" {
 		server.pushSender, err = push.New(ctx, projectID)
 		if err != nil {
@@ -40,6 +43,7 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
+	server.phoneVerificationRoutes(mux)
 	mux.HandleFunc("GET /api/saved-searches", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
 	mux.HandleFunc("POST /api/saved-searches", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
 	mux.HandleFunc("DELETE /api/saved-searches/{id}", server.authMiddleware(server.RequireRole("candidate", "admin")(server.savedSearchesHandler)))
