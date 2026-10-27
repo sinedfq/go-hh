@@ -36,6 +36,12 @@ services:
       DATABASE_URL: ${DOCKER_DATABASE_URL:-postgres://postgres:${POSTGRES_PASSWORD:-postgres}@postgres:5432/gohh?sslmode=disable}
       HTTP_ADDR: :8080
       JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      APP_ENV: ${APP_ENV:-production}
+      OTP_MODE: ${OTP_MODE:-off}
+      OTP_SECRET: ${OTP_SECRET:-}
+      OTP_TEST_PHONES: ${OTP_TEST_PHONES:-}
+      SMS_GATEWAY_URL: ${SMS_GATEWAY_URL:-}
+      SMS_GATEWAY_TOKEN: ${SMS_GATEWAY_TOKEN:-}
       ML_SERVICE_URL: ${ML_SERVICE_URL:-http://host.docker.internal:8000}
       YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
     extra_hosts:

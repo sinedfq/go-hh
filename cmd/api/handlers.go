@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/sinedfq/go-hh/internal/phoneotp"
 )
 
 // ====== СТРУКТУРА СЕРВЕРА ======
@@ -16,13 +17,15 @@ type notificationSender interface {
 }
 
 type Server struct {
-	pushSender  notificationSender
-	storage     *PostgresStorage // ← КОНКРЕТНЫЙ ТИП, без интерфейса
-	mlClient    *MLClient
-	pool        *pgxpool.Pool
-	recCache    *RecommendationsCache
-	typingMu    sync.Mutex
-	typingUsers map[int]map[int]time.Time
+	phoneVerification     *phoneotp.Service
+	phoneVerificationTest bool
+	pushSender            notificationSender
+	storage               *PostgresStorage // ← КОНКРЕТНЫЙ ТИП, без интерфейса
+	mlClient              *MLClient
+	pool                  *pgxpool.Pool
+	recCache              *RecommendationsCache
+	typingMu              sync.Mutex
+	typingUsers           map[int]map[int]time.Time
 }
 
 func NewServer(storage *PostgresStorage, mlClient *MLClient) *Server {
