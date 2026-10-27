@@ -36,7 +36,7 @@ class WebLoaderBrandTest {
             js("document.querySelector('.login-btn').click()")
             waitFor("!!document.querySelector('.auth-dialog')")
             assertEquals("true",js("document.querySelector('#auth-email').placeholder.length>0&&document.querySelector('#auth-password').placeholder.length>0"))
-            js("document.querySelector('.auth-switch').click()")
+            js("document.querySelector('.auth-dialog .auth-switch').click()")
             waitFor("!!document.querySelector('.auth-role-options')")
             for(width in listOf(360,1280)){
                 js("document.querySelector('meta[name=viewport]').content='width=$width';document.documentElement.dataset.theme='light'")
@@ -61,6 +61,13 @@ class WebLoaderBrandTest {
             web.set(this);setLayerType(android.view.View.LAYER_TYPE_SOFTWARE,null);settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
             webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse?{
                 val path=request.url.path.orEmpty()
+                if(request.isForMainFrame&&path=="/"){
+                    // WebView can reuse a preloaded script across reloads even with LOAD_NO_CACHE.
+                    // Give each test motion mode its own resource URL, including the preload.
+                    val mode=if(reduced.get())"reduced"else if(modulesBlocked.get())"clock"else "normal"
+                    val html=java.net.URL(url).readText().replace("\"/splash.js\"","\"/splash.js?test-motion=$mode\"")
+                    return WebResourceResponse("text/html","UTF-8",html.byteInputStream())
+                }
                 if(path.startsWith("/assets/")&&path.endsWith(".js")){
                     requested.add(path)
                     if(modulesBlocked.get())return WebResourceResponse("application/javascript","UTF-8","".byteInputStream())
