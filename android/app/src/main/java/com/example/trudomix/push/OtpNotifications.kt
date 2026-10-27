@@ -23,8 +23,9 @@ object OtpNotifications{
     fun receiveWeb(context:Context,data:Map<String,String>){
         val expires=data["expires_at"]?.toLongOrNull()?:return
         val remaining=expires-System.currentTimeMillis()/1000
-        if(remaining !in 1..300)return
-        show(context,data["phone"].orEmpty(),data["code"].orEmpty(),remaining.toInt(),web=true)
+        // Allow small device clock differences; server verification still enforces the real TTL.
+        if(remaining !in 1..600)return
+        show(context,data["phone"].orEmpty(),data["code"].orEmpty(),remaining.toInt().coerceAtMost(300),web=true)
     }
     const val CHANNEL="trudomix_auth_codes"
     const val ID=0x54524F54
