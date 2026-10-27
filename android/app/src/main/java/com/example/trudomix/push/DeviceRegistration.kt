@@ -30,23 +30,15 @@ object DeviceRegistration {
             combine(ApiClient.getTokenManager().tokenFlow, NotificationPreferences.enabled, refresh.onStart { emit(Unit) }) { token, enabled, _ -> token to enabled }
                 .collectLatest { (session, enabled) ->
                     if (session.isNullOrBlank()) { mutableStatus.value = RegistrationStatus.SIGNED_OUT; return@collectLatest }
-                    if (!enabled) {
-                        mutableStatus.value = RegistrationStatus.DISABLED
-                        val cached = context.getSharedPreferences("push_registration", Context.MODE_PRIVATE).getString("token", null)
-                        if (!cached.isNullOrBlank()) try {
-                            mutex.withLock { withTimeout(8000) { ApiClient.api.unregisterDevice(DeviceTokenRequest(cached)).checkSuccess() } }
-                        } catch (_: TimeoutCancellationException) { }
-                        catch (e: CancellationException) { throw e }
-                        catch (_: Exception) { /* Local delivery remains disabled while offline. */ }
-                        return@collectLatest
-                    }
+                    // Keep the signed-in installation reachable for explicitly requested login codes.
+                    // Business events are suppressed locally by NotificationPreferences.
                     mutableStatus.value = RegistrationStatus.REGISTERING
                     repeat(4) { attempt ->
                         try {
                             val registered = mutex.withLock {
                                 withTimeout(20000) {
                                     val token = FirebaseMessaging.getInstance().token.await()
-                                    if (ApiClient.getTokenManager().getToken() != session || !NotificationPreferences.isEnabled(context)) false
+                                    if (ApiClient.getTokenManager().getToken() != session) false
                                     else {
                                         context.getSharedPreferences("push_registration",Context.MODE_PRIVATE).edit().putString("token",token).apply()
                                         ApiClient.api.registerDevice(DeviceTokenRequest(token)).checkSuccess(); true
@@ -54,7 +46,7 @@ object DeviceRegistration {
                                 }
                             }
                             if (!registered) return@collectLatest
-                            mutableStatus.value = RegistrationStatus.REGISTERED
+                            mutableStatus.value = if(enabled)RegistrationStatus.REGISTERED else RegistrationStatus.DISABLED
                             return@collectLatest
                         } catch (e: TimeoutCancellationException) {
                             // Retry a bounded registration attempt after a temporary network timeout.

@@ -17,6 +17,7 @@ func (s *Server) phoneVerificationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/phone-verification/request", s.phoneVerificationRequest)
 	mux.HandleFunc("POST /api/phone-verification/verify", s.phoneVerificationVerify)
 	mux.HandleFunc("POST /api/auth/phone-login", s.phoneLoginHandler)
+	mux.HandleFunc("POST /api/auth/phone/web/request", s.webPhoneRequest)
 	mux.HandleFunc("POST /api/auth/mobile/register", s.mobileRegisterHandler)
 	mux.HandleFunc("GET /api/account/phone", s.authMiddleware(s.accountPhoneHandler))
 	mux.HandleFunc("PUT /api/account/phone", s.authMiddleware(s.accountPhoneHandler))
@@ -88,7 +89,7 @@ func (s *Server) phoneVerificationConfig(w http.ResponseWriter, _ *http.Request)
 	if s.phoneVerificationFirebase {
 		delivery = "firebase"
 	}
-	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery})
+	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery, "web_login_enabled": s.phoneVerificationFirebase && s.pushSender != nil})
 }
 func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request) {
 	if s.phoneVerification == nil {

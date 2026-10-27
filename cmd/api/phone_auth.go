@@ -61,6 +61,9 @@ func (s *Server) createPhoneUser(ctx context.Context, req RegisterRequest, passw
 	if err != nil {
 		return 0, err
 	}
+	if mode == "firebase_account" {
+		return 0, phoneotp.ErrInvalid
+	}
 	phone, _ := phoneotp.NormalizePhone(req.Phone)
 	var id int
 	if err = tx.QueryRow(ctx, `INSERT INTO users(email,password_hash,role) VALUES($1,$2,$3) RETURNING id`, req.Email, passwordHash, role).Scan(&id); err != nil {
@@ -102,7 +105,16 @@ func (s *Server) phoneLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// A locally displayed test code must never authenticate another installation or a real-SMS account.
-	if (accountMode == "sms" && mode != "sms") || (accountMode != "sms" && (binding == "" || !hmac.Equal([]byte(binding), []byte(accountDevice)))) {
+	trustedWeb := false
+	if mode == "firebase_account" {
+		var owner int
+		if err = tx.QueryRow(r.Context(), `SELECT account_user_id FROM phone_verification_challenges WHERE id=$1`, strings.Split(req.PhoneReceipt, ".")[0]).Scan(&owner); err != nil || owner != id {
+			phoneVerificationError(w, 401, "Привязка номера изменилась. Запросите новый код")
+			return
+		}
+		trustedWeb = true
+	}
+	if !trustedWeb && ((accountMode == "sms" && mode != "sms") || (accountMode != "sms" && (binding == "" || !hmac.Equal([]byte(binding), []byte(accountDevice))))) {
 		phoneVerificationError(w, 401, "Тестовый вход доступен на устройстве регистрации. Используйте почту и пароль")
 		return
 	}

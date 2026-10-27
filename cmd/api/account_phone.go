@@ -48,6 +48,10 @@ func (s *Server) accountPhoneHandler(w http.ResponseWriter, r *http.Request) {
 		phoneRegistrationError(w, err)
 		return
 	}
+	if mode == "firebase_account" {
+		phoneRegistrationError(w, phoneotp.ErrInvalid)
+		return
+	}
 	phone, err := phoneotp.NormalizePhone(req.Phone)
 	if err != nil {
 		phoneRegistrationError(w, err)

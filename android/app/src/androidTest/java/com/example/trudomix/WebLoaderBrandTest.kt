@@ -35,6 +35,8 @@ class WebLoaderBrandTest {
             waitFor("!window.reloading&&!!document.querySelector('.login-btn')&&!document.querySelector('#startup-splash')")
             js("document.querySelector('.login-btn').click()")
             waitFor("!!document.querySelector('.auth-dialog')")
+            assertEquals("Auth must not show scrollbar chrome","true",js("(()=>{const e=document.querySelector('.auth-overlay');return getComputedStyle(e).scrollbarWidth==='none'||getComputedStyle(e,'::-webkit-scrollbar').display==='none'})()"))
+            assertEquals("Close icon must be centered","true",js("(()=>{const a=document.querySelector('.auth-close').getBoundingClientRect(),b=document.querySelector('.auth-close svg').getBoundingClientRect();return Math.abs((a.left+a.right)-(b.left+b.right))<1&&Math.abs((a.top+a.bottom)-(b.top+b.bottom))<1})()"))
             assertEquals("true",js("document.querySelector('#auth-email').placeholder.length>0&&document.querySelector('#auth-password').placeholder.length>0"))
             js("document.querySelector('.auth-dialog .auth-switch').click()")
             waitFor("!!document.querySelector('.auth-role-options')")

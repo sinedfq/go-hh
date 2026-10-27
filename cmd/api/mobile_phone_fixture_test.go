@@ -39,6 +39,11 @@ func TestMobilePhoneFixture(t *testing.T) {
 	s.phoneVerificationRoutes(mux)
 	mux.HandleFunc("GET /health", s.healthHandler)
 	mux.HandleFunc("GET /api/me", s.authMiddleware(s.meHandler))
+	mux.HandleFunc("POST /api/devices", s.authMiddleware(s.registerDeviceHandler))
+	mux.HandleFunc("DELETE /api/devices", s.authMiddleware(s.registerDeviceHandler))
+	mux.HandleFunc("POST /api/devices/status", s.authMiddleware(s.devicePushStatusHandler))
+	mux.HandleFunc("POST /api/devices/test", s.authMiddleware(s.testDevicePushHandler))
+	mux.Handle("/", http.FileServer(http.Dir("../../frontend/dist")))
 	done := make(chan struct{})
 	var once sync.Once
 	mux.HandleFunc("POST /test/stop", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(204); once.Do(func() { close(done) }) })

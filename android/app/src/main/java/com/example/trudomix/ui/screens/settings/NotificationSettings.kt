@@ -1,6 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
 import android.Manifest
+import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
 import android.provider.Settings
@@ -44,7 +45,7 @@ fun NotificationSettings() {
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         allowed = AppNotifications.allowed(context); DeviceRegistration.sync(context); refresh++
     }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { allowed = AppNotifications.allowed(context); refresh++ }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { AppNotifications.createChannel(context);allowed = AppNotifications.allowed(context);DeviceRegistration.sync(context); refresh++ }
     LaunchedEffect(registration, refresh) {
         server = null
         serverReady = false
@@ -80,6 +81,7 @@ fun NotificationSettings() {
                     allowed=AppNotifications.allowed(context)
                     DeviceRegistration.sync(context);refresh++
                     if(value&&Build.VERSION.SDK_INT>=33&&androidx.core.content.ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                    else if(value&&!allowed)context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))
                 },modifier=Modifier.semantics{contentDescription="Получать уведомления"})
             }
             if(!enabled)Text("Уведомления отключены. Сообщения и события остаются доступны внутри приложения.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
@@ -95,8 +97,9 @@ fun NotificationSettings() {
             }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = {
-                    if (Build.VERSION.SDK_INT >= 33 && androidx.core.content.ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    else context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    // A permanently denied permission cannot show the Android prompt again.
+                    // This action always opens the system switch instead of silently retrying.
+                    context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
                 }) { Text(if (allowed) "Настройки уведомлений" else "Разрешить уведомления") }
                 if (allowed) TextButton(onClick = {
                     AppNotifications.show(context, "Trudomix", "Тестовое уведомление: отображение на устройстве работает", emptyMap(), "notification-test")
@@ -121,6 +124,12 @@ fun NotificationSettings() {
             feedback?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
             }
             NotificationEventSettings(enabled)
+            val manager=context.getSystemService(NotificationManager::class.java)
+            val blocked=remember(refresh,allowed){listOf(AppNotifications.MESSAGES_CHANNEL,AppNotifications.RESUMES_CHANNEL,AppNotifications.APPLICATIONS_CHANNEL,AppNotifications.CHANNEL).mapNotNull{manager.getNotificationChannel(it)}.filter{it.importance==NotificationManager.IMPORTANCE_NONE}}
+            if(blocked.isNotEmpty()){
+                Text("Android запретил отдельные каналы. Разрешите их в системных настройках:",color=MaterialTheme.colorScheme.error,style=MaterialTheme.typography.bodyMedium)
+                blocked.forEach{channel->OutlinedButton(onClick={context.startActivity(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName).putExtra(Settings.EXTRA_CHANNEL_ID,channel.id))}){Text("Включить: ${channel.name}")}}
+            }
         }
     }
 }

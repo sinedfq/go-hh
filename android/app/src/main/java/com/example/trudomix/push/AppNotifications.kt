@@ -40,10 +40,8 @@ object AppNotifications {
 
     fun createChannel(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
-        // Preserve an explicit opt-out of the original shared channel on upgrade.
-        val disabled = manager.getNotificationChannel(CHANNEL)?.importance == NotificationManager.IMPORTANCE_NONE
         fun channel(id: String, name: String, importance: Int, description: String) =
-            NotificationChannel(id, name, if (disabled) NotificationManager.IMPORTANCE_NONE else importance).apply { this.description = description }
+            NotificationChannel(id, name, importance).apply { this.description = description }
         manager.createNotificationChannels(listOf(
             channel(CHANNEL, "Другие события", NotificationManager.IMPORTANCE_LOW, "Обновления вакансий и сводка событий"),
             channel(MESSAGES_CHANNEL, "Сообщения", NotificationManager.IMPORTANCE_HIGH, "Новые сообщения от собеседников"),

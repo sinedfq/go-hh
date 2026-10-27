@@ -21,8 +21,8 @@ import com.example.trudomix.push.*
                 Text(event.title,style=MaterialTheme.typography.bodyLarge)
                 Text(event.description,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Switch(checked=values[event]?:NotificationPreferences.eventEnabled(context,event),enabled=masterEnabled,onCheckedChange={NotificationPreferences.setEvent(context,event,it)},modifier=Modifier.semantics{contentDescription="Уведомления: ${event.title}"})
+            Switch(checked=values[event]?:NotificationPreferences.eventEnabled(context,event),onCheckedChange={NotificationPreferences.setEvent(context,event,it)},modifier=Modifier.semantics{contentDescription="Уведомления: ${event.title}"})
         }
     }
-    Text("Выбор сохраняется на этом устройстве. Код регистрации или входа приходит отдельно, только по вашему запросу.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(if(masterEnabled)"Выбор сохраняется на этом устройстве. Код регистрации или входа приходит отдельно, только по вашему запросу."else "Можно настроить события сейчас. Чтобы они приходили, включите «Получать уведомления» выше.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
 }

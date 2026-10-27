@@ -34,6 +34,14 @@ import org.junit.Test
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import android.webkit.*
+import com.google.firebase.messaging.FirebaseMessaging
+import kotlinx.coroutines.tasks.await
+import com.example.trudomix.data.models.DeviceTokenRequest
+import com.example.trudomix.data.repository.checkSuccess
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class MobilePhoneFlowTest{
     @get:Rule val compose=createAndroidComposeRule<ComponentActivity>()
@@ -41,15 +49,17 @@ class MobilePhoneFlowTest{
         val fixture=InstrumentationRegistry.getArguments().getString("phoneFixture")
         assumeTrue(fixture!=null)
         val base=fixture!!
-        val previousUrl=ApiClient.baseUrl
+        val wasFixture=ApiClient.baseUrl.contains(":8188")
+        val previousUrl=if(wasFixture)"http://10.0.2.2:8080/"else ApiClient.baseUrl
         val tokenManager=ApiClient.getTokenManager()
-        val previousToken=runBlocking{tokenManager.getToken()}
-        val previousUser=com.example.trudomix.data.local.SessionIdentity.user.value
+        val previousToken=if(wasFixture)null else runBlocking{tokenManager.getToken()}
+        val previousUser=if(wasFixture)null else com.example.trudomix.data.local.SessionIdentity.user.value
         val phase=mutableIntStateOf(0)
         val app=compose.activity.application
         val auth=AuthViewModel()
+        var browser:WebView?=null
         try{
-            runBlocking{ApiClient.setServer(base)}
+            runBlocking{ApiClient.setServer(base);tokenManager.clearSession()}
             compose.setContent{TrudomixTheme{
                 val state by auth.uiState.collectAsState()
                 when(phase.intValue){
@@ -69,11 +79,11 @@ class MobilePhoneFlowTest{
             compose.waitUntil(15000){compose.onAllNodesWithText("Получить код").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Получить код").performScrollTo().performClick()
             val code=notificationCode()
-            compose.onNodeWithText("Код из уведомления").performScrollTo().performTextReplacement(if(code=="000000")"111111"else "000000")
+            compose.onNodeWithContentDescription("Код из уведомления").performScrollTo().performTextReplacement(if(code=="000000")"111111"else "000000")
             compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
             compose.waitUntil(10000){compose.onAllNodesWithText("Код неверный",substring=true).fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Зарегистрироваться").assertIsNotEnabled()
-            compose.onNodeWithText("Код из уведомления").performScrollTo().performTextReplacement(code)
+            compose.onNodeWithContentDescription("Код из уведомления").performScrollTo().performTextReplacement(code)
             compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
             compose.waitUntil(10000){compose.onAllNodesWithText("Код подтверждён. Можно продолжить").fetchSemanticsNodes().isNotEmpty()}
             screenshot("phone-registration-verified.png")
@@ -86,7 +96,7 @@ class MobilePhoneFlowTest{
             compose.waitUntil(10000){compose.onAllNodesWithText("Получить код").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Получить код").performScrollTo().performClick()
             val loginCode=notificationCode()
-            compose.onNodeWithText("Код из уведомления").performScrollTo().performTextReplacement(loginCode)
+            compose.onNodeWithContentDescription("Код из уведомления").performScrollTo().performTextReplacement(loginCode)
             compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
             compose.waitUntil(15000){phase.intValue==3}
             compose.onNodeWithText("Вход по телефону выполнен").assertIsDisplayed()
@@ -96,7 +106,7 @@ class MobilePhoneFlowTest{
             compose.waitUntil(10000){compose.onAllNodesWithText("Получить код").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Получить код").performScrollTo().performClick()
             val linkCode=notificationCode()
-            compose.onNodeWithText("Код из уведомления").performScrollTo().performTextReplacement(linkCode)
+            compose.onNodeWithContentDescription("Код из уведомления").performScrollTo().performTextReplacement(linkCode)
             compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
             compose.waitUntil(10000){compose.onAllNodesWithText("Код подтверждён. Можно продолжить").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Привязать номер").performScrollTo().performClick()
@@ -107,12 +117,51 @@ class MobilePhoneFlowTest{
             compose.onNodeWithText("Получать уведомления").assertDoesNotExist()
             compose.onNodeWithText("Уведомления").performScrollTo().performClick()
             compose.onNodeWithContentDescription("Получать уведомления").performScrollTo().assertExists()
+            if(InstrumentationRegistry.getArguments().getString("liveWeb")=="true"){
+                compose.waitUntil(25000){compose.onAllNodesWithText("Проверить доставку с сервера").fetchSemanticsNodes().isNotEmpty()}
+                compose.onNodeWithText("Проверить доставку с сервера").performScrollTo().performClick()
+                val manager=app.getSystemService(NotificationManager::class.java)
+                compose.waitUntil(30000){manager.activeNotifications.any{it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)?.toString()=="Уведомления Trudomix подключены"}}
+            }
             screenshot("notification-settings-page.png")
             compose.onNodeWithContentDescription("Назад").performClick()
             compose.onNodeWithText("Документы").performScrollTo().performClick()
             compose.onNodeWithText("Проекты документов сервиса").assertIsDisplayed()
             screenshot("documents-page.png")
+            if(InstrumentationRegistry.getArguments().getString("liveWeb")=="true"){
+                runBlocking{ApiClient.api.registerDevice(DeviceTokenRequest(FirebaseMessaging.getInstance().token.await())).checkSuccess()}
+                InstrumentationRegistry.getInstrumentation().runOnMainSync{compose.activity.setContentView(WebView(compose.activity).apply{
+                    browser=this;settings.javaScriptEnabled=true;settings.domStorageEnabled=true;settings.cacheMode=WebSettings.LOAD_NO_CACHE
+                    webViewClient=object:WebViewClient(){override fun shouldInterceptRequest(view:WebView,request:WebResourceRequest):WebResourceResponse?{
+                        val path=request.url.path.orEmpty()
+                        if(!path.startsWith("/api/")||path.startsWith("/api/auth/")||path.startsWith("/api/phone-verification/"))return null
+                        val body=when(path){"/api/feed"->"""{"posts":[],"next_cursor":0}""";"/api/vacancies/search"->"""{"vacancies":[],"total_count":0}""";else->"[]"}
+                        return WebResourceResponse("application/json","UTF-8",body.byteInputStream())
+                    }};loadUrl(base)
+                })}
+                fun js(script:String):String{val result=AtomicReference<String>();val ready=CountDownLatch(1);InstrumentationRegistry.getInstrumentation().runOnMainSync{browser?.evaluateJavascript(script){result.set(it);ready.countDown()}};return if(ready.await(3,TimeUnit.SECONDS))result.get()else "null"}
+                fun waitFor(script:String){val end=System.currentTimeMillis()+45000;while(System.currentTimeMillis()<end){if(js(script)=="true")return;Thread.sleep(100)};error("Web phone condition failed: $script; ${js("JSON.stringify({app:!!document.querySelector('.app'),splash:window.TrudomixSplash?.inspect(),root:document.querySelector('#root')?.childElementCount})")}")}
+                waitFor("!!document.querySelector('.app')&&!document.querySelector('#startup-splash')")
+                js("window.reloading=true;localStorage.removeItem('token');localStorage.removeItem('user');location.reload()")
+                waitFor("!window.reloading&&!!document.querySelector('.login-btn')&&!document.querySelector('#startup-splash')")
+                js("document.querySelector('.login-btn').click()")
+                waitFor("!!document.querySelector('.auth-methods')")
+                js("document.querySelector('.auth-methods button:last-child').click()")
+                waitFor("!!document.querySelector('#auth-phone')")
+                js("(()=>{const e=document.querySelector('#auth-phone');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'+79990000002');e.dispatchEvent(new Event('input',{bubbles:true}))})()")
+                waitFor("document.querySelector('#auth-phone').value==='+7 (999) 000-00-02'")
+                runBlocking{withContext(Dispatchers.IO){val c=URL(base.trimEnd('/')+"/test/resend-ready").openConnection() as HttpURLConnection;c.requestMethod="POST";assertEquals(204,c.responseCode);c.disconnect()}}
+                js("document.querySelector('.auth-code-send').click()")
+                waitFor("!!document.querySelector('#auth-otp')")
+                val webCode=notificationCode()
+                js("(()=>{const e=document.querySelector('#auth-otp');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'$webCode');e.dispatchEvent(new Event('input',{bubbles:true}))})()")
+                js("document.querySelector('.auth-phone-form .auth-submit').click()")
+                waitFor("!!document.querySelector('.auth-otp.verified')&&document.querySelectorAll('.auth-otp-cells>span').length===6")
+                js("document.querySelector('.auth-phone-form .auth-submit').click()")
+                waitFor("!document.querySelector('.auth-dialog')&&JSON.parse(localStorage.getItem('user')||'{}').email==='mobile-otp@example.test'")
+            }
         }finally{
+            InstrumentationRegistry.getInstrumentation().runOnMainSync{browser?.destroy()}
             OtpNotifications.clear(app)
             runBlocking{ApiClient.setServer(previousUrl);if(previousToken.isNullOrBlank())tokenManager.clearSession()else tokenManager.saveToken(previousToken)}
             com.example.trudomix.data.local.SessionIdentity.user.value=previousUser
@@ -147,10 +196,14 @@ class MobilePhoneFlowTest{
         }
     }
     private fun notificationCode():String{
-        val manager=compose.activity.getSystemService(NotificationManager::class.java)
-        var code:String?=null
-        compose.waitUntil(30000){code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value};code!=null}
-        return code!!
+        val manager=InstrumentationRegistry.getInstrumentation().targetContext.getSystemService(NotificationManager::class.java)
+        val deadline=System.currentTimeMillis()+30000
+        while(System.currentTimeMillis()<deadline){
+            val code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value}
+            if(code!=null)return code
+            Thread.sleep(80)
+        }
+        error("Code notification did not arrive")
     }
     private fun screenshot(name:String){val bitmap=compose.onRoot().captureToImage().asAndroidBitmap();File(compose.activity.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()}
 }

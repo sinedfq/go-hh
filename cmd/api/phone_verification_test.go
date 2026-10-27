@@ -91,6 +91,15 @@ func phoneOTPTestPool(t *testing.T) *pgxpool.Pool {
 	if _, err = pool.Exec(ctx, strings.Split(string(migration), "-- +goose Down")[0]); err != nil {
 		t.Fatal(err)
 	}
+	for _, file := range []string{"030_web_phone_login.sql", "024_device_tokens.sql"} {
+		migration, err = os.ReadFile("../../migrations/" + file)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err = pool.Exec(ctx, strings.Split(string(migration), "-- +goose Down")[0]); err != nil {
+			t.Fatal(err)
+		}
+	}
 	return pool
 }
 func TestPhoneVerificationPostgresConcurrentAttemptsAndReceipts(t *testing.T) {
