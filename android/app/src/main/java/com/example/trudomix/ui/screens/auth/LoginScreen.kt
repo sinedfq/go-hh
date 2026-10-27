@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import com.example.trudomix.ui.loading.AppLoader
+
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
@@ -115,7 +117,7 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
                 }
             }
             Button(onClick = { submit() }, enabled = !busy, shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                if (busy) CircularProgressIndicator(Modifier.size(22.dp), color = colors.onPrimary, strokeWidth = 2.dp)
+                if (busy) AppLoader(Modifier.size(22.dp), color = colors.onPrimary, strokeWidth = 2.dp)
                 else { Text("Войти", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
             }
             TextButton(onClick = onRegister, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Создать аккаунт", textAlign = androidx.compose.ui.text.style.TextAlign.Center) }

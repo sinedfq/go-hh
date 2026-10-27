@@ -2,16 +2,32 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="stylesheet" href="/loader.css" />
-    <link rel="icon" type="image/svg+xml" href="/brand-trudomix.svg" />
-    <link rel="apple-touch-icon" href="/brand-trudomix.png" />
+    <script>try{document.documentElement.dataset.theme=(localStorage.getItem('theme')==='dark'||(!['light','dark'].includes(localStorage.getItem('theme'))&&matchMedia('(prefers-color-scheme: dark)').matches))?'dark':'light'}catch{document.documentElement.dataset.theme='light'}</script>
+    <link rel="preload" href="/splash.js" as="script"/>
+    <link rel="stylesheet" href="/splash.css" />
+    <link rel="icon" type="image/png" href="/brand/wave-night.png" />
+    <link rel="apple-touch-icon" href="/brand/wave-night.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Trudomix
     </title>
   </head>
   <body>
-    <div id="root"><div class="trudomix-loader trudomix-loader-fullscreen" role="status" aria-label="Загрузка приложения"><div class="trudomix-loader-stage"><div class="trudomix-loader-content"><img class="trudomix-loader-logo" src="/loader-icons/icon_06_white.svg" alt="Логотип Трудомикс"/><strong class="trudomix-loader-name">Трудомикс</strong><span class="trudomix-loader-label">Подбираем возможности для вас</span><div class="trudomix-loader-progress" aria-hidden="true"><span></span></div></div></div></div></div>
+    <div id="startup-splash" role="status" aria-label="&#1047;&#1072;&#1075;&#1088;&#1091;&#1079;&#1082;&#1072; &#1058;&#1088;&#1091;&#1076;&#1086;&#1084;&#1080;&#1082;&#1089;">
+      <canvas aria-hidden="true"></canvas>
+      <svg class="startup-logo" viewBox="0 0 1000 850" aria-hidden="true"><defs>
+<linearGradient id="darkLetter" x1=".15" y1=".1" x2=".85" y2=".9"><stop stop-color="#fff"/><stop offset=".72" stop-color="#fff"/><stop offset="1" stop-color="#ded8ff"/></linearGradient>
+<linearGradient id="lightLetter" x1="0" y1=".7" x2=".9" y2=".05"><stop stop-color="#0b0a25"/><stop offset=".5" stop-color="#16134a"/><stop offset="1" stop-color="#4330e4"/></linearGradient>
+<linearGradient id="orbGradient" x1=".3" y1="0" x2=".7" y2="1"><stop stop-color="#e08dff"/><stop offset=".36" stop-color="#b74bf9"/><stop offset=".72" stop-color="#7921f5"/><stop offset="1" stop-color="#4013d7"/></linearGradient>
+<radialGradient id="orbShine" cx=".33" cy=".06" r=".88"><stop stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>
+<path class="slot-letter" d="M 955.19 55.80 Q 948.89 48.78 943.33 45.46 Q 937.78 42.13 929.26 40.28 Q 920.74 38.43 575.19 38.43 Q 229.63 38.43 210.00 41.76 Q 190.37 45.09 170.37 52.85 Q 150.37 60.61 133.70 71.33 Q 117.04 82.04 103.33 94.61 Q 89.63 107.17 73.33 131.20 Q 57.04 155.22 52.22 167.78 Q 47.41 180.35 45.19 191.80 Q 42.96 203.26 43.33 216.20 Q 43.70 229.13 48.52 242.43 Q 53.33 255.74 59.26 263.13 Q 65.19 270.52 75.56 277.17 Q 85.93 283.83 99.26 286.78 Q 112.59 289.74 320.00 290.11 Q 527.41 290.48 484.44 299.72 Q 441.48 308.96 408.89 323.00 Q 376.30 337.04 351.48 354.78 Q 326.67 372.52 311.11 389.15 Q 295.56 405.78 285.19 421.67 Q 274.81 437.57 266.30 459.37 Q 257.78 481.17 254.81 500.39 Q 251.85 519.61 251.85 642.30 Q 251.85 765.00 255.19 775.72 Q 258.52 786.43 263.70 792.35 Q 268.89 798.26 277.78 802.70 Q 286.67 807.13 298.89 808.24 Q 311.11 809.35 340.00 802.70 Q 368.89 796.04 399.26 780.89 Q 429.63 765.74 446.67 752.80 Q 463.70 739.87 474.07 729.52 Q 484.44 719.17 500.74 696.26 Q 517.04 673.35 524.44 657.46 Q 531.85 641.57 535.93 627.52 Q 540.00 613.48 541.85 599.80 Q 543.70 586.13 544.44 507.41 Q 545.19 428.70 548.89 414.28 Q 552.59 399.87 561.11 383.24 Q 569.63 366.61 585.19 349.61 Q 600.74 332.61 612.22 324.48 Q 623.70 316.35 635.56 310.43 Q 647.41 304.52 670.74 298.24 Q 694.07 291.96 728.52 290.48 Q 762.96 289.00 784.07 284.57 Q 805.19 280.13 826.67 270.89 Q 848.15 261.65 867.41 248.35 Q 886.67 235.04 907.04 212.87 Q 927.41 190.70 935.93 177.02 Q 944.44 163.35 951.11 148.57 Q 957.78 133.78 962.22 117.52 Q 966.67 101.26 967.04 92.02 Q 967.41 82.78 964.44 72.80 Q 961.48 62.83 955.19 55.80 Z"/><path class="slot-outline letter-line" pathLength="1" d="M 955.19 55.80 Q 948.89 48.78 943.33 45.46 Q 937.78 42.13 929.26 40.28 Q 920.74 38.43 575.19 38.43 Q 229.63 38.43 210.00 41.76 Q 190.37 45.09 170.37 52.85 Q 150.37 60.61 133.70 71.33 Q 117.04 82.04 103.33 94.61 Q 89.63 107.17 73.33 131.20 Q 57.04 155.22 52.22 167.78 Q 47.41 180.35 45.19 191.80 Q 42.96 203.26 43.33 216.20 Q 43.70 229.13 48.52 242.43 Q 53.33 255.74 59.26 263.13 Q 65.19 270.52 75.56 277.17 Q 85.93 283.83 99.26 286.78 Q 112.59 289.74 320.00 290.11 Q 527.41 290.48 484.44 299.72 Q 441.48 308.96 408.89 323.00 Q 376.30 337.04 351.48 354.78 Q 326.67 372.52 311.11 389.15 Q 295.56 405.78 285.19 421.67 Q 274.81 437.57 266.30 459.37 Q 257.78 481.17 254.81 500.39 Q 251.85 519.61 251.85 642.30 Q 251.85 765.00 255.19 775.72 Q 258.52 786.43 263.70 792.35 Q 268.89 798.26 277.78 802.70 Q 286.67 807.13 298.89 808.24 Q 311.11 809.35 340.00 802.70 Q 368.89 796.04 399.26 780.89 Q 429.63 765.74 446.67 752.80 Q 463.70 739.87 474.07 729.52 Q 484.44 719.17 500.74 696.26 Q 517.04 673.35 524.44 657.46 Q 531.85 641.57 535.93 627.52 Q 540.00 613.48 541.85 599.80 Q 543.70 586.13 544.44 507.41 Q 545.19 428.70 548.89 414.28 Q 552.59 399.87 561.11 383.24 Q 569.63 366.61 585.19 349.61 Q 600.74 332.61 612.22 324.48 Q 623.70 316.35 635.56 310.43 Q 647.41 304.52 670.74 298.24 Q 694.07 291.96 728.52 290.48 Q 762.96 289.00 784.07 284.57 Q 805.19 280.13 826.67 270.89 Q 848.15 261.65 867.41 248.35 Q 886.67 235.04 907.04 212.87 Q 927.41 190.70 935.93 177.02 Q 944.44 163.35 951.11 148.57 Q 957.78 133.78 962.22 117.52 Q 966.67 101.26 967.04 92.02 Q 967.41 82.78 964.44 72.80 Q 961.48 62.83 955.19 55.80 Z"/>
+<circle class="slot-halo" cx="746.67" cy="510.00" r="126"/>
+<g class="slot-orb"><circle cx="746.67" cy="510.00" r="126" fill="url(#orbGradient)"/><circle cx="746.67" cy="510.00" r="126" fill="url(#orbShine)"/></g>
+<circle class="slot-outline orb-line" pathLength="1" cx="746.67" cy="510.00" r="126"/></svg>
+      <strong class="startup-wordmark" aria-hidden="true">&#1058;&#1056;&#1059;&#1044;&#1054;&#1052;&#1048;&#1050;&#1057;</strong>
+    </div>
     <script src="/loader-bootstrap.js"></script>
+    <script src="/splash.js"></script>
+    <div id="root" inert aria-hidden="true"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

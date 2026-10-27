@@ -64,7 +64,7 @@ fun VacancyFeed(
             verticalArrangement = Arrangement.spacedBy(16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             item(span = { GridItemSpan(maxLineSpan) }, key = "search-header") {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    AppScreenHeader(applyInsets=false,contentPadding=PaddingValues(0.dp),title={
+                    AppScreenHeader(applyInsets=false,showProfileAction=false,contentPadding=PaddingValues(0.dp),title={
                             AnimatedContent(favorites, transitionSpec = { (fadeIn(tween(180)) + slideInVertically { it / 4 }).togetherWith(fadeOut(tween(100))) }, label = "vacancy-title") { saved ->
                                 Text(if (saved) "Твои избранные" else "Найди свою команду", style = MaterialTheme.typography.headlineMedium,
                                     fontWeight = FontWeight.Bold, color = colors.onBackground)
@@ -106,7 +106,7 @@ fun VacancyFeed(
         }
         AnimatedVisibility(showFloating,enter=fadeIn()+slideInVertically{ -it },exit=fadeOut()+slideOutVertically{ -it },modifier=Modifier.align(Alignment.TopCenter).widthIn(max=1200.dp).fillMaxWidth().padding(horizontal=12.dp,vertical=8.dp).testTag("floating-vacancy-search")) {
             Surface(shape=RoundedCornerShape(24.dp),color=colors.surface,shadowElevation=8.dp,modifier=Modifier.pointerInput(Unit){detectTapGestures{}}) {
-                VacancySearchRow(query,onQuery,onFilters,Modifier.padding(10.dp).then(if(com.example.trudomix.ui.components.LocalProfileAccess.current!=null)Modifier.padding(end=52.dp)else Modifier),{floatingFocused=it})
+                VacancySearchRow(query,onQuery,onFilters,Modifier.padding(10.dp),{floatingFocused=it})
             }
         }
     }
@@ -117,11 +117,12 @@ fun VacancyFeed(
 private fun VacancySearchRow(query:String,onQuery:(String)->Unit,onFilters:()->Unit,modifier:Modifier=Modifier,onFocus:(Boolean)->Unit={}) {
     val colors=MaterialTheme.colorScheme
     Row(modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp),verticalAlignment=Alignment.CenterVertically) {
-        OutlinedTextField(query,onQuery,placeholder={Text("Должность или компания")},singleLine=true,
+        OutlinedTextField(query,onQuery,placeholder={Text("Должность или компания",maxLines=1,overflow=androidx.compose.ui.text.style.TextOverflow.Ellipsis)},singleLine=true,
             leadingIcon={Icon(Icons.Default.Search,null)},trailingIcon={if(query.isNotEmpty())IconButton(onClick={onQuery("")}){Icon(Icons.Default.Close,"Очистить поиск")}},
             keyboardOptions=KeyboardOptions(imeAction=ImeAction.Search),shape=RoundedCornerShape(18.dp),
             colors=OutlinedTextFieldDefaults.colors(unfocusedContainerColor=colors.surface,focusedContainerColor=colors.surface),modifier=Modifier.weight(1f).onFocusChanged{onFocus(it.isFocused)})
         FilledTonalIconButton(onClick=onFilters,shape=RoundedCornerShape(18.dp),modifier=Modifier.size(56.dp)){Icon(Icons.Default.Tune,"Фильтры")}
+        com.example.trudomix.ui.components.ProfileAction(toolbarStyle=true)
     }
 }
 

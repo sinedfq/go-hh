@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.applications
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -54,7 +56,7 @@ fun ApplicationHistorySection(applicationId: Int, state: ApplicationHistoryState
         AnimatedVisibility(expanded) {
             Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(12.dp)) {
                 when(state) {
-                    null, ApplicationHistoryState.Loading -> LinearProgressIndicator(Modifier.fillMaxWidth())
+                    null, ApplicationHistoryState.Loading -> InlineLoadingState()
                     is ApplicationHistoryState.Error -> {
                         Text(state.message,color=MaterialTheme.colorScheme.error)
                         TextButton(onClick=onLoad){Text("Повторить загрузку истории")}

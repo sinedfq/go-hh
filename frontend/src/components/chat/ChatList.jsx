@@ -1,3 +1,4 @@
+import AppLoader from '../common/AppLoader'
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Chat.css'
@@ -41,7 +42,7 @@ function ChatList({ currentUser, onOpenChat, onOpenVacancy }) {
     if (loading) {
         return (
             <div className="chat-list-container">
-                <div className="loading"><div className="spinner"></div><p>Загрузка чатов...</p></div>
+                <div className="loading"><AppLoader inline/><p>Загрузка чатов...</p></div>
             </div>
         )
     }

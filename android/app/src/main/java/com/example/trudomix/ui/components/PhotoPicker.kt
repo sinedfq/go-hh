@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.components
 
+import com.example.trudomix.ui.loading.AppLoader
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -42,7 +44,7 @@ fun PhotoPicker(photoUrl: String, label: String, onUpload: suspend (MultipartBod
                 if (photoUrl.isBlank() || imageFailed) Icon(Icons.Default.PersonOutline, label, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 else AsyncImage(ApiClient.mediaUrl(photoUrl), label, contentScale = ContentScale.Crop,
                     onError = { imageFailed = true }, modifier = Modifier.fillMaxSize().clip(CircleShape))
-                if (busy) CircularProgressIndicator(Modifier.size(32.dp))
+                if (busy) AppLoader(Modifier.size(32.dp))
             }
         }
         TextButton(enabled = !busy && cropBitmap==null, onClick = { picker.launch("image/*") }) {

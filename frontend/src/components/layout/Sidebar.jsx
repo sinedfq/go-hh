@@ -237,7 +237,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                 <div className="sidebar-footer">
                     {user ? (
                         <>
-                            <div className="user-profile-btn" onClick={() => handleMode('profile')}>
+                            {mode !== 'search' && <div className="user-profile-btn" onClick={() => handleMode('profile')}>
                                 <div className="user-avatar">
                                     {user.photo_url ? (
                                         <img src={user.photo_url} alt={user.email} />
@@ -249,7 +249,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="user-profile-title">{user.name || 'Профиль'}</span>
                                     <span className="user-profile-email">{user.email}</span>
                                 </div>
-                            </div>
+                            </div>}
                             <button className="logout-btn" onClick={onLogout}>Выйти</button>
                         </>
                     ) : (

@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.vacancies
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -74,7 +76,7 @@ fun VacancyFilters(city:String,onCity:(String)->Unit,company:String,onCompany:(S
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal=24.dp).imePadding().padding(bottom=24.dp),verticalArrangement=Arrangement.spacedBy(12.dp)) {
         Text("Твоя следующая работа",style=MaterialTheme.typography.headlineSmall)
         Text("Настрой поиск под себя",color=MaterialTheme.colorScheme.onSurfaceVariant)
-        if(options.loading)LinearProgressIndicator(Modifier.fillMaxWidth())
+        if(options.loading)InlineLoadingState()
         if(options.failed){Text("Часть подсказок недоступна. Поля можно заполнить вручную.",style=MaterialTheme.typography.bodySmall);TextButton(onClick=onRetry){Text("Загрузить подсказки")}}
         SuggestionField(city,onCity,"Город",options.cities,Modifier.fillMaxWidth())
         SuggestionField(company,onCompany,"Компания",options.companies,Modifier.fillMaxWidth())

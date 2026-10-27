@@ -87,7 +87,7 @@
     padding: 0 0.5rem;
     border-radius: 14px;
     background: white;
-    border: 2.5px solid var(--score-color, #868e96);
+    border: 2.5px solid var(--score-color, var(--text-muted));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -97,8 +97,8 @@
 }
 
 .match-score-badge.unknown {
-    border-color: #868e96;
-    background: #f8f9fa;
+    border-color: var(--text-muted);
+    background: var(--bg);
 }
 
 @keyframes badgeAppear {
@@ -109,14 +109,14 @@
 .score-number {
     font-size: 1.25rem;
     font-weight: 800;
-    color: var(--score-color, #868e96);
+    color: var(--score-color, var(--text-muted));
     line-height: 1;
 }
 
 .score-suffix {
     font-size: 0.6rem;
     font-weight: 600;
-    color: var(--score-color, #868e96);
+    color: var(--score-color, var(--text-muted));
     line-height: 1;
     margin-top: 2px;
     opacity: 0.85;
@@ -162,19 +162,18 @@
 
 .card-btn-like:hover {
     background: var(--accent);
-    border-color: var(--accent);
-    color: white;
+    border-color: var(--accent);color:var(--on-accent);
 }
 
 .card-btn-info {
     background: white;
-    color: #0066cc;
-    border: 1px solid rgba(0, 102, 204, 0.3);
+    color: var(--accent);
+    border: 1px solid color-mix(in srgb,var(--accent) 30%,transparent);
 }
 
 .card-btn-info:hover {
     background: #f0f7ff;
-    border-color: #0066cc;
+    border-color: var(--accent);
     color: #0052a3;
 }
 
@@ -191,7 +190,7 @@
 }
 
 .like-overlay {
-    background: linear-gradient(to top, rgba(0, 102, 204, 0.7) 0%, transparent 60%);
+    background: linear-gradient(to top, color-mix(in srgb,var(--accent) 70%,transparent) 0%, transparent 60%);
 }
 
 .nope-overlay {

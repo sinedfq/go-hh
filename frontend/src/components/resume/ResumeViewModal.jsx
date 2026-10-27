@@ -1,3 +1,4 @@
+import AppLoader from '../common/AppLoader'
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import ModalPortal from '../common/ModalPortal'
@@ -70,7 +71,7 @@ function ResumeViewModal({ resumeId, onClose }) {
                 <div className="resume-view-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
                     <div className="resume-view-modal">
                         <div className="loading">
-                            <div className="spinner"></div>
+                            <AppLoader inline/>
                             <p>Загрузка резюме...</p>
                         </div>
                     </div>

@@ -25,7 +25,7 @@
 .sidebar-logo h1 {
     font-size: 1rem;
     font-weight: 700;
-    color: #0066cc;
+    color: var(--accent);
     letter-spacing: -0.5px;
     white-space: nowrap;
     overflow: hidden;
@@ -86,13 +86,13 @@
 
 .nav-item:hover .nav-bar {
     height: 32px;
-    background: #0066cc;
+    background: var(--accent);
 }
 
 .nav-item.active .nav-bar {
     height: 40px;
-    background: #0066cc;
-    box-shadow: 0 0 12px rgba(0, 102, 204, 0.4);
+    background: var(--accent);
+    box-shadow: 0 0 12px color-mix(in srgb,var(--accent) 40%,transparent);
 }
 
 .nav-label {
@@ -122,7 +122,7 @@
 }
 
 .nav-item.active .nav-title {
-    color: #0066cc;
+    color: var(--accent);
 }
 
 .nav-subtitle {
@@ -163,8 +163,7 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #0066cc;
-    color: white;
+    background: var(--accent);color:var(--on-accent);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -245,8 +244,7 @@
 .login-btn {
     width: 100%;
     padding: 0.625rem 0.875rem;
-    background: var(--accent);
-    color: white;
+    background: var(--accent);color:var(--on-accent);
     border: none;
     border-radius: 8px;
     font-size: 0.875rem;
@@ -308,17 +306,17 @@
     justify-content: center;
     width: 24px;
     height: 24px;
-    color: #868e96;
+    color: var(--text-muted);
     flex-shrink: 0;
     transition: color 0.2s ease;
 }
 
 .nav-item:hover .nav-icon {
-    color: #0066cc;
+    color: var(--accent);
 }
 
 .nav-item.active .nav-icon {
-    color: #0066cc;
+    color: var(--accent);
 }
 
 /* ============================================
@@ -344,6 +342,8 @@
 
 /* На десктопе кнопка "Ещё" скрыта если есть место */
 @media (min-width: 769px) {
+    /* Keep a transition from the full-width mobile bar from consuming the page. */
+    .sidebar { max-width: 240px; }
     .mobile-more-btn {
         display: none !important;
     }
@@ -467,33 +467,33 @@
 
 /* Тёмная тема */
 [data-theme="dark"] .mobile-more-sheet {
-    background: #161b22;
+    background: var(--surface);
     box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.5);
 }
 
 [data-theme="dark"] .mobile-more-handle {
-    background: #30363d;
+    background: var(--border);
 }
 
 [data-theme="dark"] .mobile-more-item {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .mobile-more-item:active {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 [data-theme="dark"] .mobile-more-item.active {
-    color: #4493f8;
-    background: rgba(68, 147, 248, 0.1);
+    color: var(--accent);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 [data-theme="dark"] .mobile-more-divider {
-    color: #768390;
+    color: var(--text-muted);
 }
 
 [data-theme="dark"] .mobile-more-divider span {
-    border-color: #21262d;
+    border-color: var(--surface-secondary);
 }
 
 [data-theme="dark"] .mobile-more-logout {
@@ -504,7 +504,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #00a3ff);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
     color: white;
     display: flex;
     align-items: center;
@@ -526,7 +526,7 @@
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), #00a3ff);
+    background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
     color: white;
     display: flex;
     align-items: center;

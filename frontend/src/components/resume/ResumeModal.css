@@ -45,7 +45,7 @@
   overflow-y: auto;
   animation: modalAppear 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 102, 204, 0.5) transparent;
+  scrollbar-color: color-mix(in srgb,var(--accent) 50%,transparent) transparent;
 }
 
 .resume-modal::-webkit-scrollbar {
@@ -57,12 +57,12 @@
 }
 
 .resume-modal::-webkit-scrollbar-thumb {
-   background: rgba(0, 102, 204, 0.5);
+   background: color-mix(in srgb,var(--accent) 50%,transparent);
   border-radius: 2px;
 }
 
 .resume-modal::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 102, 204, 0.8);
+  background: color-mix(in srgb,var(--accent) 80%,transparent);
 }
 
 @keyframes modalAppear {
@@ -431,7 +431,7 @@
 /* Тёмная тема */
 [data-theme="dark"] .resume-modal-close-btn {
     background: rgba(255, 255, 255, 0.1);
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .resume-modal-close-btn:hover {

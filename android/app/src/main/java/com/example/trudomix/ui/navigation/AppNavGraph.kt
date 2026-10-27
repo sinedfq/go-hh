@@ -75,6 +75,8 @@ fun AppNavGraph() {
     }
     LaunchedEffect(token, entry?.destination?.route) {
         val route = entry?.destination?.route ?: return@LaunchedEffect
+        // Restored back stacks can bypass the auth splash after process death.
+        if(token!="loading"&&route!=NavRoutes.SPLASH)com.example.trudomix.startup.StartupReadiness.finish("session")
         if (token == null && route !in listOf(NavRoutes.SPLASH, NavRoutes.LOGIN, NavRoutes.REGISTER)) {
             navController.navigate(NavRoutes.LOGIN) { popUpTo(navController.graph.id) { inclusive = true } }
         }
@@ -213,8 +215,7 @@ fun AppNavGraph() {
             val profileViewModel: ProfileViewModel = viewModel()
             SettingsScreen(
                 viewModel = profileViewModel,
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateToLogs = { navController.navigate(NavRoutes.LOGS) }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
@@ -243,6 +244,8 @@ fun SplashScreen(onAuthCheckComplete: (Boolean) -> Unit) {
     var error by remember { mutableStateOf(false) }
 
     LaunchedEffect(attempt) {
+        com.example.trudomix.startup.StartupReadiness.begin("session")
+        try {
         error = false
         val started = android.os.SystemClock.elapsedRealtime()
         suspend fun complete(authenticated: Boolean) {
@@ -259,6 +262,9 @@ fun SplashScreen(onAuthCheckComplete: (Boolean) -> Unit) {
             else error = true
         } catch (e: kotlinx.coroutines.CancellationException) { throw e }
         catch (failure: Exception) { android.util.Log.e("TrudomixNavigation","Session startup failed",failure);error = true }
+        } catch(e:kotlinx.coroutines.CancellationException){throw e}
+        catch(failure:Exception){android.util.Log.e("TrudomixNavigation","Session initialization failed",failure);error=true}
+        finally { com.example.trudomix.startup.StartupReadiness.finish("session") }
     }
 
     Box(

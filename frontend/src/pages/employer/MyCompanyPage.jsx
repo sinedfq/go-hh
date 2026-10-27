@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import { useState } from 'react'
 import PhotoUpload from '../../components/common/PhotoUpload'
 import ITAccreditationBadge from '../../components/common/ITAccreditationBadge'
@@ -38,7 +39,7 @@ export default function MyCompanyPage({myCompany,onCreateCompany,onUploadLogo,lo
         try{await onRemovePhoto(photo)}catch(failure){setError(userError(failure))}finally{setRemoving(null)}
     }
     const filled=company?[company.description,company.logo_url,company.team_story,company.benefits?.length,company.hiring_process,company.photos?.length].filter(Boolean).length:0
-    if(loadingCompany&&!company)return <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем компанию…</p></div>
+    if(loadingCompany&&!company)return <div className="workspace-state" role="status"><AppLoader inline/><p>Загружаем компанию…</p></div>
     return <div className="employer-page workspace-screen company-workspace">
         <WorkspaceHeader eyebrow="ЛИЦО ВАШЕЙ КОМАНДЫ" title={editing?'Редактировать компанию':company?'Моя компания':'Создать компанию'} description="Покажите кандидатам, кто вы, как работаете и почему к вам стоит присоединиться."/>
         {error&&<div className="employer-error" role="alert">{error}</div>}

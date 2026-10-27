@@ -1,4 +1,6 @@
 package com.example.trudomix.ui.screens.vacancies
+
+import com.example.trudomix.ui.loading.AppLoader
 import com.example.trudomix.ui.components.CompanyAvatar
 import com.example.trudomix.ui.components.VacancyTerms
 import com.example.trudomix.ui.components.ITAccreditationBadge
@@ -282,7 +284,7 @@ fun VacancyDetailScreen(
                         .height(48.dp)
                 ) {
                     if (isApplying) {
-                        CircularProgressIndicator(
+                        AppLoader(
                             modifier = Modifier.size(24.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                             strokeWidth = 2.dp

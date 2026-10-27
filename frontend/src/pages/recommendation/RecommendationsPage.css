@@ -17,7 +17,7 @@
     width: 360px;
     background: white;
     border-radius: 16px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border);
     padding: 1.25rem;
     height: fit-content;
     display: flex;
@@ -31,7 +31,7 @@
     align-items: center;
     margin-bottom: 1rem;
     padding-bottom: 1rem;
-    border-bottom: 1px solid #f1f3f5;
+    border-bottom: 1px solid var(--surface-secondary);
 }
 
 .recommendations-header h2 {
@@ -42,7 +42,7 @@
 }
 
 .recommendations-count {
-    color: #868e96;
+    color: var(--text-muted);
     font-size: 0.8125rem;
     margin: 0;
 }
@@ -51,9 +51,9 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border);
     background: white;
-    color: #868e96;
+    color: var(--text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -63,9 +63,9 @@
 }
 
 .refresh-btn:hover:not(:disabled) {
-    background: #e7f1ff;
-    border-color: #0066cc;
-    color: #0066cc;
+    background: var(--accent-light);
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 .refresh-btn:disabled {
@@ -96,16 +96,16 @@
     cursor: pointer;
     transition: all 0.15s ease;
     border: 1px solid transparent;
-    background: #f8f9fa;
+    background: var(--bg);
 }
 
 .recommendation-item:hover {
-    background: #f1f3f5;
+    background: var(--surface-secondary);
 }
 
 .recommendation-item.active {
-    background: #e7f1ff;
-    border-color: rgba(0, 102, 204, 0.2);
+    background: var(--accent-light);
+    border-color: color-mix(in srgb,var(--accent) 20%,transparent);
 }
 
 .recommendation-score {
@@ -142,7 +142,7 @@
 }
 
 .recommendation-company {
-    color: #495057;
+    color: var(--text-secondary);
     font-size: 0.8125rem;
     margin-bottom: 0.25rem;
 }
@@ -164,7 +164,7 @@
     margin-top: 1.5rem;
     background: white;
     border-radius: 16px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border);
     overflow: hidden;
     animation: reasoningAppear 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -185,8 +185,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    background: #f8f9fa;
-    border-bottom: 1px solid #f1f3f5;
+    background: var(--bg);
+    border-bottom: 1px solid var(--surface-secondary);
 }
 
 .ai-badge {
@@ -196,14 +196,14 @@
     padding: 0.375rem 0.875rem;
     background: white;
     border-radius: 20px;
-    border: 1px solid #e9ecef;
-    color: #0066cc;
+    border: 1px solid var(--border);
+    color: var(--accent);
     font-size: 0.8rem;
     font-weight: 600;
 }
 
 .ai-badge svg {
-    color: #0066cc;
+    color: var(--accent);
 }
 
 .ai-score-badge {
@@ -229,28 +229,28 @@
     content: '';
     width: 4px;
     height: 18px;
-    background: linear-gradient(180deg, #0066cc 0%, #00a3ff 100%);
+    background: linear-gradient(180deg, var(--accent) 0%, var(--accent-secondary) 100%);
     border-radius: 2px;
 }
 
 .ai-reasoning p {
-    color: #495057;
+    color: var(--text-secondary);
     line-height: 1.7;
     font-size: 0.9375rem;
     margin: 0 1.5rem 1rem;
     padding: 1rem 1.25rem;
-    background: #f8f9fa;
+    background: var(--bg);
     border-radius: 10px;
 }
 
 .ai-footer {
     padding: 0.875rem 1.5rem;
-    border-top: 1px solid #f1f3f5;
+    border-top: 1px solid var(--surface-secondary);
 }
 
 .ai-model-info {
     font-size: 0.75rem;
-    color: #868e96;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
@@ -266,7 +266,7 @@
     padding: 3rem;
     background: white;
     border-radius: 16px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border);
     min-height: 360px;
     width: 100%;
 }
@@ -288,13 +288,13 @@
 
 .empty-recommendations p,
 .error-state p {
-    color: #495057;
+    color: var(--text-secondary);
     margin-bottom: 1.25rem;
     max-width: 400px;
 }
 
 .no-selection p {
-    color: #495057;
+    color: var(--text-secondary);
     font-size: 0.9375rem;
 }
 
@@ -305,16 +305,16 @@
     align-items: center;
     justify-content: center;
     min-height: 360px;
-    color: #495057;
+    color: var(--text-secondary);
     background: white;
     border-radius: 16px;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--border);
     width: 100%;
 }
 
 .loading-subtitle {
     font-size: 0.8125rem;
-    color: #868e96;
+    color: var(--text-muted);
     margin-top: 0.5rem;
 }
 

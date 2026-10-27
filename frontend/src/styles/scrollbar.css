@@ -1,7 +1,7 @@
 /* styles/scrollbar.css — только общее правило, без специфичных */
 * {
     scrollbar-width: thin !important;
-    scrollbar-color: #0066cc transparent !important;
+    scrollbar-color: var(--accent) transparent !important;
 }
 
 *::-webkit-scrollbar {
@@ -16,7 +16,7 @@
 }
 
 *::-webkit-scrollbar-thumb {
-    background: #0066cc !important;
+    background: var(--accent) !important;
     border-radius: 0 !important;
 }
 

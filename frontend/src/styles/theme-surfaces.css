@@ -42,7 +42,7 @@
 :root[data-theme="dark"] :is(.back-btn,.details-modal-close,.resume-modal-close,.modal-close-btn,.notification-item):hover { background:var(--border-light);color:var(--text-primary); }
 :root[data-theme="dark"] :is(.meta-badge,.badge,.badge.remote,.skill-tag,.details-badges .badge,.details-badges .badge.remote) { background:var(--accent-light);color:var(--accent);border-color:color-mix(in srgb,var(--accent) 30%,var(--border));box-shadow:none; }
 :root[data-theme="dark"] :is(.company-industry,.company-website,.company-info-link,.header-stat .stat-value,.details-position,.contact-link) { color:var(--accent); }
-:root[data-theme="dark"] .btn-primary { background:var(--accent);color:#fff; }
+:root[data-theme="dark"] .btn-primary { background:var(--accent);color:var(--on-accent); }
 :root[data-theme="dark"] .btn-primary.btn-small { border-color:var(--accent); }
 :root[data-theme="dark"] .btn-primary:hover { background:var(--accent-hover); }
 :root[data-theme="dark"] .btn-secondary { background:var(--border-light);color:var(--text-primary);border-color:var(--border); }

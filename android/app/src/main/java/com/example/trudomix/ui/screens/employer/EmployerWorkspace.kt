@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.employer
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -35,7 +37,7 @@ fun EmployerWorkspace(state:EmployerState,tab:Int,embedded:Boolean,onTab:(Int)->
                 item{AppScreenHeader(title={Text(if(!embedded)"Кабинет работодателя"else if(tab==0)"Мои вакансии"else "Отклики")},subtitle=if(tab==0)"Публикации и люди для вашей команды"else "Кандидаты и следующие шаги",applyInsets=false,contentPadding=PaddingValues(0.dp),navigationIcon={if(!embedded)IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})}
                 if(!embedded)item{FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){FilterChip(tab==0,{onTab(0)},label={Text("Вакансии")});FilterChip(tab==1,{onTab(1)},label={Text("Отклики")})}}
                 if(state.error!=null)item{OutlinedCard(Modifier.fillMaxWidth(),shape=RoundedCornerShape(20.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text(state.error,color=colors.error);TextButton(onClick=onRefresh,enabled=!state.busy){Text("Попробовать снова")}}}}
-                if(state.busy)item{LinearProgressIndicator(Modifier.fillMaxWidth())}
+                if(state.busy)item{InlineLoadingState()}
                 if(state.loading&&state.company.id==0)item{com.example.trudomix.ui.loading.TrudomixLoadingScreen(compact=true,label="Загружаем кабинет")}
                 else if(state.company.id==0)item{WorkspaceEmpty("Начните с вашей компании","Добавьте название и описание, чтобы публиковать вакансии."){Button(onClick=onCompany){Text("Создать компанию")}}}
                 else {

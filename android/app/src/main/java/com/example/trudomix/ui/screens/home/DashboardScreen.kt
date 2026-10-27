@@ -21,6 +21,7 @@ import com.example.trudomix.ui.screens.social.*
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 data class DashboardState(val loading:Boolean=false,val user:User?=null,val resume:Resume?=null,val jobs:List<Vacancy> = emptyList(),val applications:Int?=null,val views:Int?=null,val error:Boolean=false)
 class DashboardViewModel:ViewModel(){
@@ -48,14 +49,24 @@ class DashboardViewModel:ViewModel(){
 
 @Composable
 fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,onResume:()->Unit,onEmployer:()->Unit,onVacancy:(Int)->Unit){
-    val model:DashboardViewModel=viewModel();val state by model.state.collectAsState()
-    val social:SocialViewModel=viewModel();val feed by social.state.collectAsState()
-    val employer=(state.user?:SessionIdentity.user.value)?.role in listOf("employer","admin")
+    val model:DashboardViewModel=viewModel();val state by model.state.collectAsStateWithLifecycle()
+    val social:SocialViewModel=viewModel();val feed by social.state.collectAsStateWithLifecycle()
+    val identity by SessionIdentity.user.collectAsStateWithLifecycle()
+    val employer=(state.user?:identity)?.role in listOf("employer","admin")
     LaunchedEffect(Unit){model.refreshIfStale()}
     val lifecycle=LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){social.load();while(true){delay(60000);social.refreshStories()}}}
+    LaunchedEffect(lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){social.refreshIfStale();while(true){delay(60000);social.refreshStories()}}}
+    var initialReady by remember{mutableStateOf(false)}
+    LaunchedEffect(state.loading,feed.loading,state.user,state.error){
+        if(!state.loading&&!feed.loading&&(state.user!=null||state.error))initialReady=true
+    }
+    if(!initialReady){
+        com.example.trudomix.ui.loading.TrudomixLoadingScreen()
+        return
+    }
     RefreshContent(state.loading||feed.loading,{model.load();social.load()}){
         LazyColumn(Modifier.fillMaxSize().statusBarsPadding(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=16.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(18.dp)){
+            item(key="company-stories",contentType="stories"){TimedStoriesBar(feed.stories,onRefresh={social.refreshStories()})}
             item{AppScreenHeader(title={Text(if(employer)"Ваша команда"else "Твоя карьера")},subtitle=if(employer)"Вакансии, кандидаты и работа с командой"else "Возможности и следующие шаги в одном месте",applyInsets=false,contentPadding=PaddingValues(0.dp))}
             item{Card(Modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),colors=CardDefaults.cardColors(containerColor=MaterialTheme.colorScheme.primaryContainer)){
                 Column(Modifier.padding(24.dp),verticalArrangement=Arrangement.spacedBy(14.dp)){

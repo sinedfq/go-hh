@@ -1,5 +1,9 @@
 package com.example.trudomix.ui.screens.map
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
+import com.example.trudomix.ui.loading.AppLoader
+
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.layout.*
@@ -112,7 +116,7 @@ fun VacancyMapContent(items:List<Vacancy>,loading:Boolean=false,error:String?=nu
                         FilterChip(!office,{office=false},label={Text("Все вакансии")})
                         FilterChip(office,{office=true},label={Text("В офисе")})
                     }
-                    if(loading)LinearProgressIndicator(Modifier.fillMaxWidth())
+                    if(loading)InlineLoadingState()
                 }
             }
             (error?:mapError)?.let{message->Surface(shape=RoundedCornerShape(16.dp),color=MaterialTheme.colorScheme.errorContainer){Column(Modifier.padding(12.dp)){Text(message,color=MaterialTheme.colorScheme.onErrorContainer,style=MaterialTheme.typography.bodySmall);TextButton(onClick={mapError=null;attempt++;onRetry()}){Text("Повторить")}}}}
@@ -124,7 +128,7 @@ fun VacancyMapContent(items:List<Vacancy>,loading:Boolean=false,error:String?=nu
         }
         FilledTonalIconButton(onClick={if(hasLocationPermission(context))locate()else permission.launch(arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION,android.Manifest.permission.ACCESS_FINE_LOCATION))},enabled=!locating,
             modifier=Modifier.align(Alignment.CenterStart).padding(start=16.dp).size(52.dp)) {
-            if(locating)CircularProgressIndicator(Modifier.size(22.dp),strokeWidth=2.dp)else Icon(Icons.Default.MyLocation,"Моё местоположение")
+            if(locating)AppLoader(Modifier.size(22.dp),strokeWidth=2.dp)else Icon(Icons.Default.MyLocation,"Моё местоположение")
         }
         Column(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().widthIn(max=700.dp).padding(start=16.dp,end=16.dp,bottom=40.dp)) {
             AppSnackbarHost(snackbar,Modifier.fillMaxWidth())

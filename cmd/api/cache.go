@@ -43,7 +43,11 @@ func (c *RecommendationsCache) Get(userID int, resumeHash string) (*CacheEntry, 
 	}
 
 	// TTL истёк
-	if time.Since(entry.CreatedAt) > recommendationsCacheTTL {
+	ttl := recommendationsCacheTTL
+	if entry.ModelUsed == basicRecommendationModel {
+		ttl = 45 * time.Second
+	}
+	if time.Since(entry.CreatedAt) > ttl {
 		return nil, false
 	}
 

@@ -1,0 +1,2 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:inset="16dp" android:drawable="@drawable/trudomix_wave_light" />

@@ -1,3 +1,4 @@
+import AppLoader from '../../components/common/AppLoader'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
 import ApplicationHistory from '../../components/common/ApplicationHistory'
@@ -68,7 +69,7 @@ export default function EmployerApplicationsPage({ onOpenVacancy, onOpenResume, 
         <WorkspaceHeader eyebrow="ЗНАКОМСТВО С КАНДИДАТАМИ" title="Отклики" description="Все ответы на вакансии команды. Изучайте резюме, приглашайте кандидатов и планируйте встречи."/>
         {confirmation && <ConfirmModal title={confirmation.status==='accepted'?'Пригласить кандидата?':'Отправить отказ?'} message={`${confirmation.app.resume_full_name || confirmation.app.candidate_email} получит ответ по вакансии «${confirmation.app.vacancy_title}». Комментарий и время встречи можно добавить в истории отклика.`} confirmText={confirmation.status==='accepted'?'Пригласить':'Отправить отказ'} danger={confirmation.status==='rejected'} onConfirm={()=>changeStatus(confirmation.app,confirmation.status)} onCancel={()=>setConfirmation(null)}/>}
         {error && <div className="employer-error" role="alert">{error}<button className="btn btn-secondary" onClick={()=>load()}>Повторить загрузку</button></div>}
-        {loading ? <div className="workspace-state" role="status"><div className="spinner"/><p>Загружаем отклики…</p></div> : <>
+        {loading ? <div className="workspace-state" role="status"><AppLoader inline/><p>Загружаем отклики…</p></div> : <>
             <div className="workspace-metrics"><WorkspaceMetric icon="briefcase" value={applications.length} label="Всего откликов" hint="На вакансии вашей компании"/><WorkspaceMetric icon="eye" value={stats.new} label="Новые кандидаты" hint="Ожидают первого ответа"/><WorkspaceMetric icon="check" value={stats.accepted} label="Приглашения" hint="Следующий шаг — знакомство"/></div>
             <div className="workspace-toolbar"><label className="workspace-search"><WorkspaceIcon name="search" size={18}/><input aria-label="Поиск кандидатов и вакансий" placeholder="Кандидат или вакансия" value={query} onChange={event=>setQuery(event.target.value)}/></label></div>
             <div className="workspace-tabs applications-tabs" aria-label="Этапы подбора">{[['all','Все',applications.length],['new','Новые',stats.new],['viewed','В работе',stats.viewed],['accepted','Приглашения',stats.accepted],['rejected','Отказы',stats.rejected]].map(([value,label,count])=><button key={value} aria-pressed={filter===value} onClick={()=>setFilter(value)}>{label}<span>{count}</span></button>)}</div>

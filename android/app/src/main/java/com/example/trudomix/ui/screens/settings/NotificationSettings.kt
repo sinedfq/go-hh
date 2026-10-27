@@ -12,6 +12,9 @@ import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -29,6 +32,7 @@ import kotlinx.coroutines.tasks.await
 @Composable
 fun NotificationSettings() {
     val context = LocalContext.current
+    val enabled by NotificationPreferences.enabled.collectAsState()
     val registration by DeviceRegistration.status.collectAsState()
     var allowed by remember { mutableStateOf(AppNotifications.allowed(context)) }
     var server by remember { mutableStateOf<String?>(null) }
@@ -66,10 +70,25 @@ fun NotificationSettings() {
                 Icon(Icons.Default.NotificationsNone, null, tint = MaterialTheme.colorScheme.primary)
                 Text("Уведомления", style = MaterialTheme.typography.titleMedium)
             }
+            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+                Column(Modifier.weight(1f).padding(end=12.dp)){
+                    Text("Получать уведомления",style=MaterialTheme.typography.bodyLarge)
+                    Text("Сообщения, отклики и просмотры резюме на этом устройстве",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Switch(checked=enabled,onCheckedChange={value->
+                    NotificationPreferences.setEnabled(context,value)
+                    allowed=AppNotifications.allowed(context)
+                    DeviceRegistration.sync(context);refresh++
+                    if(value&&Build.VERSION.SDK_INT>=33&&androidx.core.content.ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                },modifier=Modifier.semantics{contentDescription="Получать уведомления"})
+            }
+            if(!enabled)Text("Уведомления отключены. Сообщения и события остаются доступны внутри приложения.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+            if(enabled){
             Text(if (allowed) "Уведомления разрешены на устройстве" else "Разреши уведомления, чтобы видеть новые сообщения", style = MaterialTheme.typography.bodyMedium)
             Text(server ?: when (registration) {
                 RegistrationStatus.UNCONFIGURED -> "Сервис уведомлений ещё не подключён в этой сборке. После настройки потребуется обновить приложение."
                 RegistrationStatus.SIGNED_OUT -> "Войди в аккаунт для получения уведомлений"
+                RegistrationStatus.DISABLED -> "Уведомления отключены"
                 RegistrationStatus.REGISTERING -> "Подключаем уведомления…"
                 RegistrationStatus.REGISTERED -> "Проверяем готовность сервера…"
                 RegistrationStatus.FAILED -> "Не удалось подключить уведомления. Проверь соединение и повтори попытку."
@@ -111,6 +130,7 @@ fun NotificationSettings() {
                             .putExtra(Settings.EXTRA_CHANNEL_ID, channel))
                     }) { Text(label) }
                 }
+            }
             }
         }
     }

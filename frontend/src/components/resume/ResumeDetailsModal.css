@@ -45,7 +45,7 @@
   overflow-y: auto;
   animation: modalAppear 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   scrollbar-width: thin;
-  scrollbar-color: rgba(0, 102, 204, 0.5) transparent;
+  scrollbar-color: color-mix(in srgb,var(--accent) 50%,transparent) transparent;
 }
 
 .details-modal::-webkit-scrollbar {
@@ -57,12 +57,12 @@
 }
 
 .details-modal::-webkit-scrollbar-thumb {
-  background: rgba(0, 102, 204, 0.5);
+  background: color-mix(in srgb,var(--accent) 50%,transparent);
   border-radius: 2px;
 }
 
 .details-modal::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 102, 204, 0.8);
+  background: color-mix(in srgb,var(--accent) 80%,transparent);
 }
 
 @keyframes modalAppear {
@@ -124,7 +124,7 @@
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #0066cc 0%, #00a3ff 100%);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%);
   color: white;
   display: flex;
   align-items: center;
@@ -133,7 +133,7 @@
   font-weight: 700;
   flex-shrink: 0;
   box-shadow: 
-    0 4px 16px rgba(0, 102, 204, 0.3),
+    0 4px 16px color-mix(in srgb,var(--accent) 30%,transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
@@ -145,7 +145,7 @@
 }
 
 .details-position {
-  color: #0066cc;
+  color: var(--accent);
   font-weight: 600;
   font-size: 1rem;
   margin-bottom: 0.75rem;
@@ -158,15 +158,15 @@
 }
 
 .details-badges .badge {
-  background: rgba(0, 102, 204, 0.1);
+  background: color-mix(in srgb,var(--accent) 10%,transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #0066cc;
+  color: var(--accent);
   padding: 0.25rem 0.75rem;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 500;
-  border: 0.5px solid rgba(0, 102, 204, 0.2);
+  border: 0.5px solid color-mix(in srgb,var(--accent) 20%,transparent);
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -199,15 +199,15 @@
 }
 
 .details-skills .skill-tag {
-  background: rgba(0, 102, 204, 0.1);
+  background: color-mix(in srgb,var(--accent) 10%,transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  color: #0066cc;
+  color: var(--accent);
   padding: 0.4rem 0.75rem;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 500;
-  border: 0.5px solid rgba(0, 102, 204, 0.2);
+  border: 0.5px solid color-mix(in srgb,var(--accent) 20%,transparent);
   box-shadow: 
     0 1px 3px rgba(0, 0, 0, 0.04),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
@@ -268,10 +268,10 @@
 
 .work-exp-form input:focus,
 .work-exp-form textarea:focus {
-  border-color: #0066cc;
+  border-color: var(--accent);
   background: rgba(255, 255, 255, 0.85);
   box-shadow: 
-    0 0 0 3px rgba(0, 102, 204, 0.15),
+    0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
@@ -288,7 +288,7 @@
   padding: 1rem;
   border-radius: 12px;
   border: 0.5px solid rgba(255, 255, 255, 0.3);
-  border-left: 3px solid #0066cc;
+  border-left: 3px solid var(--accent);
   transition: all 0.2s ease;
   box-shadow: 
     0 2px 6px rgba(0, 0, 0, 0.04),
@@ -318,7 +318,7 @@
 }
 
 .work-exp-company {
-  color: #0066cc;
+  color: var(--accent);
   font-weight: 600;
   font-size: 0.85rem;
 }
@@ -470,18 +470,18 @@
 
 .total-experience-badge {
   display: inline-block;
-  color: #0066cc;
+  color: var(--accent);
   font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 0.75rem;
   padding: 0.35rem 0.875rem;
-  background: rgba(0, 102, 204, 0.08);
+  background: color-mix(in srgb,var(--accent) 8%,transparent);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border-radius: 8px;
-  border: 0.5px solid rgba(0, 102, 204, 0.2);
+  border: 0.5px solid color-mix(in srgb,var(--accent) 20%,transparent);
   box-shadow: 
-    0 2px 4px rgba(0, 102, 204, 0.08),
+    0 2px 4px color-mix(in srgb,var(--accent) 8%,transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
@@ -497,10 +497,10 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.5rem 0.875rem;
-    background: rgba(0, 102, 204, 0.06);
-    border: 0.5px solid rgba(0, 102, 204, 0.15);
+    background: color-mix(in srgb,var(--accent) 6%,transparent);
+    border: 0.5px solid color-mix(in srgb,var(--accent) 15%,transparent);
     border-radius: 10px;
-    color: #0066cc;
+    color: var(--accent);
     font-size: 0.85rem;
     font-weight: 500;
     text-decoration: none;
@@ -508,10 +508,10 @@
 }
 
 .contact-link:hover {
-    background: rgba(0, 102, 204, 0.12);
-    border-color: rgba(0, 102, 204, 0.3);
+    background: color-mix(in srgb,var(--accent) 12%,transparent);
+    border-color: color-mix(in srgb,var(--accent) 30%,transparent);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.15);
+    box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 .contact-link svg {
@@ -669,20 +669,20 @@
    ============================================ */
 
 [data-theme="dark"] .details-modal {
-    background: #161b22;
-    color: #e6edf3;
+    background: var(--surface);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .details-modal-content {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .details-header {
-    border-bottom: 1px solid #30363d;
+    border-bottom: 1px solid var(--border);
 }
 
 [data-theme="dark"] .details-info h2 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .details-position {
@@ -690,15 +690,15 @@
 }
 
 [data-theme="dark"] .details-section {
-    border-bottom: 1px solid #30363d;
+    border-bottom: 1px solid var(--border);
 }
 
 [data-theme="dark"] .section-title {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .section-header-with-btn {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .details-about {
@@ -707,17 +707,17 @@
 
 /* ====== ОПЫТ РАБОТЫ — ИСПРАВЛЕНО ДЛЯ ТЁМНОЙ ТЕМЫ ====== */
 [data-theme="dark"] .work-exp-item {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .work-exp-header {
-    border-bottom: 1px solid #30363d;
+    border-bottom: 1px solid var(--border);
 }
 
 [data-theme="dark"] .work-exp-header h4 {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .work-exp-company {
@@ -733,7 +733,7 @@
 }
 
 [data-theme="dark"] .delete-exp-btn {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #f85149;
 }
 
@@ -744,15 +744,15 @@
 
 /* ====== ФОРМА ДОБАВЛЕНИЯ ОПЫТА ====== */
 [data-theme="dark"] .work-exp-form {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: var(--bg);
+    border: 1px solid var(--border);
 }
 
 [data-theme="dark"] .work-exp-form input,
 [data-theme="dark"] .work-exp-form textarea {
-    background: #161b22;
-    border: 1px solid #30363d;
-    color: #e6edf3;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .work-exp-form input::placeholder,
@@ -762,7 +762,7 @@
 
 [data-theme="dark"] .work-exp-form input:focus,
 [data-theme="dark"] .work-exp-form textarea:focus {
-    border-color: #4493f8;
+    border-color: var(--accent);
     outline: none;
 }
 
@@ -773,37 +773,37 @@
 
 /* ====== КОНТАКТЫ ====== */
 [data-theme="dark"] .contact-link {
-    background: #0d1117;
-    border: 1px solid #30363d;
+    background: var(--bg);
+    border: 1px solid var(--border);
     color: #58a6ff;
 }
 
 [data-theme="dark"] .contact-link:hover {
-    background: #21262d;
-    border-color: #4493f8;
+    background: var(--surface-secondary);
+    border-color: var(--accent);
 }
 
 /* ====== BADGES ====== */
 [data-theme="dark"] .badge {
-    background: #21262d;
-    color: #e6edf3;
-    border: 1px solid #30363d;
+    background: var(--surface-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
 }
 
 [data-theme="dark"] .badge.remote {
-    background: rgba(68, 147, 248, 0.15);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
     color: #58a6ff;
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .badge.views-badge {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #8b949e;
 }
 
 /* ====== КНОПКИ ====== */
 [data-theme="dark"] .details-actions {
-    border-top: 1px solid #30363d;
+    border-top: 1px solid var(--border);
 }
 
 [data-theme="dark"] .btn-primary {
@@ -825,21 +825,21 @@
 }
 
 [data-theme="dark"] .btn-small {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #58a6ff;
-    border: 1px solid #30363d;
+    border: 1px solid var(--border);
 }
 
 [data-theme="dark"] .btn-small:hover {
-    background: #30363d;
-    border-color: #4493f8;
+    background: var(--border);
+    border-color: var(--accent);
 }
 
 /* ====== SKILL TAGS ====== */
 [data-theme="dark"] .skill-tag {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #58a6ff;
-    border: 1px solid #30363d;
+    border: 1px solid var(--border);
 }
 
 /* ====== SCROLLBAR ====== */
@@ -848,11 +848,11 @@
 }
 
 [data-theme="dark"] .details-modal::-webkit-scrollbar-track {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 [data-theme="dark"] .details-modal::-webkit-scrollbar-thumb {
-    background: #30363d;
+    background: var(--border);
     border-radius: 4px;
 }
 
@@ -862,12 +862,12 @@
 
 /* ====== PHOTO UPLOAD ====== */
 [data-theme="dark"] .photo-upload-container {
-    background: #0d1117;
-    border: 2px dashed #30363d;
+    background: var(--bg);
+    border: 2px dashed var(--border);
 }
 
 [data-theme="dark"] .photo-upload-container:hover {
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 /* ====== OVERLAY ====== */
@@ -877,11 +877,11 @@
 
 /* ====== CLOSE BUTTON ====== */
 [data-theme="dark"] .modal-close-btn {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #8b949e;
 }
 
 [data-theme="dark"] .modal-close-btn:hover {
-    background: #30363d;
-    color: #e6edf3;
+    background: var(--border);
+    color: var(--text-primary);
 }

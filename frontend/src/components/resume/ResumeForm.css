@@ -58,8 +58,8 @@
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .form-group textarea {
@@ -88,8 +88,8 @@
 }
 
 .dropdown-trigger.open {
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .dropdown-value {
@@ -150,8 +150,8 @@
 }
 
 .dropdown-option.selected {
-    background: rgba(0, 102, 204, 0.08);
-    color: var(--accent, #0066cc);
+    background: color-mix(in srgb,var(--accent) 8%,transparent);
+    color: var(--accent, var(--accent));
 }
 
 .option-content {
@@ -170,7 +170,7 @@
 }
 
 .option-check {
-    color: var(--accent, #0066cc);
+    color: var(--accent, var(--accent));
 }
 
 /* ====== НАВЫКИ ====== */
@@ -196,8 +196,8 @@
 
 .skills-input input:focus {
     outline: none;
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .add-skill-btn {
@@ -206,7 +206,7 @@
     border-radius: 8px;
     border: 1px solid var(--border, #d1d5db);
     background: var(--bg, #f3f4f6);
-    color: var(--accent, #0066cc);
+    color: var(--accent, var(--accent));
     font-size: 1.25rem;
     font-weight: 600;
     cursor: pointer;
@@ -215,9 +215,9 @@
 }
 
 .add-skill-btn:hover {
-    background: var(--accent, #0066cc);
+    background: var(--accent, var(--accent));
     color: white;
-    border-color: var(--accent, #0066cc);
+    border-color: var(--accent, var(--accent));
 }
 
 .skills-suggestions {
@@ -263,10 +263,10 @@
     align-items: center;
     gap: 0.375rem;
     padding: 0.375rem 0.75rem;
-    background: rgba(0, 102, 204, 0.1);
-    border: 1px solid rgba(0, 102, 204, 0.2);
+    background: color-mix(in srgb,var(--accent) 10%,transparent);
+    border: 1px solid color-mix(in srgb,var(--accent) 20%,transparent);
     border-radius: 20px;
-    color: var(--accent, #0066cc);
+    color: var(--accent, var(--accent));
     font-size: 0.8125rem;
     font-weight: 500;
 }
@@ -274,7 +274,7 @@
 .remove-skill {
     background: transparent;
     border: none;
-    color: var(--accent, #0066cc);
+    color: var(--accent, var(--accent));
     cursor: pointer;
     font-size: 1rem;
     line-height: 1;
@@ -312,9 +312,9 @@
 }
 
 .contact-input-wrapper:focus-within {
-    border-color: var(--accent, #0066cc);
+    border-color: var(--accent, var(--accent));
     background: var(--surface, #ffffff);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .contact-icon {
@@ -357,7 +357,7 @@
 }
 
 .toggle-status.active {
-    color: #0066cc;
+    color: var(--accent);
 }
 
 @keyframes statusFadeIn {
@@ -442,8 +442,8 @@
 
 /* ====== СОСТОЯНИЕ ВКЛЮЧЕНО ====== */
 .toggle-switch input[type="checkbox"]:checked + .toggle-slider {
-    background-color: #0066cc !important;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+    background-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent) !important;
     animation: togglePulse 0.4s ease;
 }
 
@@ -454,8 +454,8 @@
 
 /* Альтернативный селектор */
 .toggle-switch input[type="checkbox"]:checked ~ .toggle-slider {
-    background-color: #0066cc !important;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+    background-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent) !important;
 }
 
 .toggle-switch input[type="checkbox"]:checked ~ .toggle-slider::before {
@@ -464,20 +464,20 @@
 
 /* Фокус для доступности */
 .toggle-switch input[type="checkbox"]:focus-visible + .toggle-slider {
-    outline: 2px solid #0066cc;
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
 }
 
 /* Анимация пульсации при включении */
 @keyframes togglePulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(0, 102, 204, 0.4);
+        box-shadow: 0 0 0 0 color-mix(in srgb,var(--accent) 40%,transparent);
     }
     50% {
-        box-shadow: 0 0 0 6px rgba(0, 102, 204, 0.2);
+        box-shadow: 0 0 0 6px color-mix(in srgb,var(--accent) 20%,transparent);
     }
     100% {
-        box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+        box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
     }
 }
 
@@ -494,8 +494,8 @@
 }
 
 .remote-toggle:hover {
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 2px 8px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .remote-toggle-info {
@@ -518,7 +518,7 @@
 
 /* Подсветка subtitle при включении */
 .remote-toggle:has(input:checked) .remote-toggle-subtitle {
-    color: #0066cc;
+    color: var(--accent);
     font-weight: 500;
 }
 
@@ -544,7 +544,7 @@
     background: var(--bg, #f3f4f6);
     border: 1px solid var(--border, #d1d5db);
     border-radius: 8px;
-    color: var(--accent, #0066cc);
+    color: var(--accent, var(--accent));
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
@@ -552,9 +552,9 @@
 }
 
 .add-experience-btn:hover {
-    background: var(--accent, #0066cc);
+    background: var(--accent, var(--accent));
     color: white;
-    border-color: var(--accent, #0066cc);
+    border-color: var(--accent, var(--accent));
 }
 
 .empty-work-exp {
@@ -584,8 +584,8 @@
 }
 
 .work-experience-item:hover {
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .work-exp-item-header {
@@ -658,8 +658,8 @@
 .work-exp-row input:focus,
 .work-exp-row textarea:focus {
     outline: none;
-    border-color: var(--accent, #0066cc);
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    border-color: var(--accent, var(--accent));
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 10%,transparent);
 }
 
 .work-exp-row textarea {
@@ -767,24 +767,24 @@
    ============================================ */
 
 [data-theme="dark"] .resume-form-wrapper {
-    background: #161b22;
+    background: var(--surface);
 }
 
 [data-theme="dark"] .resume-form h3 {
-    color: #e6edf3;
-    border-bottom-color: #30363d;
+    color: var(--text-primary);
+    border-bottom-color: var(--border);
 }
 
 /* ====== ГРУППЫ ФОРМЫ ====== */
 [data-theme="dark"] .form-group label {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-group input,
 [data-theme="dark"] .form-group textarea {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .form-group input::placeholder,
@@ -794,19 +794,19 @@
 
 [data-theme="dark"] .form-group input:focus,
 [data-theme="dark"] .form-group textarea:focus {
-    border-color: #4493f8;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 /* ====== DROPDOWN ====== */
 [data-theme="dark"] .dropdown-trigger {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-trigger.open {
-    border-color: #4493f8;
+    border-color: var(--accent);
 }
 
 [data-theme="dark"] .dropdown-arrow {
@@ -814,20 +814,20 @@
 }
 
 [data-theme="dark"] .dropdown-menu {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .dropdown-option {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .dropdown-option:hover {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 [data-theme="dark"] .dropdown-option.selected {
-    background: rgba(68, 147, 248, 0.15);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
     color: #58a6ff;
 }
 
@@ -837,43 +837,43 @@
 
 /* ====== НАВЫКИ ====== */
 [data-theme="dark"] .skills-input input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .skills-input input:focus {
-    border-color: #4493f8;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .add-skill-btn {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
     color: #58a6ff;
 }
 
 [data-theme="dark"] .add-skill-btn:hover {
     background: #58a6ff;
-    color: #0d1117;
+    color: var(--bg);
 }
 
 [data-theme="dark"] .skills-suggestions {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .skill-suggestion-item {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .skill-suggestion-item:hover {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 [data-theme="dark"] .skill-tag-form {
-    background: rgba(68, 147, 248, 0.15);
-    border-color: rgba(68, 147, 248, 0.3);
+    background: color-mix(in srgb,var(--accent) 15%,transparent);
+    border-color: color-mix(in srgb,var(--accent) 30%,transparent);
     color: #58a6ff;
 }
 
@@ -887,14 +887,14 @@
 
 /* ====== КОНТАКТЫ ====== */
 [data-theme="dark"] .contact-input-wrapper {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .contact-input-wrapper:focus-within {
-    border-color: #4493f8;
-    background: #161b22;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    background: var(--surface);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .contact-icon {
@@ -902,7 +902,7 @@
 }
 
 [data-theme="dark"] .contact-input-wrapper input {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .contact-input-wrapper input::placeholder {
@@ -919,11 +919,11 @@
 }
 
 [data-theme="dark"] .toggle-switch .toggle-slider {
-    background-color: #30363d !important;
+    background-color: var(--border) !important;
 }
 
 [data-theme="dark"] .toggle-switch .toggle-slider::before {
-    background-color: #e6edf3 !important;
+    background-color: var(--text-primary) !important;
 }
 
 /* ВКЛЮЧЕНО в тёмной теме — зелёный */
@@ -944,17 +944,17 @@
 
 /* ====== REMOTE TOGGLE — ТЁМНАЯ ТЕМА ====== */
 [data-theme="dark"] .remote-toggle {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .remote-toggle:hover {
-    border-color: #4493f8;
-    box-shadow: 0 2px 8px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 2px 8px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .remote-toggle-title {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .remote-toggle-subtitle {
@@ -968,48 +968,48 @@
 
 /* ====== ОПЫТ РАБОТЫ — ТЁМНАЯ ТЕМА ====== */
 [data-theme="dark"] .work-experience-section {
-    border-top-color: #30363d;
+    border-top-color: var(--border);
 }
 
 [data-theme="dark"] .section-header-form label {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .add-experience-btn {
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
     color: #58a6ff;
 }
 
 [data-theme="dark"] .add-experience-btn:hover {
     background: #58a6ff;
-    color: #0d1117;
+    color: var(--bg);
 }
 
 [data-theme="dark"] .empty-work-exp {
     color: #8b949e;
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .work-experience-item {
-    background: #0d1117;
-    border-color: #30363d;
+    background: var(--bg);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .work-experience-item:hover {
-    border-color: #4493f8;
-    box-shadow: 0 4px 12px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 [data-theme="dark"] .work-exp-item-header {
-    border-bottom-color: #30363d;
+    border-bottom-color: var(--border);
 }
 
 [data-theme="dark"] .work-exp-index {
     color: #8b949e;
-    background: #21262d;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .remove-exp-btn {
@@ -1024,9 +1024,9 @@
 
 [data-theme="dark"] .work-exp-row input,
 [data-theme="dark"] .work-exp-row textarea {
-    background: #161b22;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--surface);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .work-exp-row input::placeholder,
@@ -1036,8 +1036,8 @@
 
 [data-theme="dark"] .work-exp-row input:focus,
 [data-theme="dark"] .work-exp-row textarea:focus {
-    border-color: #4493f8;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 /* ====== ОШИБКА ФОРМЫ ====== */
@@ -1049,17 +1049,17 @@
 
 /* ====== КНОПКИ ДЕЙСТВИЙ ====== */
 [data-theme="dark"] .form-actions {
-    border-top-color: #30363d;
+    border-top-color: var(--border);
 }
 
 [data-theme="dark"] .form-actions .btn-secondary {
-    background: #21262d;
-    color: #e6edf3;
-    border-color: #30363d;
+    background: var(--surface-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .form-actions .btn-secondary:hover {
-    background: #30363d;
+    background: var(--border);
 }
 
 [data-theme="dark"] .form-actions .btn-primary {
@@ -1072,29 +1072,29 @@
 }
 
 [data-theme="dark"] .form-actions .btn-primary:disabled {
-    background: #21262d;
+    background: var(--surface-secondary);
     color: #6e7681;
 }
 
 /* ====== POSITION SUGGESTIONS ====== */
 [data-theme="dark"] .position-suggestions {
-    background: #161b22;
-    border-color: #30363d;
+    background: var(--surface);
+    border-color: var(--border);
 }
 
 [data-theme="dark"] .position-suggestion-item {
-    color: #e6edf3;
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .position-suggestion-item:hover {
-    background: #0d1117;
+    background: var(--bg);
 }
 
 /* ====== POSITION INPUT ====== */
 [data-theme="dark"] .position-input-wrapper input {
-    background: #0d1117;
-    border-color: #30363d;
-    color: #e6edf3;
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-primary);
 }
 
 [data-theme="dark"] .position-input-wrapper input::placeholder {
@@ -1102,8 +1102,8 @@
 }
 
 [data-theme="dark"] .position-input-wrapper input:focus {
-    border-color: #4493f8;
-    box-shadow: 0 0 0 3px rgba(68, 147, 248, 0.15);
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent);
 }
 
 /* ============================================

@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
@@ -38,7 +40,7 @@ private fun ServerConnectionDialog(onDismiss: () -> Unit, onSaved: () -> Unit) {
                 Text("Например: http://192.168.0.4:8080/", style = MaterialTheme.typography.bodySmall)
                 Text("При смене сервера потребуется войти заново.", style = MaterialTheme.typography.bodySmall)
                 result?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-                if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
+                if (busy) InlineLoadingState()
             }
         },
         confirmButton = {

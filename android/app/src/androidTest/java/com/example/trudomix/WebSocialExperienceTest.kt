@@ -25,7 +25,7 @@ class WebSocialExperienceTest {
         val url=InstrumentationRegistry.getArguments().getString("webUrl")?:"http://10.0.2.2:5174/"
         val following=AtomicBoolean(false);val posted=AtomicBoolean(false);val liked=AtomicBoolean(false);val commented=AtomicBoolean(false)
         val user="""{"id":9999,"email":"preview@example.test","role":"candidate"}"""
-        val company="""{"id":99,"name":"ООО ИКС","description":"Создаём продукты","logo_url":"/brand-dark-waves.png","photos":["/brand-dark-waves.png"],"videos":["/preview-company-story.mp4"]}"""
+        val company="""{"id":99,"name":"ООО ИКС","description":"Создаём продукты","logo_url":"/brand/wave-night.png","photos":["/brand/wave-night.png"],"videos":["/preview-company-story.mp4"]}"""
         val expiry=Instant.now().plusSeconds(86400).toString()
         fun post(id:Int,own:Boolean)="""{"id":$id,"author_name":"${if(own)"Александр"else "Команда Trudomix"}","company_id":${if(own)"null"else "99"},"body":"${if(own)"Мой новый пост"else "Новости команды"}","can_delete":$own,"liked":${liked.get()},"likes":${if(liked.get())1 else 0},"comments":${if(commented.get())1 else 0},"created_at":"2026-10-25T10:00:00Z"}"""
         instrumentation.runOnMainSync{compose.activity.setContentView(WebView(compose.activity).apply{
@@ -45,7 +45,7 @@ class WebSocialExperienceTest {
                     path=="/api/companies"->"[$company]"
                     path=="/api/companies/99"->company
                     path.endsWith("/subscription")->{if(request.method=="PUT")following.set(true);if(request.method=="DELETE")following.set(false);"""{"following":${following.get()},"followers":${if(following.get())1 else 0}}"""}
-                    path=="/api/stories"->if(following.get())"""[{"id":1,"company_id":99,"company_name":"Команда Trudomix","company_logo":"/brand-dark-waves.png","media_url":"/brand-dark-waves.png","media_type":"image","caption":"День команды","expires_at":"$expiry"}]"""else "[]"
+                    path=="/api/stories"->if(following.get())"""[{"id":1,"company_id":99,"company_name":"Команда Trudomix","company_logo":"/brand/wave-night.png","media_url":"/brand/wave-night.png","media_type":"image","caption":"День команды","expires_at":"$expiry"}]"""else "[]"
                     path=="/api/posts"->{posted.set(true);"""{"id":2}"""}
                     path=="/api/posts/2"&&request.method=="DELETE"->{posted.set(false);"{}"}
                     path.endsWith("/like")->{liked.set(request.method=="PUT");"""{"likes":${if(liked.get())1 else 0},"liked":${liked.get()}}"""}
@@ -66,13 +66,13 @@ class WebSocialExperienceTest {
         try{
             waitFor("!!document.querySelector('.top-header')")
             js("window.loadingPreview=true;localStorage.removeItem('user');localStorage.removeItem('token');location.reload()")
-            waitFor("!window.loadingPreview&&!!document.querySelector('.header-login-btn')")
+            waitFor("!window.loadingPreview&&!document.getElementById('startup-splash')&&!!document.querySelector('.header-login-btn')")
             js("document.querySelector('.header-login-btn').click()")
             waitFor("!!document.querySelector('#auth-email')")
             assertEquals("Login hints are present","true",js("document.querySelector('#auth-email').placeholder.length>0&&document.querySelector('#auth-password').placeholder.length>0&&getComputedStyle(document.querySelector('#auth-email'),'::placeholder').opacity==='1'"))
             js("document.querySelector('.auth-close').click()")
             js("window.loadingPreview=true;localStorage.setItem('theme','light');localStorage.setItem('user',JSON.stringify($user));localStorage.setItem('token','preview-token');sessionStorage.setItem('currentMode','companies');location.reload()")
-            waitFor("!window.loadingPreview&&!!document.querySelector('.company-card')")
+            waitFor("!window.loadingPreview&&!document.getElementById('startup-splash')&&!!document.querySelector('.company-card')")
             js("document.querySelector('.company-card').click()")
             waitFor("!!document.querySelector('.company-follow button:not(:disabled)')")
             js("document.querySelector('.company-follow button').click()")

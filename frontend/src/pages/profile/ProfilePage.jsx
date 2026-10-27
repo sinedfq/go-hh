@@ -168,7 +168,7 @@ function ProfilePage({ onResumeUpdate, onLogout, showToast, onNavigate }) {
 
     if (isEmployer) return <EmployerProfile user={user} stats={stats} loading={loading} dataError={dataError} onRetry={loadData} onUpload={handleUserPhotoUpload} onNavigate={onNavigate} onLogout={onLogout}/>
 
-    if (loading) {
+    if (loading && !resume) {
         return (
             <div className="profile-page">
                 <div className="loading">

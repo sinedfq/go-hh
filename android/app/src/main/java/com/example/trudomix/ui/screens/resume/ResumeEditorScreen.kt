@@ -1,5 +1,9 @@
 package com.example.trudomix.ui.screens.resume
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
+import com.example.trudomix.ui.loading.AppLoader
+
 import com.example.trudomix.ui.components.AppScreenHeader
 
 import androidx.compose.foundation.layout.*
@@ -31,7 +35,7 @@ fun ResumeEditorScreen(viewModel: ResumeViewModel,onNavigateBack:()->Unit) {
     Scaffold(topBar={AppScreenHeader(title={Text("Редактирование резюме")},navigationIcon={IconButton(onClick=onNavigateBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})},snackbarHost={AppSnackbarHost(snackbar)}) { padding ->
         Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.TopCenter) {
             when(val current=state) {
-                ResumeUiState.Loading -> CircularProgressIndicator(Modifier.align(Alignment.Center))
+                ResumeUiState.Loading -> AppLoader(Modifier.align(Alignment.Center))
                 is ResumeUiState.Error -> Column(Modifier.padding(24.dp)){Text(current.message);Button(onClick=viewModel::loadResume){Text("Повторить")}}
                 is ResumeUiState.Success -> ResumeEditorContent(current.resume,options,saving,directory::load,viewModel::uploadPhoto) { resume -> viewModel.saveResume(resume,current.resume!=null,onNavigateBack) }
             }
@@ -65,7 +69,7 @@ fun ResumeEditorContent(existing:Resume?,options:DirectoryOptions,saving:Boolean
             LinearProgressIndicator(progress={complete/8f},modifier=Modifier.fillMaxWidth())
             Text("8 разделов по 12,5%. Проценты показывают заполненность, а не оценку работодателя.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         }}
-        if(options.loading)LinearProgressIndicator(Modifier.fillMaxWidth())
+        if(options.loading)InlineLoadingState()
         if(options.failed) {Text("Подсказки загружены частично. Можно вписать свой вариант.",style=MaterialTheme.typography.bodySmall);TextButton(onClick=onRetry){Text("Обновить подсказки")}}
         ResumeSection("Фото · +12,5%") {
             if(existing!=null)PhotoPicker(existing.photo_url,"Фото резюме",onPhoto)
@@ -93,7 +97,7 @@ fun ResumeEditorContent(existing:Resume?,options:DirectoryOptions,saving:Boolean
             ResumeInput(linkedin,{linkedin=it},"LinkedIn · +0% (дополнительно)")
         }
         Button(onClick={onSave(draft.copy(full_name=name.trim(),desired_position=position.trim(),city=city.trim(),experience=experience.trim()))},enabled=!saving&&name.isNotBlank()&&position.isNotBlank(),modifier=Modifier.fillMaxWidth().heightIn(min=52.dp)){
-            if(saving)CircularProgressIndicator(Modifier.size(24.dp),strokeWidth=2.dp)else Text("Сохранить резюме")
+            if(saving)AppLoader(Modifier.size(24.dp),strokeWidth=2.dp)else Text("Сохранить резюме")
         }
         Spacer(Modifier.navigationBarsPadding())
     }

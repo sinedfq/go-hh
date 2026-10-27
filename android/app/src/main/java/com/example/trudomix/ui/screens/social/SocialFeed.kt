@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.social
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import android.content.Context
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -50,22 +52,34 @@ data class SocialState(val posts:List<SocialPost> = emptyList(),val stories:List
 class SocialViewModel:ViewModel(){
     val state=MutableStateFlow(SocialState())
     private var loadJob:Job?=null
+    private var loadedAt=0L
+    private var storiesJob:Job?=null
     init{load()}
+    fun refreshIfStale(){if(loadJob?.isActive!=true&&System.currentTimeMillis()-loadedAt>60000)load()}
     fun load(more:Boolean=false,scope:String=state.value.scope){
         if(more&&(state.value.loading||state.value.next==0L))return
         loadJob?.cancel();val before=if(more)state.value.next else null
         state.value=state.value.copy(scope=scope,loading=true,error=null,posts=if(scope==state.value.scope)state.value.posts else emptyList())
         loadJob=viewModelScope.launch{try{
-            val page=ApiClient.api.socialFeed(scope,before).bodyOrThrow()
-            state.value=state.value.copy(posts=if(more)state.value.posts+page.posts else page.posts,next=page.next_cursor)
-            val stories=ApiClient.api.timedStories().bodyOrThrow();state.value=state.value.copy(stories=stories)
+            coroutineScope {
+                val page=async{ApiClient.api.socialFeed(scope,before).bodyOrThrow()}
+                val stories=if(!more)async{
+                    try{val items=ApiClient.api.timedStories().bodyOrThrow();state.value=state.value.copy(stories=items)}
+                    catch(e:CancellationException){throw e}
+                    catch(e:Exception){state.value=state.value.copy(error=userErrorMessage(e))}
+                }else null
+                val result=page.await()
+                state.value=state.value.copy(posts=if(more)state.value.posts+result.posts else result.posts,next=result.next_cursor)
+                stories?.await()
+                loadedAt=System.currentTimeMillis()
+            }
         }catch(e:CancellationException){throw e}catch(e:Exception){state.value=state.value.copy(error=userErrorMessage(e))}finally{if(isActive)state.value=state.value.copy(loading=false)}}
     }
     private fun action(id:Long,block:suspend()->Unit){if(id in state.value.busy)return;state.value=state.value.copy(busy=state.value.busy+id,error=null);viewModelScope.launch{try{block()}catch(e:CancellationException){throw e}catch(e:Exception){state.value=state.value.copy(error=userErrorMessage(e))}finally{state.value=state.value.copy(busy=state.value.busy-id)}}}
     fun like(post:SocialPost)=action(post.id){val result=(if(post.liked)ApiClient.api.unlikePost(post.id)else ApiClient.api.likePost(post.id)).bodyOrThrow();state.value=state.value.copy(posts=state.value.posts.map{if(it.id==post.id)it.copy(liked=result.liked,likes=result.likes)else it})}
     fun delete(post:SocialPost)=action(post.id){ApiClient.api.deletePost(post.id).checkSuccess();state.value=state.value.copy(posts=state.value.posts.filter{it.id!=post.id})}
     fun commentCount(id:Long,delta:Int){state.value=state.value.copy(posts=state.value.posts.map{if(it.id==id)it.copy(comments=(it.comments+delta).coerceAtLeast(0))else it})}
-    fun refreshStories(){viewModelScope.launch{try{state.value=state.value.copy(stories=ApiClient.api.timedStories().bodyOrThrow())}catch(e:CancellationException){throw e}catch(_:Exception){/* Pull-to-refresh reports errors without interrupting reading. */}}}
+    fun refreshStories(){if(storiesJob?.isActive==true||loadJob?.isActive==true)return;storiesJob=viewModelScope.launch{try{val items=ApiClient.api.timedStories().bodyOrThrow();state.value=state.value.copy(stories=items)}catch(e:CancellationException){throw e}catch(_:Exception){/* Pull-to-refresh reports errors without interrupting reading. */}}}
 }
 
 private fun socialDate(value:String)=runCatching{DateTimeFormatter.ofPattern("dd.MM · HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(value))}.getOrDefault("")
@@ -77,7 +91,6 @@ fun SocialHomeHeader(state:SocialState,model:SocialViewModel){
     val identity by SessionIdentity.user.collectAsState()
     val employer=identity?.role in listOf("employer","admin")
     Column(verticalArrangement=Arrangement.spacedBy(16.dp)){
-        TimedStoriesBar(state.stories,onRefresh={model.load()})
         Text("Люди и команды",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)
         Text("Делись опытом, следи за новостями и общайся с командами.",color=MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)){
@@ -86,7 +99,7 @@ fun SocialHomeHeader(state:SocialState,model:SocialViewModel){
         }
         LazyRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){items(listOf("all" to "Все публикации","following" to "Мои подписки")){(value,label)->FilterChip(state.scope==value,{model.load(scope=value)},label={Text(label)})}}
         state.error?.let{Text(it,color=MaterialTheme.colorScheme.error);TextButton(onClick={model.load()}){Text("Повторить загрузку")}}
-        if(state.loading)LinearProgressIndicator(Modifier.fillMaxWidth())
+        if(state.loading)InlineLoadingState()
         if(state.posts.isEmpty()&&!state.loading&&state.error==null)OutlinedCard(Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp)){Text(if(state.scope=="following")"Подпишись на компании: их новости появятся здесь."else "Стань автором первого поста о работе и команде.",Modifier.padding(20.dp))}
     }
     if(composePost)SocialEditor(false,employer,{composePost=false}){model.load()}
@@ -96,8 +109,14 @@ fun SocialHomeHeader(state:SocialState,model:SocialViewModel){
 @Composable
 fun TimedStoriesBar(stories:List<TimedCompanyStory>,onRefresh:()->Unit={}){
     var now by remember{mutableLongStateOf(System.currentTimeMillis())}
-    LaunchedEffect(Unit){while(true){delay(1000);now=System.currentTimeMillis()}}
-    val groups=activeStories(stories,now).groupBy{it.company_id}
+    LaunchedEffect(stories){
+        while(isActive){
+            now=System.currentTimeMillis()
+            val next=stories.mapNotNull{runCatching{Instant.parse(it.expires_at).toEpochMilli()}.getOrNull()}.filter{it>now}.minOrNull()?:break
+            delay((next-now+1).coerceAtLeast(1))
+        }
+    }
+    val groups=remember(stories,now){activeStories(stories,now).groupBy{it.company_id}}
     var opened by remember{mutableStateOf<Int?>(null)};var deleting by remember{mutableStateOf<TimedCompanyStory?>(null)}
     var error by remember{mutableStateOf<String?>(null)};var busy by remember{mutableStateOf(false)};val scope=rememberCoroutineScope()
     Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
@@ -197,7 +216,7 @@ private fun PostCommentsSheet(postId:Long,onClose:()->Unit,onCount:(Int)->Unit){
             item{Text("Комментарии",style=MaterialTheme.typography.headlineSmall)}
             if(next>0)item{TextButton(onClick={scope.launch{load(next)}},enabled=!loading&&!busy){Text("Предыдущие комментарии")}}
             items(items.reversed(),key={it.id}){comment->Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){CompanyAvatar(comment.author_photo,comment.author_name,36.dp);Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)){Text(comment.author_name,fontWeight=FontWeight.SemiBold);Text(socialDate(comment.created_at),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant);Text(comment.body);if(comment.can_delete)TextButton(enabled=!busy,onClick={busy=true;scope.launch{try{ApiClient.api.deletePostComment(comment.id).checkSuccess();items=items.filter{it.id!=comment.id};onCount(-1)}catch(e:CancellationException){throw e}catch(e:Exception){error=userErrorMessage(e)}finally{busy=false}}}){Text("Удалить комментарий")}}}}
-            if(loading)item{LinearProgressIndicator(Modifier.fillMaxWidth())}
+            if(loading)item{InlineLoadingState()}
             error?.let{item{Text(it,color=MaterialTheme.colorScheme.error);TextButton(onClick={scope.launch{load()}},enabled=!loading&&!busy){Text("Повторить")}}}
             item{OutlinedTextField(body,{body=it.take(2000)},Modifier.fillMaxWidth(),label={Text("Ваш комментарий")},minLines=2,maxLines=5,enabled=!busy,shape=RoundedCornerShape(16.dp))}
             item{Button(modifier=Modifier.fillMaxWidth(),enabled=body.isNotBlank()&&!busy&&!loading,onClick={busy=true;error=null;scope.launch{try{ApiClient.api.addPostComment(postId,SocialBody(body.trim())).bodyOrThrow();body="";onCount(1);load()}catch(e:CancellationException){throw e}catch(e:Exception){error=userErrorMessage(e)}finally{busy=false}}}){Text(if(busy)"Отправляем…"else "Отправить")}}

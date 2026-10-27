@@ -21,7 +21,8 @@ fun AppScreenHeader(
     subtitle: String? = null,
     applyInsets: Boolean = true,
     contentPadding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-    containerColor: Color = MaterialTheme.colorScheme.background
+    containerColor: Color = MaterialTheme.colorScheme.background,
+    showProfileAction: Boolean = true
 ) {
     val colors = MaterialTheme.colorScheme
     Box(modifier.fillMaxWidth().background(containerColor).then(if (applyInsets) Modifier.statusBarsPadding() else Modifier), contentAlignment = Alignment.TopCenter) {
@@ -35,7 +36,7 @@ fun AppScreenHeader(
                     }
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, content = actions)
-                ProfileAction()
+                if(showProfileAction) ProfileAction()
             }
             subtitle?.takeIf { it.isNotBlank() }?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant) }
         }

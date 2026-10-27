@@ -33,7 +33,7 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, candidates)
+	mlMatches, modelUsed, err := s.rankRecommendations(ctx, resume, candidates)
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -64,8 +64,9 @@ func (s *Server) matchesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(map[string]any{
-		"resume_id": resume.ID,
-		"matches":   fullMatches,
+		"resume_id":  resume.ID,
+		"matches":    fullMatches,
+		"model_used": modelUsed,
 	})
 }
 
@@ -131,7 +132,7 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 	modelUsed := "none"
 
 	if len(candidates) > 0 {
-		mlMatches, err := s.mlClient.MatchResumeToVacancies(ctx, resume, candidates)
+		mlMatches, usedModel, err := s.rankRecommendations(ctx, resume, candidates)
 		if err != nil {
 			log.Printf("❌ ML service error: %v", err)
 			w.WriteHeader(http.StatusServiceUnavailable)
@@ -142,7 +143,7 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 			return
 		}
 
-		log.Printf("✅ ML returned %d matches", len(mlMatches))
+		log.Printf("Recommendations (%s) returned %d matches", usedModel, len(mlMatches))
 
 		for _, mlMatch := range mlMatches {
 			for _, v := range candidates {
@@ -156,7 +157,7 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 				}
 			}
 		}
-		modelUsed = "ml-service"
+		modelUsed = usedModel
 	}
 
 	if recommendations == nil {

@@ -12,8 +12,14 @@ if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google
 val frontendMapFile = rootProject.file("../frontend/src/components/common/YandexMap.jsx")
 val frontendMapKey = if (frontendMapFile.exists()) Regex("YANDEX_MAPS_API_KEY = '([^']+)'").find(frontendMapFile.readText())?.groupValues?.get(1).orEmpty() else ""
 val yandexMapsKey = providers.gradleProperty("YANDEX_MAPS_API_KEY").getOrElse(frontendMapKey)
+val buildNumberFile = rootProject.file("../.cache/android-build-number.txt")
+val appBuildNumber = providers.gradleProperty("BUILD_NUMBER").getOrElse(
+    if (buildNumberFile.exists()) buildNumberFile.readText().trim() else "1"
+).toInt()
+require(appBuildNumber in 1..2100000000) { "BUILD_NUMBER must be between 1 and 2100000000" }
 
 android {
+    sourceSets.getByName("main").assets.srcDir(rootProject.file("../frontend/public/legal"))
     namespace = "com.example.trudomix"
     compileSdk = 35
 
@@ -21,7 +27,7 @@ android {
         applicationId = "com.example.trudomix"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
+        versionCode = appBuildNumber
         versionName = "1.0"
         buildConfigField("String", "YANDEX_MAPS_API_KEY", "\"${yandexMapsKey.replace("\\", "\\\\").replace("\"", "\\\"")}\"")
 

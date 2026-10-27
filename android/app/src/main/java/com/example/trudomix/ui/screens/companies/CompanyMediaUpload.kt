@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.companies
 
+import com.example.trudomix.ui.loading.InlineLoadingState
+
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -53,7 +55,7 @@ fun CompanyMediaUpload(company:Company,onUpdated:()->Unit){
             Text("Истории вашей команды",style=MaterialTheme.typography.titleMedium)
             Text("До 6 фото (4 МБ) и 4 видео MP4/WebM (50 МБ)",style=MaterialTheme.typography.bodySmall)
             Button(onClick={picker.launch(arrayOf("image/jpeg","image/png","image/webp","video/mp4","video/webm"))},enabled=!busy&&company.photos.size+company.videos.size<10){Text(if(busy)"Загружаем…"else "Добавить фото или видео")}
-            if(busy)LinearProgressIndicator(Modifier.fillMaxWidth())
+            if(busy)InlineLoadingState()
             error?.let{Text(it,color=MaterialTheme.colorScheme.error)}
         }
     }

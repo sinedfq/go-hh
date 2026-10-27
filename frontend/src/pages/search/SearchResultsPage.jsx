@@ -15,7 +15,7 @@ import './SearchResultsPage.css'
 
 function SearchResultsPage({
     results, totalCount, loading, filters,
-    onApply, onReset, onOpenVacancy, cities, companies, skills, experiences, showToast
+    onApply, onReset, onOpenVacancy, cities, companies, skills, experiences, showToast, onProfile
 }) {
     const [showFilters, setShowFilters] = useState(false)
     const {user}=useAuth()
@@ -102,6 +102,9 @@ function SearchResultsPage({
                             <line x1="20" y1="12" x2="20" y2="3" />
                         </svg>
                     </button>
+                    <button className="filter-toggle-button profile-toggle-button" type="button" aria-label="Профиль" title="Профиль" onClick={onProfile}>
+                        {user?.photo_url ? <img src={user.photo_url} alt=""/> : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v2"/></svg>}
+                    </button>
                 </div>
 
                 {showFilters && (
@@ -146,7 +149,7 @@ function SearchResultsPage({
                     <button className="btn btn-secondary" onClick={onReset}>Сбросить фильтры</button>
                 </div>
             ) : (
-                <div className="search-results-grid">
+                <div className="search-results-grid" aria-busy={loading}>
                     {results.map((vacancy, index) => {
                         const hasApplied = appliedVacancies.has(vacancy.id)
                         return (
