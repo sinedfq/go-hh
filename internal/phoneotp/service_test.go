@@ -63,6 +63,15 @@ func TestPhoneNormalization(t *testing.T) {
 		}
 	}
 }
+
+func TestExplicitInternationalPrefixesAreNotRewrittenAsDomesticRussianNumbers(t *testing.T) {
+	for _, phone := range []string{"+81312345678", "+82212345678", "+84901234567"} {
+		normalized, err := NormalizePhone(phone)
+		if err != nil || normalized != phone {
+			t.Fatalf("explicit country prefix changed: %q -> %q (%v)", phone, normalized, err)
+		}
+	}
+}
 func TestProductionNeverExposesCodeAndHashesAreDomainSeparated(t *testing.T) {
 	store := &spyStore{}
 	sender := &captureSender{}

@@ -24,7 +24,7 @@ func NormalizePhone(value string) (string, error) {
 		}
 	}
 	phone := digits.String()
-	if len(phone) == 11 && phone[0] == '8' {
+	if len(phone) == 11 && phone[0] == '8' && !strings.HasPrefix(strings.TrimSpace(value), "+") {
 		phone = "7" + phone[1:]
 	}
 	if len(phone) < 8 || len(phone) > 15 || phone[0] == '0' {
