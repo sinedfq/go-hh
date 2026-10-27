@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { userError } from '../../utils/userError'
 import ModalPortal from '../../components/common/ModalPortal'
+import PhoneLogin from './PhoneLogin'
 import './LoginPage.css'
 
 export default function LoginPage({ onClose }) {
@@ -13,13 +14,16 @@ export default function LoginPage({ onClose }) {
     const [visible, setVisible] = useState(false)
     const [error, setError] = useState('')
     const [busy, setBusy] = useState(false)
+    const [method,setMethod]=useState('email')
     const { login, register } = useAuth()
     const dialog = useRef(null)
     const emailField = useRef(null)
     useEffect(() => {
         const previous = document.activeElement
+        const overflow=document.body.style.overflow
+        document.body.style.overflow='hidden'
         emailField.current?.focus({ preventScroll: true })
-        return () => previous?.focus?.()
+        return () => {document.body.style.overflow=overflow;previous?.focus?.({preventScroll:true})}
     }, [])
     function onKeyDown(event) {
         if (event.key === 'Escape' && !busy) onClose?.()
@@ -52,11 +56,14 @@ export default function LoginPage({ onClose }) {
                     <div className="auth-story-tags"><span>Вакансии</span><span>Отклики</span><span>Общение</span></div>
                 </aside>
                 <div className="auth-form-panel">
-                    {onClose && <button type="button" className="auth-close" aria-label="Закрыть вход" onClick={onClose} disabled={busy}>×</button>}
+                    {onClose && <button type="button" className="auth-close" aria-label="Закрыть вход" onClick={onClose} disabled={busy}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>}
                     <span className="eyebrow">НАЧНИ СВОЮ ИСТОРИЮ</span>
                     <h2 id="auth-title">{isLogin ? 'С возвращением' : 'Создать аккаунт'}</h2>
                     <p className="auth-caption">{isLogin ? 'Войди, чтобы продолжить свой путь.' : 'Один профиль — новые возможности.'}</p>
-                    <form onSubmit={submit} className="auth-form">
+                    {isLogin&&<div className={`auth-methods ${method==='phone'?'by-phone':''}`} role="tablist" aria-label="Способ входа">
+                        <span aria-hidden="true"/>{[['email','Почта'],['phone','Телефон']].map(([value,label])=><button key={value} type="button" role="tab" aria-selected={method===value} disabled={busy} onClick={()=>{setMethod(value);setError('')}}>{label}</button>)}
+                    </div>}
+                    {isLogin&&method==='phone'?<PhoneLogin onSuccess={onClose} onBusy={setBusy}/>:<form onSubmit={submit} className="auth-form">
                         {!isLogin && <fieldset className="auth-roles"><legend>Как ты будешь использовать Trudomix?</legend>
                             <div className="auth-role-options">{[['candidate', 'Ищу работу'], ['employer', 'Ищу сотрудников']].map(([value, title]) => <label key={value} className={role === value ? 'selected' : ''}>
                                 <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} disabled={busy} />{title}
@@ -70,7 +77,7 @@ export default function LoginPage({ onClose }) {
                         </div>
                         {error && <p className="auth-error" role="alert">{error}</p>}
                         <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>{busy ? 'Подожди…' : isLogin ? 'Войти' : 'Зарегистрироваться'}<span aria-hidden="true">↗</span></button>
-                    </form>
+                    </form>}
                     <button type="button" className="auth-switch" disabled={busy} onClick={switchMode}>{isLogin ? 'Нет аккаунта? Создать' : 'Уже есть аккаунт? Войти'}</button>
                     {onClose && <button type="button" className="auth-guest" disabled={busy} onClick={onClose}>Пока просто посмотреть вакансии</button>}
                 </div>

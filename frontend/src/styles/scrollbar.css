@@ -1,12 +1,12 @@
 /* styles/scrollbar.css — только общее правило, без специфичных */
 * {
-    scrollbar-width: thin !important;
-    scrollbar-color: var(--accent) transparent !important;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent) transparent;
 }
 
 *::-webkit-scrollbar {
-    width: 8px !important;
-    height: 8px !important;
+    width: 8px;
+    height: 8px;
     background: transparent !important;
 }
 

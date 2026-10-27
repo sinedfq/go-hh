@@ -70,6 +70,9 @@ class SettingsRefinementsTest{
             assertFalse(AppNotifications.allowed(context))
             assertFalse(AppNotifications.show(context,"Проверка","Не должно появиться",emptyMap(),"disabled-check"))
             compose.onNodeWithText("Уведомления отключены. Сообщения и события остаются доступны внутри приложения.").assertIsDisplayed()
+            compose.onNodeWithContentDescription("Уведомления: Сообщения").performScrollTo().assertIsEnabled()
+            compose.onNodeWithContentDescription("Получать уведомления").performScrollTo().performClick().assertIsOn()
+            assertTrue(NotificationPreferences.isEnabled(context))
         }finally{NotificationPreferences.setEnabled(context,original)}
     }
     private fun screenshot(name:String){

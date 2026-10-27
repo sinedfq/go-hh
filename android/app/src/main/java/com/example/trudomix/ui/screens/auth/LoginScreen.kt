@@ -40,8 +40,10 @@ fun LoginScreen(viewModel: AuthViewModel, onLoginSuccess: () -> Unit, onNavigate
     LaunchedEffect(state) {
         if (state is AuthUiState.Success) { viewModel.resetState(); onLoginSuccess() }
     }
-    if(phoneMode)PhoneLoginContent(viewModel,phone,{phoneMode=false;viewModel.resetState()},onNavigateToRegister)
-    else LoginContent(state, viewModel::login, onNavigateToRegister, viewModel::resetState,onPhoneLogin={phoneMode=true;viewModel.resetState()})
+    AnimatedContent(targetState=phoneMode,modifier=Modifier.fillMaxSize(),transitionSpec={(fadeIn(tween(220))+slideInHorizontally{if(targetState)it/8 else -it/8}) togetherWith (fadeOut(tween(150))+slideOutHorizontally{if(targetState)-it/8 else it/8})},label="login-method"){byPhone->
+        if(byPhone)PhoneLoginContent(viewModel,phone,{phoneMode=false;viewModel.resetState()},onNavigateToRegister)
+        else LoginContent(state, viewModel::login, onNavigateToRegister, viewModel::resetState,onPhoneLogin={phoneMode=true;viewModel.resetState()})
+    }
 }
 
 @Composable
@@ -108,6 +110,7 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
         Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("С возвращением", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
             Text("Войди в свой аккаунт", style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            if(onPhoneLogin!=null)AuthMethodPicker(false,{if(it)onPhoneLogin()},!busy)
             OutlinedTextField(email, { email = it }, label = { Text("Почта") }, placeholder={Text("you@example.com")}, leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true,
                 enabled = !busy, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(password, { password = it }, label = { Text("Пароль") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, singleLine = true, enabled = !busy,
@@ -124,7 +127,6 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
                 else { Text("Войти", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
             }
             TextButton(onClick = onRegister, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Создать аккаунт", textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
-            if(onPhoneLogin!=null)TextButton(onClick=onPhoneLogin,enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("Войти по телефону")}
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { ServerConnectionButton(onServerChanged) }
         }
     }

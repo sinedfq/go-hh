@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.dp
             Surface(Modifier.widthIn(max=480.dp).fillMaxWidth(),shape=MaterialTheme.shapes.extraLarge){
                 Column(Modifier.padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
                     Text("Вход по телефону",style=MaterialTheme.typography.headlineSmall)
+                    AuthMethodPicker(true,{if(!it)onEmail()},state !is AuthUiState.Loading)
                     Text("В тестовом режиме вход доступен на устройстве регистрации. После смены устройства используйте почту и пароль.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     PhoneOtpForm(phone,enabled=state !is AuthUiState.Loading)
                     if(state is AuthUiState.Error)Text((state as AuthUiState.Error).message,color=MaterialTheme.colorScheme.error)
                     if(proof.verified)Button(onClick={login()},enabled=state !is AuthUiState.Loading,modifier=Modifier.fillMaxWidth()){Text(if(state is AuthUiState.Loading)"Входим…"else "Войти")}
-                    TextButton(onClick=onEmail,enabled=state !is AuthUiState.Loading){Text("Войти по почте")}
                     TextButton(onClick=onRegister,enabled=state !is AuthUiState.Loading){Text("Создать аккаунт")}
                 }
             }

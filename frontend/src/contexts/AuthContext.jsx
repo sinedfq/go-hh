@@ -50,6 +50,15 @@ export function AuthProvider({ children }) {
         return userData
     }
 
+    const loginWithPhone = async (phone, phone_receipt, device_key) => {
+        const {data}=await axios.post('/api/auth/phone-login',{phone,phone_receipt,device_key})
+        localStorage.setItem('token',data.token)
+        localStorage.setItem('user',JSON.stringify(data.user))
+        axios.defaults.headers.common['Authorization']=`Bearer ${data.token}`
+        setUser(data.user)
+        return data.user
+    }
+
     const logout = () => {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
@@ -81,6 +90,7 @@ export function AuthProvider({ children }) {
             user,
             loading,
             login,
+            loginWithPhone,
             register,
             logout,
             updateUserPhoto,

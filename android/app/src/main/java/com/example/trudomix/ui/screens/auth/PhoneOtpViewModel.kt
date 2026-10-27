@@ -35,7 +35,7 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
         try{val config=api.phoneOtpConfig().phoneOtpBody();state.update{it.copy(config=config,configuring=false,error=if(config.enabled)null else "Доставка кодов пока недоступна. Повторите подключение позже")}}
         catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(configuring=false,error=phoneOtpError(e))}}
     }}
-    fun editPhone(phone:String){if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,error=null,note=null)}}
+    fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,error=null,note=null)}}
     fun editCode(code:String){state.update{it.copy(code=code.filter(Char::isDigit).take(6),error=null)}}
     fun requestCode(){
         if(state.value.busy||state.value.retryIn>0||state.value.config?.enabled!=true)return
@@ -69,7 +69,7 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
                 val result=api.verifyPhoneOtp(PhoneOtpVerify(current.challenge,current.code,deviceKey())).phoneOtpBody()
                 if(!result.verified)error("Номер не подтверждён")
                 receiptExpires=SystemClock.elapsedRealtime()+result.expires_in*1000L;pendingCode=null;OtpNotifications.clear(app)
-                state.update{it.copy(receipt=result.verification_receipt,code="",note="Код подтверждён. Можно продолжить")};startClock()
+                state.update{it.copy(receipt=result.verification_receipt,code=current.code,note="Код подтверждён. Можно продолжить")};startClock()
             }catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(error=phoneOtpError(e))}}
             finally{state.update{it.copy(busy=false)}}
         }
