@@ -196,10 +196,14 @@ class MobilePhoneFlowTest{
         }
     }
     private fun notificationCode():String{
-        val manager=compose.activity.getSystemService(NotificationManager::class.java)
-        var code:String?=null
-        compose.waitUntil(30000){code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value};code!=null}
-        return code!!
+        val manager=InstrumentationRegistry.getInstrumentation().targetContext.getSystemService(NotificationManager::class.java)
+        val deadline=System.currentTimeMillis()+30000
+        while(System.currentTimeMillis()<deadline){
+            val code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value}
+            if(code!=null)return code
+            Thread.sleep(80)
+        }
+        error("Code notification did not arrive")
     }
     private fun screenshot(name:String){val bitmap=compose.onRoot().captureToImage().asAndroidBitmap();File(compose.activity.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()}
 }
