@@ -14,6 +14,8 @@ func (s *Server) phoneVerificationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/phone-verification/config", s.phoneVerificationConfig)
 	mux.HandleFunc("POST /api/phone-verification/request", s.phoneVerificationRequest)
 	mux.HandleFunc("POST /api/phone-verification/verify", s.phoneVerificationVerify)
+	mux.HandleFunc("POST /api/auth/phone-login", s.phoneLoginHandler)
+	mux.HandleFunc("POST /api/auth/mobile/register", s.mobileRegisterHandler)
 }
 
 func (s *Server) configurePhoneVerification() error {
@@ -28,6 +30,17 @@ func (s *Server) configurePhoneVerification() error {
 	var sender phoneotp.Sender
 	var phones []string
 	switch mode {
+	case "app_notification":
+		if os.Getenv("APP_ENV") != "development" {
+			return errors.New("app-notification OTP requires APP_ENV=development")
+		}
+		service, err := phoneotp.NewAppNotificationService(phoneVerificationStore{pool: s.pool}, secret)
+		if err != nil {
+			return err
+		}
+		s.phoneVerification = service
+		s.phoneVerificationTest = true
+		return nil
 	case "development":
 		if os.Getenv("APP_ENV") != "development" {
 			return errors.New("development OTP requires APP_ENV=development")
@@ -52,7 +65,7 @@ func (s *Server) configurePhoneVerification() error {
 	default:
 		return errors.New("OTP_MODE must be off, development or http")
 	}
-	service, err := phoneotp.New(phoneVerificationStore{s.pool}, sender, secret, phones)
+	service, err := phoneotp.New(phoneVerificationStore{pool: s.pool}, sender, secret, phones)
 	if err != nil {
 		return err
 	}
@@ -63,7 +76,11 @@ func (s *Server) configurePhoneVerification() error {
 func (s *Server) phoneVerificationConfig(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest})
+	delivery := "off"
+	if s.phoneVerification != nil {
+		delivery = s.phoneVerification.DeliveryMode()
+	}
+	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery})
 }
 func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request) {
 	if s.phoneVerification == nil {
@@ -71,7 +88,8 @@ func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request
 		return
 	}
 	var body struct {
-		Phone string `json:"phone"`
+		Phone     string `json:"phone"`
+		DeviceKey string `json:"device_key"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body) != nil {
 		phoneVerificationError(w, 400, "Укажите номер телефона")
@@ -85,7 +103,15 @@ func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		ip = r.RemoteAddr
 	}
-	result, err := s.phoneVerification.Request(r.Context(), body.Phone, ip)
+	binding := ""
+	if body.DeviceKey != "" || s.phoneVerification.DeliveryMode() == "app_notification" {
+		binding, err = s.phoneVerification.DeviceBinding(body.DeviceKey)
+		if err != nil {
+			phoneVerificationError(w, 400, "Не удалось определить устройство для доставки кода")
+			return
+		}
+	}
+	result, err := s.phoneVerification.RequestBound(r.Context(), body.Phone, ip, binding)
 	if err != nil {
 		s.phoneVerificationFailure(w, err)
 		return
@@ -102,9 +128,14 @@ func (s *Server) phoneVerificationVerify(w http.ResponseWriter, r *http.Request)
 	var body struct {
 		ChallengeID string `json:"challenge_id"`
 		Code        string `json:"code"`
+		DeviceKey   string `json:"device_key"`
 	}
 	if json.NewDecoder(http.MaxBytesReader(w, r.Body, 4096)).Decode(&body) != nil {
 		phoneVerificationError(w, 400, "Укажите код подтверждения")
+		return
+	}
+	if err := s.checkPhoneDevice(r.Context(), body.ChallengeID, body.DeviceKey); err != nil {
+		s.phoneVerificationFailure(w, phoneotp.ErrInvalid)
 		return
 	}
 	result, err := s.phoneVerification.Verify(r.Context(), body.ChallengeID, body.Code)

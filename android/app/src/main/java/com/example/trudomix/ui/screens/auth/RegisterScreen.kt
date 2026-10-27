@@ -33,13 +33,15 @@ import com.example.trudomix.ui.components.AppScreenHeader
 
 @Composable
 fun RegisterScreen(viewModel:AuthViewModel,onRegisterSuccess:()->Unit,onNavigateToLogin:()->Unit) {
+    val phone=androidx.lifecycle.viewmodel.compose.viewModel<PhoneOtpViewModel>(key="registration-phone")
+    val proof by phone.uiState.collectAsState()
     val state by viewModel.uiState.collectAsState()
     LaunchedEffect(state) { if(state is AuthUiState.Success){viewModel.resetState();onRegisterSuccess()} }
-    RegisterContent(state,viewModel::register,onNavigateToLogin)
+    RegisterContent(state,{email,password,role->viewModel.registerWithPhone(email,password,role,proof.phone,proof.receipt,phone.deviceKey())},onNavigateToLogin,phone)
 }
 
 @Composable
-fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,onLogin:()->Unit) {
+fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,onLogin:()->Unit,phoneViewModel:PhoneOtpViewModel?=null) {
     var appeared by remember{mutableStateOf(false)}
     LaunchedEffect(Unit){appeared=true}
     val entrance by animateFloatAsState(if(appeared)1f else 0f,tween(450),label="registration-entry")
@@ -56,8 +58,8 @@ fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,on
                         Text("Знакомься с будущей командой",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
                         Text("Ищи работу или находи людей, с которыми хочется работать.",color=MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    RegistrationForm(state,onRegister,onLogin,Modifier.weight(1f))
-                } else RegistrationForm(state,onRegister,onLogin)
+                    RegistrationForm(state,onRegister,onLogin,Modifier.weight(1f),phoneViewModel)
+                } else RegistrationForm(state,onRegister,onLogin,phoneViewModel=phoneViewModel)
             }
         }
     }
@@ -65,7 +67,9 @@ fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,on
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)->Unit,onLogin:()->Unit,modifier:Modifier=Modifier) {
+private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)->Unit,onLogin:()->Unit,modifier:Modifier=Modifier,phoneViewModel:PhoneOtpViewModel?=null) {
+    val phoneState=phoneViewModel?.uiState?.collectAsState()
+    val phoneReady=phoneViewModel==null||phoneState?.value?.verified==true
     var email by rememberSaveable{mutableStateOf("")}
     var password by remember{mutableStateOf("")}
     var visible by remember{mutableStateOf(false)}
@@ -73,7 +77,7 @@ private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)
     val busy=state is AuthUiState.Loading
     val colors=MaterialTheme.colorScheme
     val focus=LocalFocusManager.current
-    fun submit(){if(!busy){focus.clearFocus();onRegister(email.trim(),password,role)}}
+    fun submit(){if(!busy&&phoneReady){focus.clearFocus();onRegister(email.trim(),password,role)}}
     Surface(modifier.fillMaxWidth(),shape=RoundedCornerShape(28.dp),color=colors.surface,contentColor=colors.onSurface,border=BorderStroke(1.dp,colors.outlineVariant),shadowElevation=4.dp) {
         Column(Modifier.padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
             Text("Создать аккаунт",style=MaterialTheme.typography.titleLarge,fontWeight=FontWeight.Bold)
@@ -84,6 +88,7 @@ private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)
             }
             OutlinedTextField(email,{email=it},label={Text("Почта")},singleLine=true,enabled=!busy,leadingIcon={Icon(Icons.Default.Email,null)},shape=RoundedCornerShape(16.dp),
                 keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Email,imeAction=ImeAction.Next),modifier=Modifier.fillMaxWidth())
+            if(phoneViewModel!=null)PhoneOtpForm(phoneViewModel,enabled=!busy)
             OutlinedTextField(password,{password=it},label={Text("Пароль")},singleLine=true,enabled=!busy,leadingIcon={Icon(Icons.Default.Lock,null)},shape=RoundedCornerShape(16.dp),
                 trailingIcon={IconButton(onClick={visible=!visible},enabled=!busy){Icon(if(visible)Icons.Default.VisibilityOff else Icons.Default.Visibility,if(visible)"Скрыть пароль" else "Показать пароль")}},
                 visualTransformation=if(visible)VisualTransformation.None else PasswordVisualTransformation(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password,imeAction=ImeAction.Done),
@@ -93,7 +98,7 @@ private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)
                     Text((state as? AuthUiState.Error)?.message.orEmpty(),Modifier.padding(12.dp),style=MaterialTheme.typography.bodySmall)
                 }
             }
-            Button(onClick={submit()},enabled=!busy,shape=RoundedCornerShape(16.dp),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) {
+            Button(onClick={submit()},enabled=!busy&&phoneReady,shape=RoundedCornerShape(16.dp),modifier=Modifier.fillMaxWidth().heightIn(min=56.dp)) {
                 if(busy)AppLoader(Modifier.size(22.dp),color=colors.onPrimary,strokeWidth=2.dp)else Text("Зарегистрироваться")
             }
             TextButton(onClick=onLogin,enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("Уже есть аккаунт? Войти")}

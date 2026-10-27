@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.example.trudomix.data.api.ApiClient
 import com.example.trudomix.data.models.LoginRequest
 import com.example.trudomix.data.models.RegisterRequest
+import com.example.trudomix.data.models.PhoneLoginRequest
+import com.example.trudomix.data.api.phoneOtpBody
+import com.example.trudomix.data.api.phoneOtpError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,12 +46,14 @@ class AuthViewModel : ViewModel() {
                     _uiState.value = AuthUiState.Error(com.example.trudomix.data.api.httpErrorMessage(response.code(), authentication = true))
                 }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(com.example.trudomix.data.api.userErrorMessage(e))
+                _uiState.value = AuthUiState.Error(phoneOtpError(e))
             }
         }
     }
 
-    fun register(email: String, password: String, role: String) {
+    fun register(email: String, password: String, role: String) = registerWithPhone(email,password,role,"","","")
+    fun registerWithPhone(email: String, password: String, role: String,phone:String,receipt:String,deviceKey:String) {
+        if(_uiState.value is AuthUiState.Loading)return
         if (email.isBlank() || password.isBlank()) {
             _uiState.value = AuthUiState.Error("Заполните все поля")
             return
@@ -57,7 +62,9 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             try {
-                val response = api.register(RegisterRequest(email = email, password = password, role = role))
+                val request=RegisterRequest(email=email,password=password,role=role,phone=phone,phone_receipt=receipt,device_key=deviceKey)
+                val response = if(phone.isNotBlank())api.registerPhone(request)else api.register(request)
+                if(!response.isSuccessful&&phone.isNotBlank())response.phoneOtpBody()
                 if (response.isSuccessful && response.body() != null) {
                     val authResponse = response.body()!!
                     com.example.trudomix.data.local.SessionIdentity.user.value=authResponse.user
@@ -67,11 +74,22 @@ class AuthViewModel : ViewModel() {
                     _uiState.value = AuthUiState.Error(com.example.trudomix.data.api.httpErrorMessage(response.code(), registration = true))
                 }
             } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
-                _uiState.value = AuthUiState.Error(com.example.trudomix.data.api.userErrorMessage(e))
+                _uiState.value = AuthUiState.Error(phoneOtpError(e))
             }
         }
     }
 
+    fun loginPhone(phone:String,receipt:String,key:String){
+        if(_uiState.value is AuthUiState.Loading)return
+        viewModelScope.launch{
+            _uiState.value=AuthUiState.Loading
+            try{
+                val result=api.phoneLogin(PhoneLoginRequest(phone,receipt,key)).phoneOtpBody()
+                com.example.trudomix.data.local.SessionIdentity.user.value=result.user
+                tokenManager.saveToken(result.token);_uiState.value=AuthUiState.Success
+            }catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){_uiState.value=AuthUiState.Error(phoneOtpError(e))}
+        }
+    }
     fun resetState() {
         _uiState.value = AuthUiState.Idle
     }

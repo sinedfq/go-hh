@@ -134,9 +134,12 @@ type User struct {
 }
 
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Phone        string `json:"phone"`
+	PhoneReceipt string `json:"phone_receipt"`
+	DeviceKey    string `json:"device_key"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	Role         string `json:"role"`
 }
 
 type LoginRequest struct {

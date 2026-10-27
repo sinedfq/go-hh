@@ -119,19 +119,8 @@ fun NotificationSettings() {
                 }) { Text(if (testingPush) "Отправляем…" else "Проверить доставку с сервера") }
             }
             feedback?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-            Text("Настройки по событиям", style = MaterialTheme.typography.labelLarge)
-            Text("Сообщения могут появляться поверх экрана, просмотры резюме приходят без звука. Звук и показ каждого типа можно изменить отдельно.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("Сообщения" to AppNotifications.MESSAGES_CHANNEL, "Просмотры резюме" to AppNotifications.RESUMES_CHANNEL, "Отклики" to AppNotifications.APPLICATIONS_CHANNEL).forEach { (label, channel) ->
-                    TextButton(onClick = {
-                        AppNotifications.createChannel(context)
-                        context.startActivity(Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                            .putExtra(Settings.EXTRA_CHANNEL_ID, channel))
-                    }) { Text(label) }
-                }
             }
-            }
+            NotificationEventSettings(enabled)
         }
     }
 }

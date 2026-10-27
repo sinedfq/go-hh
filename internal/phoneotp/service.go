@@ -22,6 +22,7 @@ const (
 )
 
 type Challenge struct {
+	DeviceHash, DeliveryMode                 string
 	ID, Phone, CodeHash, IPHash, ReceiptHash string
 	CreatedAt, ExpiresAt                     time.Time
 	Attempts                                 int
@@ -37,11 +38,12 @@ type Store interface {
 	Redeem(context.Context, string, string, time.Time) (string, error)
 }
 type Service struct {
-	store      Store
-	sender     Sender
-	secret     []byte
-	testPhones map[string]bool
-	now        func() time.Time
+	appNotification bool
+	store           Store
+	sender          Sender
+	secret          []byte
+	testPhones      map[string]bool
+	now             func() time.Time
 }
 
 func New(store Store, sender Sender, secret string, testPhones []string) (*Service, error) {
@@ -72,6 +74,38 @@ type Verification struct {
 }
 
 func (s *Service) Request(ctx context.Context, phone, ip string) (RequestResult, error) {
+	return s.RequestBound(ctx, phone, ip, "")
+}
+func NewAppNotificationService(store Store, secret string) (*Service, error) {
+	s, err := New(store, notificationTestSender{}, secret, nil)
+	if err != nil {
+		return nil, err
+	}
+	s.appNotification = true
+	return s, nil
+}
+
+type notificationTestSender struct{}
+
+func (notificationTestSender) SendCode(context.Context, string, string, time.Duration) error {
+	return nil
+}
+func (s *Service) DeliveryMode() string {
+	if s.appNotification {
+		return "app_notification"
+	}
+	if len(s.testPhones) > 0 {
+		return "development"
+	}
+	return "sms"
+}
+func (s *Service) DeviceBinding(key string) (string, error) {
+	if _, err := hexID(key); err != nil {
+		return "", ErrInvalid
+	}
+	return digest(s.secret, "device", key), nil
+}
+func (s *Service) RequestBound(ctx context.Context, phone, ip, binding string) (RequestResult, error) {
 	phone, err := NormalizePhone(phone)
 	if err != nil {
 		return RequestResult{}, ErrInvalid
@@ -88,7 +122,7 @@ func (s *Service) Request(ctx context.Context, phone, ip string) (RequestResult,
 		return RequestResult{}, err
 	}
 	now := s.now().UTC()
-	challenge := Challenge{ID: id, Phone: phone, CodeHash: digest(s.secret, "code", id, code), IPHash: digest(s.secret, "ip", ip), CreatedAt: now, ExpiresAt: now.Add(CodeTTL)}
+	challenge := Challenge{ID: id, Phone: phone, DeviceHash: binding, DeliveryMode: s.DeliveryMode(), CodeHash: digest(s.secret, "code", id, code), IPHash: digest(s.secret, "ip", ip), CreatedAt: now, ExpiresAt: now.Add(CodeTTL)}
 	if err = s.store.Reserve(ctx, challenge); err != nil {
 		return RequestResult{}, err
 	}
@@ -99,7 +133,7 @@ func (s *Service) Request(ctx context.Context, phone, ip string) (RequestResult,
 		return RequestResult{}, err
 	}
 	result := RequestResult{ChallengeID: id, ExpiresIn: int(CodeTTL.Seconds()), RetryAfter: int(ResendAfter.Seconds())}
-	if len(s.testPhones) > 0 {
+	if len(s.testPhones) > 0 || s.appNotification {
 		result.DevelopmentCode = code
 	}
 	return result, nil
@@ -126,6 +160,9 @@ func (s *Service) Verify(ctx context.Context, id, code string) (Verification, er
 	return Verification{Verified: true, Receipt: id + "." + receipt, ExpiresIn: int(ReceiptTTL.Seconds())}, nil
 }
 func (s *Service) Redeem(ctx context.Context, receipt string) (string, error) {
+	return s.RedeemWith(ctx, receipt, s.store)
+}
+func (s *Service) RedeemWith(ctx context.Context, receipt string, store Store) (string, error) {
 	parts := strings.Split(receipt, ".")
 	if len(parts) != 2 {
 		return "", ErrInvalid
@@ -135,7 +172,7 @@ func (s *Service) Redeem(ctx context.Context, receipt string) (string, error) {
 			return "", ErrInvalid
 		}
 	}
-	return s.store.Redeem(ctx, parts[0], digest(s.secret, "receipt", parts[0], parts[1]), s.now().UTC())
+	return store.Redeem(ctx, parts[0], digest(s.secret, "receipt", parts[0], parts[1]), s.now().UTC())
 }
 func hexID(s string) (bool, error) {
 	if len(s) != 64 {

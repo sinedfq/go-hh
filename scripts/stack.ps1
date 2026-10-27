@@ -1,6 +1,7 @@
 param([ValidateSet('up','down','status','logs')][string]$Action='up')
 $ErrorActionPreference='Stop'
 $projectRoot=Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'otp-local.ps1')
 $composeArgs=@('compose','-f',(Join-Path $projectRoot 'docker-compose.yml'))
 if(Test-Path -LiteralPath (Join-Path $projectRoot '.cache/firebase-service-account.json')) {
     $composeArgs+=@('-f',(Join-Path $projectRoot 'docker-compose.firebase.yml'))
