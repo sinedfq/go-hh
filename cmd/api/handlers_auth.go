@@ -8,6 +8,10 @@ import (
 )
 
 func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
+	s.registerAccount(w,r,false)
+}
+func (s *Server) mobileRegisterHandler(w http.ResponseWriter,r *http.Request){s.registerAccount(w,r,true)}
+func (s *Server) registerAccount(w http.ResponseWriter,r *http.Request,requirePhone bool){
 	w.Header().Set("Content-Type", "application/json")
 	ctx := r.Context()
 
@@ -23,6 +27,7 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "email and password required"})
 		return
 	}
+	if requirePhone&&(req.Phone==""||req.PhoneReceipt==""){phoneVerificationError(w,400,"Укажите телефон и подтвердите код из уведомления");return}
 
 	if len(req.Password) < 6 {
 		w.WriteHeader(http.StatusBadRequest)
@@ -55,10 +60,14 @@ func (s *Server) registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userID, err := s.storage.CreateUser(ctx, req.Email, string(passwordHash), role)
+	var userID int
+	if req.Phone != "" || req.PhoneReceipt != "" {
+		userID, err = s.createPhoneUser(ctx, req, string(passwordHash), role)
+	} else {
+		userID, err = s.storage.CreateUser(ctx, req.Email, string(passwordHash), role)
+	}
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "failed to create user"})
+		phoneRegistrationError(w, err)
 		return
 	}
 

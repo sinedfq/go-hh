@@ -34,15 +34,18 @@ import com.example.trudomix.ui.screens.settings.ServerConnectionButton
 
 @Composable
 fun LoginScreen(viewModel: AuthViewModel, onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
+    var phoneMode by rememberSaveable{mutableStateOf(false)}
+    val phone=androidx.lifecycle.viewmodel.compose.viewModel<PhoneOtpViewModel>(key="login-phone")
     val state by viewModel.uiState.collectAsState()
     LaunchedEffect(state) {
         if (state is AuthUiState.Success) { viewModel.resetState(); onLoginSuccess() }
     }
-    LoginContent(state, viewModel::login, onNavigateToRegister, viewModel::resetState)
+    if(phoneMode)PhoneLoginContent(viewModel,phone,{phoneMode=false;viewModel.resetState()},onNavigateToRegister)
+    else LoginContent(state, viewModel::login, onNavigateToRegister, viewModel::resetState,onPhoneLogin={phoneMode=true;viewModel.resetState()})
 }
 
 @Composable
-fun LoginContent(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit = {}) {
+fun LoginContent(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit = {},onPhoneLogin:(()->Unit)?=null) {
     var appeared by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { appeared = true }
     val appearance by animateFloatAsState(if (appeared) 1f else 0f, tween(600, easing = FastOutSlowInEasing), label = "login-entry")
@@ -55,10 +58,10 @@ fun LoginContent(state: AuthUiState, onLogin: (String, String) -> Unit, onRegist
             val entrance = Modifier.graphicsLayer { alpha = appearance; translationY = (1f - appearance) * 32.dp.toPx() }
             if (wide) Row(entrance.widthIn(max = 1040.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(64.dp)) {
                 Column(Modifier.weight(1f)) { LoginHero(false) }
-                LoginForm(state, onLogin, onRegister, onServerChanged, Modifier.weight(1f))
+                LoginForm(state, onLogin, onRegister, onServerChanged, Modifier.weight(1f),onPhoneLogin)
             } else Column(entrance.widthIn(max = 480.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (compact) 20.dp else 32.dp)) {
                 LoginHero(compact)
-                LoginForm(state, onLogin, onRegister, onServerChanged)
+                LoginForm(state, onLogin, onRegister, onServerChanged,onPhoneLogin=onPhoneLogin)
                 Text("Вакансии · Отклики · Общение", color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
             }
         }
@@ -92,7 +95,7 @@ private fun LoginHero(compact: Boolean) {
 }
 
 @Composable
-private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit, modifier: Modifier = Modifier) {
+private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit, modifier: Modifier = Modifier,onPhoneLogin:(()->Unit)?=null) {
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
@@ -121,6 +124,7 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
                 else { Text("Войти", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
             }
             TextButton(onClick = onRegister, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Создать аккаунт", textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+            if(onPhoneLogin!=null)TextButton(onClick=onPhoneLogin,enabled=!busy,modifier=Modifier.fillMaxWidth()){Text("Войти по телефону")}
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { ServerConnectionButton(onServerChanged) }
         }
     }

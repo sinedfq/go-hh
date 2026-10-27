@@ -5,15 +5,11 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
+        <exclude domain="sharedpref" path="phone_otp_device.xml"/>
         <!-- TODO: Use <include> and <exclude> to control what is backed up.
         <include .../>
         <exclude .../>
         -->
     </cloud-backup>
-    <!--
-    <device-transfer>
-        <include .../>
-        <exclude .../>
-    </device-transfer>
-    -->
+    <device-transfer><exclude domain="sharedpref" path="phone_otp_device.xml"/></device-transfer>
 </data-extraction-rules>

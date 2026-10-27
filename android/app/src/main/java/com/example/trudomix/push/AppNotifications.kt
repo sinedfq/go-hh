@@ -64,6 +64,8 @@ object AppNotifications {
     @Synchronized fun show(context: Context, title: String, body: String, data: Map<String, String>, messageId: String? = null): Boolean {
         createChannel(context)
         val presentation = notificationPresentation(data)
+        val event=notificationEvent(data)
+        if(!NotificationPreferences.eventEnabled(context,event))return false
         if (!allowed(context, presentation.channel)) return false
         val conversation = data["conversation_id"]?.toIntOrNull()?.takeIf { it > 0 }
         if (conversation != null && conversation == activeConversation) return false
@@ -77,6 +79,7 @@ object AppNotifications {
         val manager = context.getSystemService(NotificationManager::class.java)
         val appIcon = ContextCompat.getDrawable(context, AppIcons.current(context).resource)!!.toBitmap(192,192)
         val builder = NotificationCompat.Builder(context, presentation.channel)
+            .addExtras(android.os.Bundle().apply{putString("trudomix_event",event.name)})
             .setSmallIcon(R.drawable.ic_notification).setContentTitle(title).setContentText(body)
             .setLargeIcon(appIcon)
             .setSubText(presentation.label).setColor(0xFF0066CC.toInt())
@@ -106,7 +109,11 @@ object AppNotifications {
     private fun updateSummary(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
         val children = manager.activeNotifications.filter { it.id != SUMMARY_ID && it.notification.group == GROUP }
-        if (children.size < 2 || !allowed(context, CHANNEL)) { manager.cancel(SUMMARY_ID); return }
+        if (children.isEmpty()) { manager.cancel(SUMMARY_ID); return }
+        // Android cancels grouped children together with their summary. Keep an existing
+        // one-item summary so switching off one event never removes another event.
+        if (!allowed(context, CHANNEL)) return
+        if (children.size == 1 && manager.activeNotifications.none { it.id == SUMMARY_ID }) return
         val inbox = NotificationCompat.InboxStyle().setBigContentTitle("События Trudomix")
         children.sortedByDescending { it.postTime }.take(5).forEach { inbox.addLine(it.notification.extras.getCharSequence(Notification.EXTRA_TITLE)) }
         val open = PendingIntent.getActivity(context, SUMMARY_ID, Intent(context, MainActivity::class.java).apply {

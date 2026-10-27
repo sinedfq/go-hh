@@ -10,7 +10,10 @@ import (
 	"time"
 )
 
-type phoneVerificationStore struct{ pool *pgxpool.Pool }
+type phoneVerificationStore struct {
+	pool *pgxpool.Pool
+	tx   pgx.Tx
+}
 
 func (s phoneVerificationStore) Reserve(ctx context.Context, c phoneotp.Challenge) error {
 	tx, err := s.pool.Begin(ctx)
@@ -40,7 +43,7 @@ func (s phoneVerificationStore) Reserve(ctx context.Context, c phoneotp.Challeng
 	if _, err = tx.Exec(ctx, `UPDATE phone_verification_challenges SET consumed_at=$2 WHERE phone=$1 AND verified_at IS NULL AND consumed_at IS NULL`, c.Phone, c.CreatedAt); err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO phone_verification_challenges(id,phone,code_hash,ip_hash,created_at,expires_at) VALUES($1,$2,$3,$4,$5,$6)`, c.ID, c.Phone, c.CodeHash, c.IPHash, c.CreatedAt, c.ExpiresAt); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO phone_verification_challenges(id,phone,code_hash,ip_hash,created_at,expires_at,device_hash,delivery_mode) VALUES($1,$2,$3,$4,$5,$6,$7,$8)`, c.ID, c.Phone, c.CodeHash, c.IPHash, c.CreatedAt, c.ExpiresAt, c.DeviceHash, c.DeliveryMode); err != nil {
 		return err
 	}
 	// Bounded opportunistic cleanup; no OTP challenge is retained past its useful rate-limit window.
@@ -90,7 +93,14 @@ func (s phoneVerificationStore) Verify(ctx context.Context, id, codeHash, receip
 }
 func (s phoneVerificationStore) Redeem(ctx context.Context, id, hash string, now time.Time) (string, error) {
 	var phone string
-	err := s.pool.QueryRow(ctx, `UPDATE phone_verification_challenges SET consumed_at=$3 WHERE id=$1 AND receipt_hash=$2 AND verified_at IS NOT NULL AND consumed_at IS NULL AND expires_at>$3 RETURNING phone`, id, hash, now).Scan(&phone)
+	var row pgx.Row
+	query := `UPDATE phone_verification_challenges SET consumed_at=$3 WHERE id=$1 AND receipt_hash=$2 AND verified_at IS NOT NULL AND consumed_at IS NULL AND expires_at>$3 RETURNING phone`
+	if s.tx != nil {
+		row = s.tx.QueryRow(ctx, query, id, hash, now)
+	} else {
+		row = s.pool.QueryRow(ctx, query, id, hash, now)
+	}
+	err := row.Scan(&phone)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", phoneotp.ErrInvalid
 	}

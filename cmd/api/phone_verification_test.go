@@ -81,12 +81,22 @@ func phoneOTPTestPool(t *testing.T) *pgxpool.Pool {
 	if _, err = pool.Exec(ctx, strings.Split(string(migration), "-- +goose Down")[0]); err != nil {
 		t.Fatal(err)
 	}
+	migration, err = os.ReadFile("../../migrations/029_mobile_phone_accounts.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, "CREATE TABLE users(id SERIAL PRIMARY KEY,email TEXT UNIQUE NOT NULL,password_hash TEXT NOT NULL,role TEXT NOT NULL,photo_url TEXT DEFAULT '',company_id INTEGER,created_at TIMESTAMPTZ DEFAULT NOW())"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, strings.Split(string(migration), "-- +goose Down")[0]); err != nil {
+		t.Fatal(err)
+	}
 	return pool
 }
 func TestPhoneVerificationPostgresConcurrentAttemptsAndReceipts(t *testing.T) {
 	pool := phoneOTPTestPool(t)
 	ctx := context.Background()
-	store := phoneVerificationStore{pool}
+	store := phoneVerificationStore{pool: pool}
 	service, err := phoneotp.New(store, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
 	if err != nil {
 		t.Fatal(err)
@@ -159,8 +169,8 @@ func TestPhoneVerificationPostgresConcurrentAttemptsAndReceipts(t *testing.T) {
 func TestPhoneVerificationAPIAndExpiry(t *testing.T) {
 	pool := phoneOTPTestPool(t)
 	ctx := context.Background()
-	service, _ := phoneotp.New(phoneVerificationStore{pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
-	s := &Server{phoneVerification: service, phoneVerificationTest: true}
+	service, _ := phoneotp.New(phoneVerificationStore{pool: pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
+	s := &Server{pool: pool, phoneVerification: service, phoneVerificationTest: true}
 	w := httptest.NewRecorder()
 	s.phoneVerificationRequest(w, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{"phone":"+7 (999) 000-00-01"}`)))
 	if w.Code != 200 {
@@ -186,7 +196,7 @@ func TestPhoneVerificationAPIAndExpiry(t *testing.T) {
 func TestPhoneVerificationConcurrentSendAndReceiptExpiry(t *testing.T) {
 	pool := phoneOTPTestPool(t)
 	ctx := context.Background()
-	service, _ := phoneotp.New(phoneVerificationStore{pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
+	service, _ := phoneotp.New(phoneVerificationStore{pool: pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
 	type result struct {
 		issued phoneotp.RequestResult
 		err    error
@@ -234,11 +244,11 @@ func TestPhoneVerificationSmokeClient(t *testing.T) {
 		t.Skip("Node is required for the optional CLI smoke check")
 	}
 	pool := phoneOTPTestPool(t)
-	service, err := phoneotp.New(phoneVerificationStore{pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
+	service, err := phoneotp.New(phoneVerificationStore{pool: pool}, phoneotp.NewTestSender([]string{"+79990000001"}), strings.Repeat("s", 32), []string{"+79990000001"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	s := &Server{phoneVerification: service, phoneVerificationTest: true}
+	s := &Server{pool: pool, phoneVerification: service, phoneVerificationTest: true}
 	mux := http.NewServeMux()
 	s.phoneVerificationRoutes(mux)
 	api := httptest.NewServer(mux)

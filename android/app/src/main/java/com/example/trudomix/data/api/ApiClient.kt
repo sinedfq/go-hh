@@ -21,6 +21,7 @@ object ApiClient {
     // Для эмулятора: http://10.0.2.2:8080/
     // Для реального телефона (IP вашего компьютера в Wi-Fi сети): http://192.168.0.4:8080/
     private val BASE_URL = BuildConfig.API_BASE_URL
+    private val defaultServerUrl:String get()=if(BuildConfig.DEBUG&&(android.os.Build.HARDWARE in listOf("ranchu","goldfish")||android.os.Build.FINGERPRINT.startsWith("generic")))"http://10.0.2.2:8080/"else BASE_URL
     private lateinit var preferences: android.content.SharedPreferences
     @Volatile private var serverUrl = BASE_URL.toHttpUrl()
     val baseUrl: String get() = serverUrl.toString()
@@ -31,8 +32,8 @@ object ApiClient {
         tokenManager = TokenManager(context.applicationContext)
         preferences = context.getSharedPreferences("server_connection", Context.MODE_PRIVATE)
         serverUrl = if (BuildConfig.DEBUG) runCatching {
-            normalizeServerUrl(preferences.getString("base_url", BASE_URL) ?: BASE_URL).toHttpUrl()
-        }.getOrDefault(BASE_URL.toHttpUrl()) else BASE_URL.toHttpUrl()
+            normalizeServerUrl(preferences.getString("base_url", defaultServerUrl) ?: defaultServerUrl).toHttpUrl()
+        }.getOrDefault(defaultServerUrl.toHttpUrl()) else BASE_URL.toHttpUrl()
     }
 
     fun getTokenManager(): TokenManager = tokenManager

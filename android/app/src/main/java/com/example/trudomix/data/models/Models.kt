@@ -23,7 +23,7 @@ data class AuthResponse(
 data class LoginRequest(val email: String, val password: String)
 
 @Serializable
-data class RegisterRequest(val email: String, val password: String, val role: String)
+data class RegisterRequest(val email: String, val password: String, val role: String,val phone:String="",val phone_receipt:String="",val device_key:String="")
 
 @Serializable
 data class Vacancy(

@@ -5,6 +5,11 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface TrudomixApi {
+    @GET("api/phone-verification/config") suspend fun phoneOtpConfig():Response<PhoneOtpConfig>
+    @POST("api/phone-verification/request") suspend fun requestPhoneOtp(@Body request:PhoneOtpRequest):Response<PhoneOtpChallenge>
+    @POST("api/phone-verification/verify") suspend fun verifyPhoneOtp(@Body request:PhoneOtpVerify):Response<PhoneOtpReceipt>
+    @POST("api/auth/phone-login") suspend fun phoneLogin(@Body request:PhoneLoginRequest):Response<AuthResponse>
+    @POST("api/auth/mobile/register") suspend fun registerPhone(@Body request:RegisterRequest):Response<AuthResponse>
     @GET("api/companies/{id}/subscription") suspend fun companySubscription(@Path("id") id:Int):Response<CompanySubscription>
     @PUT("api/companies/{id}/subscription") suspend fun followCompany(@Path("id") id:Int):Response<CompanySubscription>
     @DELETE("api/companies/{id}/subscription") suspend fun unfollowCompany(@Path("id") id:Int):Response<CompanySubscription>

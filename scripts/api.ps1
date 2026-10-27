@@ -1,6 +1,7 @@
 param([switch]$RequirePush)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot 'otp-local.ps1')
 $pushConfigPath = Join-Path $projectRoot '.cache\push.local.json'
 if (Test-Path -LiteralPath $pushConfigPath) {
     $pushConfig = Get-Content -LiteralPath $pushConfigPath -Raw | ConvertFrom-Json
