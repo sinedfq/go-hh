@@ -18,6 +18,11 @@ import com.example.trudomix.data.api.ApiClient
 import com.example.trudomix.push.*
 import com.example.trudomix.ui.screens.auth.*
 import com.example.trudomix.ui.screens.settings.NotificationEventSettings
+import com.example.trudomix.ui.screens.settings.PhoneAccountScreen
+import com.example.trudomix.ui.screens.settings.SettingsScreen
+import com.example.trudomix.ui.screens.settings.SettingsDetailScreen
+import com.example.trudomix.ui.screens.settings.NotificationSettings
+import com.example.trudomix.ui.screens.settings.LegalDocuments
 import com.example.trudomix.ui.theme.TrudomixTheme
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
@@ -51,7 +56,11 @@ class MobilePhoneFlowTest{
                     0->RegisterScreen(auth,{phase.intValue=1},{})
                     1->Text("Регистрация завершена")
                     2->{val phone=androidx.lifecycle.viewmodel.compose.viewModel<PhoneOtpViewModel>(key="e2e-login");LaunchedEffect(state){if(state is AuthUiState.Success)phase.intValue=3};PhoneLoginContent(auth,phone,{}, {})}
-                    else->Text("Вход по телефону выполнен")
+                    3->Text("Вход по телефону выполнен")
+                    4->PhoneAccountScreen({phase.intValue=5})
+                    5->SettingsScreen(androidx.lifecycle.viewmodel.compose.viewModel<com.example.trudomix.ui.screens.profile.ProfileViewModel>(),{phase.intValue=3},{phase.intValue=6},{phase.intValue=7},{phase.intValue=4})
+                    6->SettingsDetailScreen("Уведомления",{phase.intValue=5}){NotificationSettings()}
+                    else->SettingsDetailScreen("Документы",{phase.intValue=5}){LegalDocuments()}
                 }
             }}
             compose.onNodeWithText("Почта").performTextReplacement("mobile-otp@example.test")
@@ -81,6 +90,28 @@ class MobilePhoneFlowTest{
             compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
             compose.waitUntil(15000){phase.intValue==3}
             compose.onNodeWithText("Вход по телефону выполнен").assertIsDisplayed()
+            compose.runOnIdle{phase.intValue=4}
+            compose.waitUntil(10000){compose.onAllNodesWithText("Привязан номер +79990000001").fetchSemanticsNodes().isNotEmpty()}
+            compose.onNode(hasText("Номер телефона") and hasSetTextAction()).performScrollTo().performTextReplacement("+79990000002")
+            compose.waitUntil(10000){compose.onAllNodesWithText("Получить код").fetchSemanticsNodes().isNotEmpty()}
+            compose.onNodeWithText("Получить код").performScrollTo().performClick()
+            val linkCode=notificationCode()
+            compose.onNodeWithText("Код из уведомления").performScrollTo().performTextReplacement(linkCode)
+            compose.onNodeWithText("Подтвердить код").performScrollTo().performClick()
+            compose.waitUntil(10000){compose.onAllNodesWithText("Код подтверждён. Можно продолжить").fetchSemanticsNodes().isNotEmpty()}
+            compose.onNodeWithText("Привязать номер").performScrollTo().performClick()
+            compose.waitUntil(10000){compose.onAllNodesWithText("Номер успешно привязан").fetchSemanticsNodes().isNotEmpty()}
+            compose.onNodeWithText("Привязан номер +79990000002").performScrollTo().assertIsDisplayed()
+            screenshot("linked-phone.png")
+            compose.runOnIdle{phase.intValue=5}
+            compose.onNodeWithText("Получать уведомления").assertDoesNotExist()
+            compose.onNodeWithText("Уведомления").performScrollTo().performClick()
+            compose.onNodeWithContentDescription("Получать уведомления").performScrollTo().assertExists()
+            screenshot("notification-settings-page.png")
+            compose.onNodeWithContentDescription("Назад").performClick()
+            compose.onNodeWithText("Документы").performScrollTo().performClick()
+            compose.onNodeWithText("Проекты документов сервиса").assertIsDisplayed()
+            screenshot("documents-page.png")
         }finally{
             OtpNotifications.clear(app)
             runBlocking{ApiClient.setServer(previousUrl);if(previousToken.isNullOrBlank())tokenManager.clearSession()else tokenManager.saveToken(previousToken)}
@@ -118,7 +149,7 @@ class MobilePhoneFlowTest{
     private fun notificationCode():String{
         val manager=compose.activity.getSystemService(NotificationManager::class.java)
         var code:String?=null
-        compose.waitUntil(15000){code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value};code!=null}
+        compose.waitUntil(30000){code=manager.activeNotifications.firstOrNull{it.id==OtpNotifications.ID}?.notification?.extras?.getCharSequence(Notification.EXTRA_TEXT)?.let{Regex("[0-9]{6}").find(it)?.value};code!=null}
         return code!!
     }
     private fun screenshot(name:String){val bitmap=compose.onRoot().captureToImage().asAndroidBitmap();File(compose.activity.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(Bitmap.CompressFormat.PNG,100,it)};bitmap.recycle()}

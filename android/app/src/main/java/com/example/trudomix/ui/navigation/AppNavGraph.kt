@@ -40,6 +40,10 @@ import com.example.trudomix.ui.screens.resume.ResumeEditorScreen
 import com.example.trudomix.ui.screens.resume.ResumeViewModel
 import com.example.trudomix.ui.screens.resume.ResumeScreen
 import com.example.trudomix.ui.screens.settings.SettingsScreen
+import com.example.trudomix.ui.screens.settings.SettingsDetailScreen
+import com.example.trudomix.ui.screens.settings.NotificationSettings
+import com.example.trudomix.ui.screens.settings.LegalDocuments
+import com.example.trudomix.ui.screens.settings.PhoneAccountScreen
 import com.example.trudomix.ui.screens.vacancies.VacancyDetailScreen
 import com.example.trudomix.ui.screens.vacancies.VacancyDetailViewModel
 import com.example.trudomix.ui.screens.home.MainScreen // <--- Убедись, что этот файл существует
@@ -215,9 +219,16 @@ fun AppNavGraph() {
             val profileViewModel: ProfileViewModel = viewModel()
             SettingsScreen(
                 viewModel = profileViewModel,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onNotifications={navController.navigate("settings/notifications")},
+                onDocuments={navController.navigate("settings/documents")},
+                onPhone={navController.navigate("settings/phone")}
             )
         }
+
+        composable("settings/notifications"){SettingsDetailScreen("Уведомления",{navController.popBackStack()}){NotificationSettings()}}
+        composable("settings/documents"){SettingsDetailScreen("Документы",{navController.popBackStack()}){LegalDocuments()}}
+        composable("settings/phone"){PhoneAccountScreen{navController.popBackStack()}}
 
         composable(NavRoutes.LOGS) {
             LogViewerScreen(

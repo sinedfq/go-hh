@@ -3,13 +3,12 @@
     const COLORS=['#8257E6','#5B43E1','#6333F6','#9474ED','#9653F5','#7965DD','#5578DA','#A879FF','#7050E8','#B57FC9','#5C3DDD','#8B6CE3']
     const clamp=x=>Math.max(0,Math.min(1,x))
     const smooth=x=>{x=clamp(x);return x*x*(3-2*x)}
-    const DURATION=9.6 // Original reference duration, without an added appearance delay.
+    const DURATION=3.7 // Keep in sync with Android LoadingStyleMotion.IMPACT.
     function frame(t,reduced=false){
         if(reduced)t=DURATION
         t=Math.max(0,t)
-        const ring=clamp((t-7.02)/1.9),dock=clamp((t-6.9)/1.45)
-        const scale=dock>=1?1:dock<.18?1-.065*smooth(dock/.18):dock<.38?.935:dock<.56?.935+.1*smooth((dock-.38)/.18):1.035-.035*smooth((dock-.56)/.44)
-        return {logo:t>0?1:0,scale,trace:smooth(t/4.6),fill:smooth((t-3.5)/1.8),orbTrace:smooth((t-4.7)/1.7),orb:smooth((t-5.7)/1.25),wave:ring,ringAlpha:ring>0&&ring<1?.78*smooth((ring-.12)/.18)*(1-smooth((ring-.3)/.7)):0,flash:smooth((t-7.45)/.6)*(1-smooth((t-8.1)/1.45)),wordmark:smooth((t-6.7)/1.2),lines:0,done:t>=9.6}
+        const ring=clamp((t-2)/1.35),glow=clamp((t-2)/1.5),fill=smooth((t-1.5)/.5)
+        return {logo:1,scale:1,trace:smooth(t/1.65),fill,orbTrace:smooth((t-1.1)/.8),orb:fill,wave:ring,ringAlpha:ring>0&&ring<1?.9*smooth(ring/.15)*(1-smooth((ring-.15)/.75)):0,flash:smooth(glow/.35)*(1-smooth((glow-.35)/.65)),wordmark:smooth((t-2.6)/1),lines:0,done:t>=DURATION}
     }
     function lineWindow(t,delay){
         const u=clamp((t-delay)/2.5),headProgress=smooth(u/.87)
@@ -57,6 +56,8 @@
     const host=document.getElementById('startup-splash')
     if(!host)return
     const canvas=host.querySelector('canvas'),ctx=canvas.getContext('2d'),logo=host.querySelector('.startup-logo'),wordmark=host.querySelector('.startup-wordmark')
+    const letterLine=logo.querySelector('.letter-line'),letter=logo.querySelector('.slot-letter'),orbLine=logo.querySelector('.orb-line'),orb=logo.querySelector('.slot-orb'),halo=logo.querySelector('.slot-halo')
+    let glowGradient
     const motion=matchMedia('(prefers-reduced-motion: reduce)')
     const flightSeed=scope.crypto?.getRandomValues?scope.crypto.getRandomValues(new Uint32Array(1))[0]:(Math.random()*4294967296)>>>0
     let w=0,h=0,logoSize=0,lines=[],raf=0,fadeTimer=0,watchdog=0,ready=false,closed=false,animationDone=false,last=0
@@ -70,7 +71,9 @@
         const dpr=Math.min(devicePixelRatio||1,2)
         canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)
         ctx.setTransform(dpr,0,0,dpr,0,0)
-        lines=trajectories(w,h,flightSeed);logoSize=Math.min(310,Math.max(100,Math.min(w,h)*.55))
+        glowGradient=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*.8)
+        glowGradient.addColorStop(0,'rgba(173,112,255,.32)');glowGradient.addColorStop(.3,'rgba(116,75,244,.15)');glowGradient.addColorStop(1,'rgba(90,55,222,0)')
+        logoSize=Math.min(310,Math.max(100,Math.min(w,h)*.55))
         host.style.setProperty('--startup-logo-size',logoSize+'px')
         host.style.setProperty('--startup-wordmark-offset',(logoSize*.425+25)+'px')
         draw(last)
@@ -101,23 +104,21 @@
         const f=frame(t,motion.matches)
         ctx.clearRect(0,0,w,h)
         if(f.flash>0){
-            const radius=Math.max(w,h)*.8,gradient=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,radius)
-            gradient.addColorStop(0,'rgba(173,112,255,.32)');gradient.addColorStop(.3,'rgba(116,75,244,.15)');gradient.addColorStop(1,'rgba(90,55,222,0)')
-            ctx.globalAlpha=f.flash;ctx.fillStyle=gradient;ctx.fillRect(0,0,w,h)
+            ctx.globalAlpha=f.flash;ctx.fillStyle=glowGradient;ctx.fillRect(0,0,w,h)
         }
-        if(f.ringAlpha>0){ctx.globalAlpha=f.ringAlpha;ctx.strokeStyle='#A782FF';ctx.lineWidth=2;ctx.beginPath();ctx.arc(w/2,h/2,logoSize*.42*(.5+3.3*smooth(f.wave)),0,Math.PI*2);ctx.stroke()}
+        if(f.ringAlpha>0){ctx.globalAlpha=f.ringAlpha;ctx.strokeStyle='#B76AFF';ctx.lineWidth=2;ctx.beginPath();ctx.arc(w/2,h/2,logoSize*.242*(.5+4.5*f.wave),0,Math.PI*2);ctx.stroke()}
         ctx.globalAlpha=1
-        logo.querySelector('.letter-line').style.strokeDashoffset=1-f.trace
-        logo.querySelector('.slot-letter').style.opacity=f.fill
-        logo.querySelector('.orb-line').style.strokeDashoffset=1-f.orbTrace
-        logo.querySelector('.slot-orb').style.opacity=f.orb
-        logo.querySelector('.slot-halo').style.opacity=f.flash*.5
+        letterLine.style.strokeDashoffset=1-f.trace
+        letter.style.opacity=f.fill
+        orbLine.style.strokeDashoffset=1-f.orbTrace
+        orb.style.opacity=f.orb
+        halo.style.opacity=f.flash*.18
         logo.style.opacity=f.logo;logo.style.transform=`translate(-50%,-50%) scale(${f.scale})`
         wordmark.style.opacity=f.wordmark;wordmark.style.transform=`translate(-50%,${10*(1-f.wordmark)}px)`
         const logoHidden=String(f.logo===0),nameHidden=String(f.wordmark===0)
         if(logo.getAttribute('aria-hidden')!==logoHidden)logo.setAttribute('aria-hidden',logoHidden)
         if(wordmark.getAttribute('aria-hidden')!==nameHidden)wordmark.setAttribute('aria-hidden',nameHidden)
-        const stage=f.done?'ready':t>=7.1?'wave':t>=6.9?'wordmark':t>=4.9?'orb':'outline'
+        const stage=f.done?'ready':t>=2.8?'wordmark':t>=2.2?'wave':t>=1.3?'orb':'outline'
         if(host.dataset.stage!==stage)host.dataset.stage=stage
         return f
     }

@@ -31,7 +31,7 @@ import com.example.trudomix.ui.loading.AppLoader
     }
     Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
         OutlinedTextField(state.phone,viewModel::editPhone,label={Text("Номер телефона")},placeholder={Text("+7 999 123-45-67")},singleLine=true,enabled=enabled&&!state.busy,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth())
-        if(state.config?.test_mode==true)Text("Временно код приходит в уведомлении Trudomix. SMS не отправляется; владение номером у оператора не проверяется.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        if(state.config?.test_mode==true)Text(if(state.config?.delivery=="firebase")"Код придёт с сервера через Firebase в уведомлении Trudomix. Это тестовый способ: SMS не отправляется и владение номером не проверяется."else "Временно код приходит в уведомлении Trudomix. SMS не отправляется; владение номером у оператора не проверяется.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         if(state.configuring)Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){AppLoader(Modifier.size(20.dp));Text("Подключаем доставку кода…",style=MaterialTheme.typography.bodySmall)}
         else if(state.config?.enabled!=true)TextButton(onClick=viewModel::loadConfig){Text("Повторить подключение")}
         else if(!state.verified){
@@ -41,7 +41,7 @@ import com.example.trudomix.ui.loading.AppLoader
             if(state.challenge.isNotBlank()){
                 OutlinedTextField(state.code,viewModel::editCode,label={Text(if(state.config?.test_mode==true)"Код из уведомления"else "Код из SMS")},singleLine=true,enabled=enabled&&!state.busy,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.NumberPassword),shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth())
                 Button(onClick=viewModel::verify,enabled=enabled&&!state.busy&&state.code.length==6,modifier=Modifier.fillMaxWidth()){Text("Подтвердить код")}
-                if(state.config?.test_mode==true)TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
+                if(state.config?.test_mode==true&&state.config?.delivery!="firebase")TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
             }
         }
         state.note?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=if(state.verified)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}

@@ -18,7 +18,7 @@ export default function LoginPage({ onClose }) {
     const emailField = useRef(null)
     useEffect(() => {
         const previous = document.activeElement
-        emailField.current?.focus()
+        emailField.current?.focus({ preventScroll: true })
         return () => previous?.focus?.()
     }, [])
     function onKeyDown(event) {
@@ -58,9 +58,9 @@ export default function LoginPage({ onClose }) {
                     <p className="auth-caption">{isLogin ? 'Войди, чтобы продолжить свой путь.' : 'Один профиль — новые возможности.'}</p>
                     <form onSubmit={submit} className="auth-form">
                         {!isLogin && <fieldset className="auth-roles"><legend>Как ты будешь использовать Trudomix?</legend>
-                            {[['candidate', 'Ищу работу'], ['employer', 'Ищу сотрудников']].map(([value, title]) => <label key={value} className={role === value ? 'selected' : ''}>
+                            <div className="auth-role-options">{[['candidate', 'Ищу работу'], ['employer', 'Ищу сотрудников']].map(([value, title]) => <label key={value} className={role === value ? 'selected' : ''}>
                                 <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} disabled={busy} />{title}
-                            </label>)}
+                            </label>)}</div>
                         </fieldset>}
                         <label htmlFor="auth-email">Почта</label>
                         <input id="auth-email" ref={emailField} type="email" autoComplete="email" placeholder="Введите почту" value={email} onChange={event => setEmail(event.target.value)} disabled={busy} required />
