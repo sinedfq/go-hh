@@ -75,12 +75,12 @@ internal fun Modifier.navHighlight(state:NavHighlightState,background:Color,fill
     val edges=navSectionEdges(size.width)
     val outline=Path()
     val radius=size.height/2
-    val border=Stroke(1.dp.toPx())
+    val border=Stroke(2.dp.toPx())
     val borderBrush=Brush.verticalGradient(listOf(Color.White.copy(alpha=.36f),borderColor.copy(alpha=.45f)))
     val sheen=Brush.verticalGradient(listOf(Color.White.copy(alpha=.06f),Color.Transparent))
     val rightArc=androidx.compose.ui.geometry.Rect(size.width-size.height,0f,size.width,size.height)
     val leftArc=androidx.compose.ui.geometry.Rect(0f,0f,size.height,size.height)
-    onDrawBehind{
+    onDrawWithContent{
         val choice=state.style
         val position=state.position.value.coerceIn(0f,4f)
         val i=floor(position).toInt();val next=(i+1).coerceAtMost(4);val part=position-i
@@ -124,7 +124,9 @@ internal fun Modifier.navHighlight(state:NavHighlightState,background:Color,fill
                     drawRect(fill,Offset(left-extendLeft,-lift),Size(right-left+extendLeft+extendRight,size.height+lift))
                 }
             }
+            this@onDrawWithContent.drawContent()
+            // Match the original inside border and keep child press indications within the panel.
+            drawPath(outline,borderBrush,style=border)
         }
-        drawPath(outline,borderBrush,style=border)
     }
 }

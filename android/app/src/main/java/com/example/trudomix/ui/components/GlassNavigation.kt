@@ -6,6 +6,8 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -62,7 +64,7 @@ fun GlassNavigation(state:HazeState,selected:Int,unread:Int,onSelect:(Int)->Unit
                     }
                 }else{
                 val color by animateColorAsState(if(selected==destinations[index]||(selected==5&&index==0)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,animationSpec=if(style==NavAnimationStyle.NONE)snap()else spring(),label="tab")
-                Column(Modifier.weight(1f).fillMaxHeight().clickable { onSelect(destinations[index]) },horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
+                Column(Modifier.weight(1f).fillMaxHeight().clickable(interactionSource=remember{MutableInteractionSource()},indication=if(style==NavAnimationStyle.CENTER_REVEAL||style==NavAnimationStyle.NONE)null else LocalIndication.current) { onSelect(destinations[index]) },horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center) {
                     Box(Modifier.size(40.dp),contentAlignment=Alignment.Center) {
                         BadgedBox(badge={if(index==4 && unread>0) Badge{Text(if(unread>99) "99+" else unread.toString())}}){Icon(icons[index],label,tint=color)}
                     }
