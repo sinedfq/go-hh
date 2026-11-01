@@ -104,7 +104,7 @@ class SplashViewModel:ViewModel(){val elapsed=mutableFloatStateOf(0f);var animat
 }
 
 @Composable fun SplashScreen(dark:Boolean,time:State<Float>,modifier:Modifier=Modifier,style:LoadingStyle?=null,blockInput:Boolean=true){
-    val selected by LoadingStyles.style.collectAsState()
+    val selected by LoadingStyles.style.collectAsStateWithLifecycle()
     val effective=style?:selected
     val background=if(dark)Color(0xFF080816)else Color(0xFFF8F7FC)
     val foreground=if(dark)Color(0xFFFAF8FF)else Color(0xFF191431)

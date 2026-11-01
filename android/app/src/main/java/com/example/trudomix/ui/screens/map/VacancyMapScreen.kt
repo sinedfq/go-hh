@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.map
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.InlineLoadingState
 
 import com.example.trudomix.ui.loading.AppLoader
@@ -59,9 +61,9 @@ class MapViewModel:ViewModel(){
 @Composable
 fun VacancyMapScreen(onBack:()->Unit,onVacancy:(Int)->Unit) {
     val model:MapViewModel=viewModel()
-    val items by model.vacancies.collectAsState()
-    val loading by model.loading.collectAsState()
-    val error by model.error.collectAsState()
+    val items by model.vacancies.collectAsStateWithLifecycle()
+    val loading by model.loading.collectAsStateWithLifecycle()
+    val error by model.error.collectAsStateWithLifecycle()
     VacancyMapContent(items,loading,error,onBack,onVacancy,model::load)
 }
 

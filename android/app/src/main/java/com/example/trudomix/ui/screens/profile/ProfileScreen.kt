@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.profile
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.components.AppScreenHeader
 
 import androidx.compose.foundation.layout.*
@@ -19,8 +21,8 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(viewModel:ProfileViewModel,onLogout:()->Unit,onNavigateToSettings:()->Unit={},onNavigateToLogs:()->Unit={},onNavigateToResumeEditor:()->Unit={},onEmployer:()->Unit={},onApplications:()->Unit={},onFavorites:()->Unit={},onBack:(()->Unit)?=null) {
-    val uiState by viewModel.uiState.collectAsState()
-    val overview by viewModel.overview.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val overview by viewModel.overview.collectAsStateWithLifecycle()
     var showLogoutDialog by remember { mutableStateOf(false) }
     com.example.trudomix.ui.components.RefreshContent(overview.loading,viewModel::loadUserProfile) {
     Box(Modifier.fillMaxSize().statusBarsPadding(),contentAlignment=Alignment.TopCenter) {

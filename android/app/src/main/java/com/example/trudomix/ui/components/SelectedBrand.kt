@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.components
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -9,7 +11,7 @@ import com.example.trudomix.data.local.AppIcons
 
 @Composable
 fun selectedBrand():AppIcon {
-    val appearance by AppIcons.appearance.collectAsState()
+    val appearance by AppIcons.appearance.collectAsStateWithLifecycle()
     return AppIcons.forTheme(appearance.icon,MaterialTheme.colorScheme.background.luminance()<.5f,appearance.followTheme)
 }
 @Composable

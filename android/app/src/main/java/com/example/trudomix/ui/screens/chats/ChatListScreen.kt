@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.chats
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -15,10 +17,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trudomix.data.models.Conversation
 import com.example.trudomix.ui.components.AppScreenHeader
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.*
 
 @Composable
 fun ChatListScreen(viewModel:ChatViewModel=viewModel(),onChatClick:(Int)->Unit={}) {
-    val state by viewModel.uiState.collectAsState()
+    val lifecycle=LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(viewModel,lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED){while(isActive){viewModel.refreshIfStale();delay(10000)}}}
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     com.example.trudomix.ui.components.RefreshContent(state is ChatListUiState.Loading,{viewModel.loadConversations()}) {
     Box(Modifier.fillMaxSize().statusBarsPadding(),contentAlignment=Alignment.TopCenter) {
         LazyColumn(Modifier.widthIn(max=760.dp).fillMaxSize(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=20.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(14.dp)) {

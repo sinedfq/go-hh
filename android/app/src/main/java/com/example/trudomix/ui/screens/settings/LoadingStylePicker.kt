@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -13,7 +15,7 @@ import com.example.trudomix.ui.loading.LoadingStylePreview
 
 @Composable fun LoadingStylePicker(){
     val context=LocalContext.current
-    val selected by LoadingStyles.style.collectAsState()
+    val selected by LoadingStyles.style.collectAsStateWithLifecycle()
     var replay by remember{mutableIntStateOf(0)}
     Card(Modifier.fillMaxWidth()){
         Column(Modifier.padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){

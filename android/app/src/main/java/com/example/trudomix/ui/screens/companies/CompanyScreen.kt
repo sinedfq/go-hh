@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.companies
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.components.AppScreenHeader
 import com.example.trudomix.ui.components.CompanyAvatar
 import com.example.trudomix.ui.components.ITAccreditationBadge
@@ -36,7 +38,7 @@ class CompanyViewModel:ViewModel(){
 @Composable
 fun CompanyScreen(id:Int,onBack:()->Unit,onVacancy:(Int)->Unit,bottomPadding:androidx.compose.ui.unit.Dp=20.dp,manage:Boolean=false){
     val model:CompanyViewModel=viewModel(key="company-$id")
-    val state by model.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
     LaunchedEffect(id){model.load(id)}
     Scaffold(topBar={AppScreenHeader(title={Text("О компании")},navigationIcon={IconButton(onClick=onBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})}){padding->
         LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("company-content"),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=20.dp,bottom=bottomPadding),verticalArrangement=Arrangement.spacedBy(16.dp)){

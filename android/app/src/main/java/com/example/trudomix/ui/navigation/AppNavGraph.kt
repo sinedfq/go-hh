@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.navigation
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -69,11 +71,11 @@ fun AppNavGraph() {
     val navController = rememberNavController()
     val authViewModel: AuthViewModel = viewModel()
     val entry by navController.currentBackStackEntryAsState()
-    val token by ApiClient.getTokenManager().tokenFlow.collectAsState(initial = "loading")
-    val pushTarget by PushNavigation.target.collectAsState()
+    val token by ApiClient.getTokenManager().tokenFlow.collectAsStateWithLifecycle(initialValue = "loading")
+    val pushTarget by PushNavigation.target.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
-    val identity by com.example.trudomix.data.local.SessionIdentity.user.collectAsState()
+    val identity by com.example.trudomix.data.local.SessionIdentity.user.collectAsStateWithLifecycle()
     LaunchedEffect(token) {
         if(token==null)com.example.trudomix.data.local.SessionIdentity.user.value=null
     }

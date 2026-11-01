@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -10,8 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable fun PhoneLoginContent(auth:AuthViewModel,phone:PhoneOtpViewModel,onEmail:()->Unit,onRegister:()->Unit){
-    val state by auth.uiState.collectAsState()
-    val proof by phone.uiState.collectAsState()
+    val state by auth.uiState.collectAsStateWithLifecycle()
+    val proof by phone.uiState.collectAsStateWithLifecycle()
     var submitted by remember{mutableStateOf("")}
     fun login(){if(proof.verified){submitted=proof.receipt;auth.loginPhone(proof.phone,proof.receipt,phone.deviceKey())}}
     LaunchedEffect(proof.receipt){if(proof.verified&&submitted!=proof.receipt)login()}

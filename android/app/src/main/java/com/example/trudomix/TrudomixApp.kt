@@ -13,6 +13,7 @@ class TrudomixApp : Application() {
         com.example.trudomix.push.NotificationPreferences.initialize(this)
         com.example.trudomix.data.local.LoadingStyles.initialize(this)
         com.example.trudomix.data.local.AccentColors.initialize(this)
+        com.example.trudomix.data.local.VisualPerformance.initialize(this)
         com.example.trudomix.data.local.ThemeManager.syncPlatformTheme(this,com.example.trudomix.data.local.ThemeManager.cachedMode(this))
         ApiClient.init(this)
         com.example.trudomix.data.local.AppIcons.initialize(this)

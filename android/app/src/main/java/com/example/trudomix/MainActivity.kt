@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             val themeManager = remember { ThemeManager(applicationContext) }
-            val themeMode by themeManager.themeModeFlow.collectAsState(initial = ThemeManager.cachedMode(applicationContext))
+            val themeMode by themeManager.themeModeFlow.collectAsStateWithLifecycle(initialValue = ThemeManager.cachedMode(applicationContext))
 
             val darkTheme = when (themeMode) {
                 AppThemeMode.LIGHT -> false

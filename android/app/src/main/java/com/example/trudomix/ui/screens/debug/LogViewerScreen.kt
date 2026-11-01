@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.debug
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.components.AppScreenHeader
 
 import androidx.compose.foundation.layout.*
@@ -21,7 +23,7 @@ import com.example.trudomix.data.local.LogCollector
 fun LogViewerScreen(
     onNavigateBack: () -> Unit
 ) {
-    val logs by LogCollector.logs.collectAsState()
+    val logs by LogCollector.logs.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

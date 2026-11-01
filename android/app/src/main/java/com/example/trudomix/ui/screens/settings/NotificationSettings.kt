@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.Manifest
 import android.app.NotificationManager
 import android.content.Intent
@@ -35,8 +37,8 @@ import kotlinx.coroutines.tasks.await
 @Composable
 fun NotificationSettings() {
     val context = LocalContext.current
-    val enabled by NotificationPreferences.enabled.collectAsState()
-    val registration by DeviceRegistration.status.collectAsState()
+    val enabled by NotificationPreferences.enabled.collectAsStateWithLifecycle()
+    val registration by DeviceRegistration.status.collectAsStateWithLifecycle()
     var allowed by remember { mutableStateOf(AppNotifications.allowed(context)) }
     var server by remember { mutableStateOf<String?>(null) }
     var feedback by remember { mutableStateOf<String?>(null) }

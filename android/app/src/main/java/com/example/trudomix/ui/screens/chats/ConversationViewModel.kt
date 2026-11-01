@@ -29,7 +29,7 @@ class ConversationViewModel:ViewModel(){
                 if(_state.value.me==0) { val me=repo.me(); _state.update{it.copy(me=me.id,mePhoto=me.photo_url,meName=me.email)} }
                 val messages=repo.messages(id)
                 val typing=repo.typing(id).isNotEmpty()
-                _state.update{it.copy(messages=(messages+it.messages.filter { old -> messages.none { m -> m.id==old.id } }).sortedBy{m->m.id},loading=false,error=null,typing=typing)}
+                withContext(Dispatchers.Default){_state.update{it.copy(messages=mergeConversationMessages(messages,it.messages),loading=false,error=null,typing=typing)}}
             }catch(e:CancellationException){throw e}
             catch(e:Exception){_state.update{it.copy(loading=false,error=com.example.trudomix.data.api.userErrorMessage(e))}}
             delay(3000)

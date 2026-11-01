@@ -1,0 +1,127 @@
+{
+  "date": "2026-11-01",
+  "baseline": "1dfd3428cc1b277d7eb87471c839e1e6530a6ba1",
+  "environment": {
+    "device": "Trudomix_API34 emulator",
+    "sdk": 34,
+    "ramMB": 3072,
+    "cores": 4,
+    "gpu": "SwiftShader",
+    "resolution": "720x1600",
+    "density": 280,
+    "buildType": "debug",
+    "motion": false
+  },
+  "before": [
+    {
+      "run": "before-1",
+      "build": 10,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 25,
+      "over16ms": 25,
+      "p50ms": 459.67387,
+      "p90ms": 639.184298,
+      "p95ms": 668.390772,
+      "maxMs": 1229.323688,
+      "wallMs": 13594.0612,
+      "cpuMs": 14151,
+      "pssKb": 196461,
+      "javaHeapBytes": 13744296
+    },
+    {
+      "run": "before-2",
+      "build": 10,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 24,
+      "over16ms": 24,
+      "p50ms": 292.696438,
+      "p90ms": 384.163524,
+      "p95ms": 411.233276,
+      "maxMs": 504.83357,
+      "wallMs": 7704.3879,
+      "cpuMs": 7984,
+      "pssKb": 190055,
+      "javaHeapBytes": 9612672
+    },
+    {
+      "run": "before-3",
+      "build": 10,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 24,
+      "over16ms": 24,
+      "p50ms": 290.188218,
+      "p90ms": 425.448264,
+      "p95ms": 458.767886,
+      "maxMs": 555.727442,
+      "wallMs": 8142.0426,
+      "cpuMs": 8411,
+      "pssKb": 191166,
+      "javaHeapBytes": 10267424
+    }
+  ],
+  "after": [
+    {
+      "run": "after-1",
+      "build": 11,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 25,
+      "over16ms": 25,
+      "p50ms": 256.488394,
+      "p90ms": 319.33513,
+      "p95ms": 350.611858,
+      "maxMs": 434.474564,
+      "wallMs": 7174.8717,
+      "cpuMs": 8004,
+      "pssKb": 199084,
+      "javaHeapBytes": 15321024
+    },
+    {
+      "run": "after-2",
+      "build": 11,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 25,
+      "over16ms": 25,
+      "p50ms": 284.303956,
+      "p90ms": 334.91763,
+      "p95ms": 351.811216,
+      "maxMs": 467.963596,
+      "wallMs": 7493.0639,
+      "cpuMs": 8310,
+      "pssKb": 194292,
+      "javaHeapBytes": 13303952
+    },
+    {
+      "run": "after-3",
+      "build": 11,
+      "scenario": "120 local vacancies; 12 alternating 400ms swipes; no network/images",
+      "frames": 25,
+      "over16ms": 25,
+      "p50ms": 268.204952,
+      "p90ms": 317.51743,
+      "p95ms": 375.198756,
+      "maxMs": 448.01517,
+      "wallMs": 7369.2507,
+      "cpuMs": 8161,
+      "pssKb": 193329,
+      "javaHeapBytes": 12695072
+    }
+  ],
+  "activityStartBeforeMs": [
+    3278,
+    2685,
+    2641
+  ],
+  "activityStartAfterMs": [
+    2552,
+    2714,
+    2576
+  ],
+  "limitations": [
+    "Not a physical-device or release Macrobenchmark",
+    "FrameMetrics callbacks may be dropped",
+    "No measured display FPS or exact dropped-frame count",
+    "CPU time includes instrumentation",
+    "PSS is end-of-run, not peak",
+    "Separate authorized-screen navigation not measured"
+  ]
+}

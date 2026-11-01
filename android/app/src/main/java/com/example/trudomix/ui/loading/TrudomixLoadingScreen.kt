@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.loading
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.startup.StartupReadiness
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -9,7 +11,7 @@ const val STARTUP_LOADER_PREVIEW_MS = 0L
 
 /** Existing screen contract delegates to the shared, compact brand loader. */
 @Composable fun TrudomixLoadingScreen(modifier:Modifier=Modifier,compact:Boolean=false,label:String="Загружаем…"){
-    val startupVisible by StartupReadiness.visible.collectAsState()
+    val startupVisible by StartupReadiness.visible.collectAsStateWithLifecycle()
     if(startupVisible&&!compact){
         val ticket=remember{Any()}
         DisposableEffect(ticket){StartupReadiness.begin(ticket);onDispose{StartupReadiness.finish(ticket)}}

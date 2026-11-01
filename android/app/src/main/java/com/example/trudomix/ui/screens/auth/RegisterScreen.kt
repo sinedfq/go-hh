@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.AppLoader
 
 import androidx.compose.animation.*
@@ -34,8 +36,8 @@ import com.example.trudomix.ui.components.AppScreenHeader
 @Composable
 fun RegisterScreen(viewModel:AuthViewModel,onRegisterSuccess:()->Unit,onNavigateToLogin:()->Unit) {
     val phone=androidx.lifecycle.viewmodel.compose.viewModel<PhoneOtpViewModel>(key="registration-phone")
-    val proof by phone.uiState.collectAsState()
-    val state by viewModel.uiState.collectAsState()
+    val proof by phone.uiState.collectAsStateWithLifecycle()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(state) { if(state is AuthUiState.Success){viewModel.resetState();onRegisterSuccess()} }
     RegisterContent(state,{email,password,role->viewModel.registerWithPhone(email,password,role,proof.phone,proof.receipt,phone.deviceKey())},onNavigateToLogin,phone)
 }
@@ -68,7 +70,7 @@ fun RegisterContent(state:AuthUiState,onRegister:(String,String,String)->Unit,on
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RegistrationForm(state:AuthUiState,onRegister:(String,String,String)->Unit,onLogin:()->Unit,modifier:Modifier=Modifier,phoneViewModel:PhoneOtpViewModel?=null) {
-    val phoneState=phoneViewModel?.uiState?.collectAsState()
+    val phoneState=phoneViewModel?.uiState?.collectAsStateWithLifecycle()
     val phoneReady=phoneViewModel==null||phoneState?.value?.verified==true
     var email by rememberSaveable{mutableStateOf("")}
     var password by remember{mutableStateOf("")}

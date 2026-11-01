@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.resume
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,11 +27,11 @@ import kotlinx.coroutines.*
 
 @Composable
 fun ResumeScreen(viewModel:ResumeViewModel,onNavigateBack:()->Unit={},onEditResumeClick:()->Unit) {
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context=LocalContext.current
     val scope=rememberCoroutineScope()
     val snackbar=remember { SnackbarHostState() }
-    val busy by viewModel.isSaving.collectAsState()
+    val busy by viewModel.isSaving.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel){viewModel.messageEvent.collect{snackbar.showSnackbar(it)}}
     var exporting by remember { mutableStateOf(false) }
     val savePdf=rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/pdf")) { uri ->

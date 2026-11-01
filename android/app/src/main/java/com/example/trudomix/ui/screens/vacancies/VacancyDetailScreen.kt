@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.vacancies
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.AppLoader
 import com.example.trudomix.ui.components.CompanyAvatar
 import com.example.trudomix.ui.components.VacancyTerms
@@ -43,10 +45,10 @@ fun VacancyDetailScreen(
     onNavigateBack: () -> Unit,
     onCompanyClick: (Int) -> Unit = {}
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val hasResume by viewModel.hasResume.collectAsState()
-    val hasApplied by viewModel.hasApplied.collectAsState()
-    val isApplying by viewModel.isApplying.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val hasResume by viewModel.hasResume.collectAsStateWithLifecycle()
+    val hasApplied by viewModel.hasApplied.collectAsStateWithLifecycle()
+    val isApplying by viewModel.isApplying.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showApplySheet by remember { mutableStateOf(false) }
