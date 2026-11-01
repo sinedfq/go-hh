@@ -7,6 +7,9 @@ import com.example.trudomix.data.api.ApiClient
 import com.example.trudomix.data.local.AppThemeMode
 import com.example.trudomix.data.local.ResumeEventBus
 import com.example.trudomix.data.local.ThemeManager
+import com.example.trudomix.data.local.NavAnimationStyle
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.SharingStarted
 import com.example.trudomix.data.models.User
 import com.example.trudomix.data.models.*
 import com.example.trudomix.data.repository.bodyOrThrow
@@ -30,6 +33,8 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
     private val api = ApiClient.api
     private val tokenManager = ApiClient.getTokenManager()
     private val themeManager = ThemeManager(application)
+    val navAnimationStyleFlow=themeManager.navAnimationStyleFlow.stateIn(viewModelScope,SharingStarted.Eagerly,NavAnimationStyle.SMOOTH)
+    fun setNavAnimationStyle(style:NavAnimationStyle){viewModelScope.launch{themeManager.setNavAnimationStyle(style)}}
 
     val themeModeFlow: StateFlow<AppThemeMode> = themeManager.themeModeFlow.let { flow ->
         val state = MutableStateFlow(AppThemeMode.SYSTEM)

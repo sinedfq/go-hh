@@ -16,11 +16,13 @@ import com.example.trudomix.ui.screens.profile.ProfileViewModel
 @OptIn(ExperimentalLayoutApi::class)
 @Composable fun AppearanceScreen(viewModel:ProfileViewModel,onBack:()->Unit){
     val mode by viewModel.themeModeFlow.collectAsStateWithLifecycle()
+    val navAnimation by viewModel.navAnimationStyleFlow.collectAsStateWithLifecycle()
     val accent by AccentColors.selected.collectAsStateWithLifecycle()
     val searchMotion by VisualPerformance.searchMotion.collectAsStateWithLifecycle()
     val context=LocalContext.current
     SettingsDetailScreen("Оформление",onBack){
         ThemePicker(mode,viewModel::setThemeMode)
+        NavAnimationPicker(navAnimation,viewModel::setNavAnimationStyle)
         Text("Цвет интерфейса",style=MaterialTheme.typography.titleMedium)
         FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp)){
             AccentColor.entries.forEach{color->FilterChip(selected=accent==color,onClick={AccentColors.select(context,color)},label={Text(color.title)},leadingIcon={Box(Modifier.size(16.dp).background(color.light,CircleShape))})}

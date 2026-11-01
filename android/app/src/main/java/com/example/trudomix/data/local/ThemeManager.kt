@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 enum class AppThemeMode {
     SYSTEM, LIGHT, DARK
@@ -22,6 +23,7 @@ class ThemeManager(context: Context) {
 
     companion object {
         private val THEME_KEY = stringPreferencesKey("app_theme_mode")
+        private val NAV_ANIMATION_KEY = stringPreferencesKey("nav_animation_style")
         fun cachedMode(context:Context):AppThemeMode=runCatching{AppThemeMode.valueOf(context.getSharedPreferences("theme_cache",Context.MODE_PRIVATE).getString("mode",AppThemeMode.SYSTEM.name)!!)}.getOrDefault(AppThemeMode.SYSTEM)
         fun syncPlatformTheme(context:Context,mode:AppThemeMode){
             if(android.os.Build.VERSION.SDK_INT<31)return
@@ -51,4 +53,8 @@ class ThemeManager(context: Context) {
         mirror.edit().putString("mode",mode.name).apply()
         syncPlatformTheme(appContext,mode)
     }
+
+    val navAnimationStyleFlow:Flow<NavAnimationStyle> = dataStore.data.map{NavAnimationStyle.fromId(it[NAV_ANIMATION_KEY])}.distinctUntilChanged()
+
+    suspend fun setNavAnimationStyle(style:NavAnimationStyle){dataStore.edit{it[NAV_ANIMATION_KEY]=style.id}}
 }
