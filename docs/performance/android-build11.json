@@ -106,8 +106,16 @@
       "javaHeapBytes": 12695072
     }
   ],
-  "activityStartBeforeMs": [],
-  "activityStartAfterMs": [],
+  "activityStartBeforeMs": [
+    3278,
+    2685,
+    2641
+  ],
+  "activityStartAfterMs": [
+    2552,
+    2714,
+    2576
+  ],
   "limitations": [
     "Not a physical-device or release Macrobenchmark",
     "FrameMetrics callbacks may be dropped",
