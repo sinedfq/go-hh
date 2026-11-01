@@ -4,11 +4,15 @@
     const clamp=x=>Math.max(0,Math.min(1,x))
     const smooth=x=>{x=clamp(x);return x*x*(3-2*x)}
     const DURATION=3.7 // Keep in sync with Android LoadingStyleMotion.IMPACT.
-    function frame(t,reduced=false){
+    function frame(t,reduced=false,style='impact'){
         if(reduced)t=DURATION
         t=Math.max(0,t)
         const ring=clamp((t-2)/1.35),glow=clamp((t-2)/1.5),fill=smooth((t-1.5)/.5)
-        return {logo:1,scale:1,trace:smooth(t/1.65),fill,orbTrace:smooth((t-1.1)/.8),orb:fill,wave:ring,ringAlpha:ring>0&&ring<1?.9*smooth(ring/.15)*(1-smooth((ring-.15)/.75)):0,flash:smooth(glow/.35)*(1-smooth((glow-.35)/.65)),wordmark:smooth((t-2.6)/1),lines:0,done:t>=DURATION}
+        const f={logo:1,scale:1,trace:smooth(t/1.65),fill,orbTrace:smooth((t-1.1)/.8),orb:fill,wave:ring,ringAlpha:ring>0&&ring<1?.9*smooth(ring/.15)*(1-smooth((ring-.15)/.75)):0,flash:smooth(glow/.35)*(1-smooth((glow-.35)/.65)),wordmark:smooth((t-2.6)/1),lines:0,done:t>=DURATION}
+        if(style==='pixel'){f.trace=0;f.orbTrace=0;f.fill=f.orb=smooth((t-2.45)/.55);f.ringAlpha=0;f.flash=0}
+        if(style==='neon'){const u=clamp((t-1.65)/.85);f.trace=clamp(t/1.5);f.orbTrace=clamp((t-.25)/1.3);f.fill=f.orb=u<.25?0:u<.33?1:u<.5?.15:u<.63?1:u<1?.3:1;f.ringAlpha=0}
+        if(style==='shutter'){f.trace=0;f.orbTrace=0;f.fill=f.orb=1;f.ringAlpha=0}
+        return f
     }
     function lineWindow(t,delay){
         const u=clamp((t-delay)/2.5),headProgress=smooth(u/.87)
@@ -58,6 +62,8 @@
     const canvas=host.querySelector('canvas'),ctx=canvas.getContext('2d'),logo=host.querySelector('.startup-logo'),wordmark=host.querySelector('.startup-wordmark')
     const letterLine=logo.querySelector('.letter-line'),letter=logo.querySelector('.slot-letter'),orbLine=logo.querySelector('.orb-line'),orb=logo.querySelector('.slot-orb'),halo=logo.querySelector('.slot-halo')
     let glowGradient
+    let style='impact',pixels=[],pixelTheme=''
+    try{const saved=localStorage.getItem('trudomix-style');if(['impact','neon','shutter','pixel'].includes(saved))style=saved}catch{}
     const motion=matchMedia('(prefers-reduced-motion: reduce)')
     const flightSeed=scope.crypto?.getRandomValues?scope.crypto.getRandomValues(new Uint32Array(1))[0]:(Math.random()*4294967296)>>>0
     let w=0,h=0,logoSize=0,lines=[],raf=0,fadeTimer=0,watchdog=0,ready=false,closed=false,animationDone=false,last=0
@@ -72,11 +78,27 @@
         canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)
         ctx.setTransform(dpr,0,0,dpr,0,0)
         glowGradient=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*.8)
-        glowGradient.addColorStop(0,'rgba(173,112,255,.32)');glowGradient.addColorStop(.3,'rgba(116,75,244,.15)');glowGradient.addColorStop(1,'rgba(90,55,222,0)')
-        logoSize=Math.min(310,Math.max(100,Math.min(w,h)*.55))
+        const dark=document.documentElement.dataset.theme==='dark'
+        glowGradient.addColorStop(0,dark?'rgba(173,112,255,.32)':'rgba(119,69,204,.16)');glowGradient.addColorStop(.3,'rgba(116,75,244,.08)');glowGradient.addColorStop(1,'rgba(90,55,222,0)')
+        logoSize=Math.min(220,Math.max(80,Math.min(w,h)*.40))
         host.style.setProperty('--startup-logo-size',logoSize+'px')
         host.style.setProperty('--startup-wordmark-offset',(logoSize*.425+25)+'px')
         draw(last)
+    }
+    function drawPixels(t){
+        const theme=document.documentElement.dataset.theme
+        if(pixelTheme!==theme||!pixels.length){
+            pixelTheme=theme
+            const off=document.createElement('canvas');off.width=34;off.height=29
+            const oc=off.getContext('2d',{willReadFrequently:true});oc.scale(34/1000,29/850)
+            const ink=oc.createLinearGradient(0,0,967,809);ink.addColorStop(0,theme==='dark'?'#ffffff':'#11102e');ink.addColorStop(1,theme==='dark'?'#ded4ff':'#5540cf');oc.fillStyle=ink;oc.fill(new Path2D(letter.getAttribute('d')))
+            const sphere=oc.createLinearGradient(620.67,384,872.67,636);sphere.addColorStop(0,'#e49cff');sphere.addColorStop(.5,'#a545fb');sphere.addColorStop(1,'#4a16d7');oc.fillStyle=sphere;oc.beginPath();oc.arc(746.67,510,126,0,Math.PI*2);oc.fill()
+            const data=oc.getImageData(0,0,34,29).data;pixels=[]
+            for(let y=0;y<29;y++)for(let x=0;x<34;x++){const i=(y*34+x)*4;if(data[i+3]>=65)pixels.push({x,y,color:`rgba(${data[i]},${data[i+1]},${data[i+2]},${data[i+3]/255})`,delay:((x*73+y*41)%125)/100+(x+y)/63*.58})}
+        }
+        const unit=logoSize/34,top=h/2-logoSize*.425,left=w/2-logoSize/2,burst=(t>.48&&t<.76)||(t>1.26&&t<1.53)||(t>2.08&&t<2.26)
+        for(const b of pixels){const a=clamp((t-b.delay)/.36)*(1-clamp((t-2.46)/.42));if(!a)continue;const stripe=Math.floor(b.y/3),jitter=burst&&(stripe+Math.floor(t/.065))%4===0?(stripe%2? -1.3:1.6)*unit:0,dx=left+b.x*unit+jitter,dy=top+b.y*unit;ctx.globalAlpha=a;if(jitter){ctx.fillStyle='#40e6ff';ctx.fillRect(dx-unit*.5,dy,unit,unit);ctx.fillStyle='#ff4bd8';ctx.fillRect(dx+unit*.4,dy,unit,unit)}ctx.fillStyle=b.color;ctx.fillRect(dx,dy,unit+1,unit+1)}
+        ctx.globalAlpha=1
     }
     function animatedLines(t,f){
         if(f.lines<=0)return
@@ -101,19 +123,22 @@
     }
     function draw(t){
         last=t
-        const f=frame(t,motion.matches)
+        const f=frame(t,motion.matches,style)
         ctx.clearRect(0,0,w,h)
         if(f.flash>0){
             ctx.globalAlpha=f.flash;ctx.fillStyle=glowGradient;ctx.fillRect(0,0,w,h)
         }
-        if(f.ringAlpha>0){ctx.globalAlpha=f.ringAlpha;ctx.strokeStyle='#B76AFF';ctx.lineWidth=2;ctx.beginPath();ctx.arc(w/2,h/2,logoSize*.242*(.5+4.5*f.wave),0,Math.PI*2);ctx.stroke()}
+        if(f.ringAlpha>0){ctx.globalAlpha=f.ringAlpha;ctx.strokeStyle=document.documentElement.dataset.theme==='dark'?'#B76AFF':'#7745CC';ctx.lineWidth=2;ctx.beginPath();ctx.arc(w/2,h/2,logoSize*.242*(.5+4.5*f.wave),0,Math.PI*2);ctx.stroke()}
         ctx.globalAlpha=1
+        if(style==='pixel'&&!motion.matches&&t<3.05)drawPixels(t)
+        if(style==='shutter'){const amount=smooth((t-.5)/1.3);ctx.fillStyle=document.documentElement.dataset.theme==='dark'?'#1d1432':'#e2d7f8';ctx.fillRect(0,-h/2*1.03*amount,w,h/2);ctx.fillRect(0,h/2+h/2*1.03*amount,w,h/2)}
         letterLine.style.strokeDashoffset=1-f.trace
         letter.style.opacity=f.fill
         orbLine.style.strokeDashoffset=1-f.orbTrace
         orb.style.opacity=f.orb
         halo.style.opacity=f.flash*.18
         logo.style.opacity=f.logo;logo.style.transform=`translate(-50%,-50%) scale(${f.scale})`
+        logo.style.clipPath=style==='shutter'?`inset(${(1-smooth((t-.5)/1.3))*50}% 0)`:'none'
         wordmark.style.opacity=f.wordmark;wordmark.style.transform=`translate(-50%,${10*(1-f.wordmark)}px)`
         const logoHidden=String(f.logo===0),nameHidden=String(f.wordmark===0)
         if(logo.getAttribute('aria-hidden')!==logoHidden)logo.setAttribute('aria-hidden',logoHidden)
@@ -172,12 +197,12 @@
         if(f.done){animationDone=true;finish()}else raf=requestAnimationFrame(tick)
     }
     function motionChanged(){cancelAnimationFrame(raf);if(motion.matches){draw(DURATION);animationDone=true;finish()}else if(!animationDone)tick()}
-    const themeObserver=new MutationObserver(()=>draw(last))
+    const themeObserver=new MutationObserver(()=>resize())
     themeObserver.observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']})
     scope.TrudomixSplash={
         ready(){ready=true;problem=null;finish()},
         result(error,onRetry){clearTimeout(watchdog);problem=error;retryAction=onRetry;busy=false;ready=!error;if(!error){host.classList.remove('startup-failed');host.querySelector('.startup-error')?.remove();host.dataset.state=animationDone?'READY':'ANIMATING'}finish()},
-        inspect(){return {elapsed:last,ready,closed,animationDone,reduced:motion.matches,state:host.dataset.state||'ANIMATING',error:problem?.kind,busy,width:w,height:h,lineCount:lines.length,stage:host.dataset.stage,...frame(last,motion.matches)}},
+        inspect(){return {elapsed:last,ready,closed,animationDone,reduced:motion.matches,style,state:host.dataset.state||'ANIMATING',error:problem?.kind,busy,width:w,height:h,lineCount:lines.length,stage:host.dataset.stage,...frame(last,motion.matches,style)}},
         destroy(){closed=true;clean();host.remove();const root=document.getElementById('root');root?.removeAttribute('inert');root?.removeAttribute('aria-hidden')}
     }
     addEventListener('resize',resize);addEventListener('pagehide',pageHidden,{once:true});addEventListener('error',resourceError,true);motion.addEventListener('change',motionChanged)

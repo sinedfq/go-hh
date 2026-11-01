@@ -34,7 +34,11 @@ func main() {
 		log.Fatal(err)
 	}
 	if projectID := os.Getenv("FIREBASE_PROJECT_ID"); projectID != "" {
-		server.pushSender, err = push.New(ctx, projectID)
+		if endpoint := os.Getenv("PUSH_SERVICE_URL"); endpoint != "" {
+			server.pushSender, err = push.NewRemote(endpoint, os.Getenv("PUSH_SERVICE_TOKEN"))
+		} else {
+			server.pushSender, err = push.New(ctx, projectID)
+		}
 		if err != nil {
 			log.Fatalf("push initialization: %v", err)
 		}

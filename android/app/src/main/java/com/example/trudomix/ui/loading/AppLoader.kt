@@ -29,7 +29,7 @@ import com.example.trudomix.ui.theme.AppSpacing
 
 @Composable fun PageLoadingState(modifier:Modifier=Modifier,label:String="Загружаем…",compact:Boolean=false){
     Column(modifier.fillMaxWidth().heightIn(min=if(compact)160.dp else 240.dp).padding(AppSpacing.lg).semantics{liveRegion=LiveRegionMode.Polite},horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.spacedBy(AppSpacing.md,Alignment.CenterVertically)){
-        AppLoader(Modifier.size(68.dp),color=MaterialTheme.colorScheme.onBackground)
+        AppLoader(Modifier.size(52.dp),color=MaterialTheme.colorScheme.onBackground)
         Text(label,color=MaterialTheme.colorScheme.onSurfaceVariant,style=MaterialTheme.typography.bodyMedium)
     }
 }

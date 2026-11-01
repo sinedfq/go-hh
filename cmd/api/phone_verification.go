@@ -14,6 +14,7 @@ import (
 
 func (s *Server) phoneVerificationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/phone-verification/config", s.phoneVerificationConfig)
+	mux.HandleFunc("POST /api/admin/phone-verification/reset", s.authMiddleware(s.RequireRole("admin")(s.resetPhoneLimits)))
 	mux.HandleFunc("POST /api/phone-verification/request", s.phoneVerificationRequest)
 	mux.HandleFunc("POST /api/phone-verification/verify", s.phoneVerificationVerify)
 	mux.HandleFunc("POST /api/auth/phone-login", s.phoneLoginHandler)

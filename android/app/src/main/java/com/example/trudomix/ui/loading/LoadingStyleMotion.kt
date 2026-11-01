@@ -24,6 +24,7 @@ object LoadingStyleMotion{
                 Frame(unit(t/1.5f),unit((t-.25f)/1.3f),flicker,envelope(t,1.7f,2f),0f,0f,1f)
             }
             LoadingStyle.SHUTTER->Frame(0f,0f,1f,envelope(t,1.5f,1.5f),0f,0f,SplashTiming.smooth((t-.5f)/1.3f))
+            LoadingStyle.PIXEL->Frame(0f,0f,SplashTiming.smooth((t-2.45f)/.55f),envelope(t,2.4f,1.2f),0f,0f,1f)
         }
     }
 }

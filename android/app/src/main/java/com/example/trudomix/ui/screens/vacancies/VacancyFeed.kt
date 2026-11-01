@@ -36,7 +36,7 @@ fun VacancyFeed(
     state: VacancyListUiState, query: String, favorites: Boolean, total: Int, loading: Boolean, error: String?,
     onQuery: (String) -> Unit, onFavorites: () -> Unit, onFilters: () -> Unit, onRefresh: () -> Unit,
     onMore: () -> Unit, onVacancy: (Int) -> Unit, onFavorite: (Int, Boolean) -> Unit,
-    onSavedSearches:()->Unit={},onSaveSearch:()->Unit={},resetScrollKey:Int=0
+    onSavedSearches:()->Unit={},onSaveSearch:()->Unit={},resetScrollKey:Int=0,onMap:()->Unit={}
 ) {
     val colors = MaterialTheme.colorScheme
     val grid = rememberSaveable(favorites,resetScrollKey,saver=LazyGridState.Saver){LazyGridState()}
@@ -75,6 +75,7 @@ fun VacancyFeed(
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         FilterChip(selected = favorites, onClick = onFavorites, label = { Text("Избранное") }, leadingIcon = { Icon(if (favorites) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null, Modifier.size(18.dp)) })
                         TextButton(onClick=onSavedSearches){Text("Мои поиски")}
+                        TextButton(onClick=onMap){Icon(Icons.Default.Map,null,Modifier.size(18.dp));Spacer(Modifier.width(6.dp));Text("На карте")}
                         if(!favorites)TextButton(onClick=onSaveSearch){Text("Сохранить поиск")}
                     }
                     HorizontalDivider(color = colors.outlineVariant)

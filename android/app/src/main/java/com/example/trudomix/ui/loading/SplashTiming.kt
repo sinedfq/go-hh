@@ -10,7 +10,7 @@ object SplashTiming {
     fun wordmark(t:Float)=smooth((t-2.6f)/1f)
     fun ringProgress(t:Float)=((t-7.22f)/1.9f).coerceIn(0f,1f)
     fun ringAlpha(t:Float):Float {val u=ringProgress(t);return if(u<=0f||u>=1f)0f else .78f*smooth((u-.12f)/.18f)*(1-smooth((u-.3f)/.7f))}
-    fun logoSize(width:Float,height:Float)=(min(width,height)*.55f).coerceIn(100f,310f)
+    fun logoSize(width:Float,height:Float)=(min(width,height)*.40f).coerceIn(80f,220f)
     fun dockScale(t:Float):Float{
         val u=((t-7.1f)/1.45f).coerceIn(0f,1f)
         return when{u<.18f->1-.065f*smooth(u/.18f);u<.38f->.935f;u<.56f->.935f+.1f*smooth((u-.38f)/.18f);else->1.035f-.035f*smooth((u-.56f)/.44f)}

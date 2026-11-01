@@ -19,7 +19,7 @@ import org.junit.Test
 
 class GlassNavigationTest {
     @get:Rule val compose = createComposeRule()
-    @Test fun overlayConsumesTapsAndMapRemainsClickable() {
+    @Test fun overlayConsumesTapsAndCentralSearchAndSwipesRemainClickable() {
         var behindClicks = 0
         var selected = -1
         var mapClicks = 0
@@ -34,8 +34,10 @@ class GlassNavigationTest {
         }
         compose.onNodeWithContentDescription("Отклики").performClick()
         compose.runOnIdle { assertEquals(1, selected); assertEquals(0, behindClicks) }
-        compose.onNodeWithContentDescription("Карта вакансий").performClick()
-        compose.runOnIdle { assertEquals(1, mapClicks); assertEquals(0, behindClicks) }
+        compose.onNodeWithContentDescription("Поиск").performClick()
+        compose.runOnIdle { assertEquals(0, selected); assertEquals(0, behindClicks) }
+        compose.onNodeWithContentDescription("Свайпы").performClick()
+        compose.runOnIdle { assertEquals(7, selected); assertEquals(0, mapClicks); assertEquals(0, behindClicks) }
         // Tap the background capsule between the label and the icon.
         compose.onNodeWithTag("navigation").performTouchInput { click(Offset(width * .35f, height * .5f)) }
         compose.runOnIdle { assertEquals(0, behindClicks) }

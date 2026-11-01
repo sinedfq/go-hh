@@ -5,6 +5,16 @@ import {runInNewContext} from 'node:vm'
 const context={}
 runInNewContext(readFileSync(new URL('../../public/splash.js',import.meta.url),'utf8'),context)
 const {frame,trajectories,lineWindow}=context.TrudomixSplashMath
+test('all four loading styles finish and reduced motion shows the completed logo',()=>{
+    for(const style of ['impact','neon','shutter','pixel']){
+        const done=frame(3.7,false,style),reduced=frame(0,true,style)
+        assert.equal(done.fill,1);assert.equal(done.orb,1);assert.equal(done.done,true)
+        assert.equal(reduced.fill,1);assert.equal(reduced.orb,1);assert.equal(reduced.wordmark,1)
+    }
+    assert.equal(frame(1,false,'pixel').fill,0)
+    assert.ok(frame(2.7,false,'pixel').fill>0)
+    assert.equal(frame(0,false,'shutter').fill,1)
+})
 test('HTML contour, orb and impact finish once; reduced motion skips the sequence',()=>{
     assert.ok(frame(.1).trace>0)
     assert.equal(frame(0).trace,0)

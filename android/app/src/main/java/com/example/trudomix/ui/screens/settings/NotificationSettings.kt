@@ -8,6 +8,8 @@ import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.*
@@ -45,6 +47,13 @@ fun NotificationSettings() {
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         allowed = AppNotifications.allowed(context); DeviceRegistration.sync(context); refresh++
     }
+    fun changeEnabled(value:Boolean){
+        NotificationPreferences.setEnabled(context,value)
+        allowed=AppNotifications.allowed(context)
+        DeviceRegistration.sync(context);refresh++
+        if(value&&Build.VERSION.SDK_INT>=33&&androidx.core.content.ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)permission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        else if(value&&!allowed)context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))
+    }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { AppNotifications.createChannel(context);allowed = AppNotifications.allowed(context);DeviceRegistration.sync(context); refresh++ }
     LaunchedEffect(registration, refresh) {
         server = null
@@ -71,18 +80,12 @@ fun NotificationSettings() {
                 Icon(Icons.Default.NotificationsNone, null, tint = MaterialTheme.colorScheme.primary)
                 Text("Уведомления", style = MaterialTheme.typography.titleMedium)
             }
-            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically){
+            Row(Modifier.fillMaxWidth().heightIn(min=76.dp).toggleable(enabled,role=Role.Switch,onValueChange=::changeEnabled).semantics{contentDescription="Получать уведомления"},verticalAlignment=Alignment.CenterVertically){
                 Column(Modifier.weight(1f).padding(end=12.dp)){
                     Text("Получать уведомления",style=MaterialTheme.typography.bodyLarge)
                     Text("Сообщения, отклики и просмотры резюме на этом устройстве",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                Switch(checked=enabled,onCheckedChange={value->
-                    NotificationPreferences.setEnabled(context,value)
-                    allowed=AppNotifications.allowed(context)
-                    DeviceRegistration.sync(context);refresh++
-                    if(value&&Build.VERSION.SDK_INT>=33&&androidx.core.content.ContextCompat.checkSelfPermission(context,Manifest.permission.POST_NOTIFICATIONS)!=android.content.pm.PackageManager.PERMISSION_GRANTED)permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    else if(value&&!allowed)context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))
-                },modifier=Modifier.semantics{contentDescription="Получать уведомления"})
+                SettingsToggle(enabled)
             }
             if(!enabled)Text("Уведомления отключены. Сообщения и события остаются доступны внутри приложения.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
             if(enabled){

@@ -30,7 +30,7 @@ import com.example.trudomix.ui.loading.AppLoader
         }else viewModel.requestCode()
     }
     Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
-        OutlinedTextField(state.phone,viewModel::editPhone,label={Text("Номер телефона")},placeholder={Text("+7 (999) 123-45-67")},visualTransformation=PhoneVisualTransformation,singleLine=true,enabled=enabled&&!state.busy,keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Phone),shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth())
+        CountryPhoneField(state.phone,viewModel::editPhone,enabled&&!state.busy)
         if(state.config?.test_mode==true)Text(if(state.config?.delivery=="firebase")"Код придёт с сервера через Firebase в уведомлении Trudomix. Это тестовый способ: SMS не отправляется и владение номером не проверяется."else "Временно код приходит в уведомлении Trudomix. SMS не отправляется; владение номером у оператора не проверяется.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
         if(state.configuring)Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){AppLoader(Modifier.size(20.dp));Text("Подключаем доставку кода…",style=MaterialTheme.typography.bodySmall)}
         else if(state.config?.enabled!=true)TextButton(onClick=viewModel::loadConfig){Text("Повторить подключение")}

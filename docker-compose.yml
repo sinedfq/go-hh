@@ -44,6 +44,8 @@ services:
       SMS_GATEWAY_TOKEN: ${SMS_GATEWAY_TOKEN:-}
       ML_SERVICE_URL: ${ML_SERVICE_URL:-http://host.docker.internal:8000}
       YANDEX_GEOCODER_API_KEY: ${YANDEX_GEOCODER_API_KEY:-}
+      PUSH_SERVICE_URL: http://notifications:8082
+      PUSH_SERVICE_TOKEN: ${PUSH_SERVICE_TOKEN:-local-development-push-token-change-in-production}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -51,10 +53,21 @@ services:
     volumes:
       - uploads_data:/app/uploads
     depends_on:
+      notifications:
+        condition: service_healthy
       migrate:
         condition: service_completed_successfully
       uploads-init:
         condition: service_completed_successfully
+    restart: unless-stopped
+
+  notifications:
+    build:
+      context: .
+      target: notifications
+    environment:
+      HTTP_ADDR: :8082
+      PUSH_SERVICE_TOKEN: ${PUSH_SERVICE_TOKEN:-local-development-push-token-change-in-production}
     restart: unless-stopped
 
   uploads-init:
