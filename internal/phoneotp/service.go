@@ -15,6 +15,7 @@ var (
 )
 
 const (
+	CodeLength  = 4
 	CodeTTL     = 5 * time.Minute
 	ReceiptTTL  = 10 * time.Minute
 	ResendAfter = time.Minute
@@ -139,7 +140,7 @@ func (s *Service) RequestBound(ctx context.Context, phone, ip, binding string) (
 	return result, nil
 }
 func (s *Service) Verify(ctx context.Context, id, code string) (Verification, error) {
-	if len(id) != 64 || len(code) != 6 {
+	if len(id) != 64 || len(code) != CodeLength {
 		return Verification{}, ErrInvalid
 	}
 	for _, c := range code {

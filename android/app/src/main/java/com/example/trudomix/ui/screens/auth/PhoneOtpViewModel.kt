@@ -14,7 +14,7 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.UUID
 
-data class PhoneOtpState(val phone:String="+7",val code:String="",val config:PhoneOtpConfig?=null,val configuring:Boolean=true,val busy:Boolean=false,val challenge:String="",val receipt:String="",val retryIn:Int=0,val error:String?=null,val note:String?=null){val verified get()=receipt.isNotBlank()}
+data class PhoneOtpState(val phone:String="+7",val code:String="",val config:PhoneOtpConfig?=null,val configuring:Boolean=true,val verifying:Boolean=false,val confirmed:Boolean=false,val busy:Boolean=false,val challenge:String="",val receipt:String="",val retryIn:Int=0,val error:String?=null,val note:String?=null){val verified get()=receipt.isNotBlank()}
 
 class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     private val api=ApiClient.api
@@ -28,15 +28,18 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     private var expires=0L
     private var receiptExpires=0L
     private var pendingCode:String?=null
-    init{loadConfig()}
+    private var requestId=""
+    init{loadConfig();viewModelScope.launch{OtpNotifications.received.collect{delivery->
+        if(delivery!=null&&delivery.requestId==requestId&&delivery.phone==state.value.phone&&state.value.challenge.isNotBlank()&&!state.value.verifying&&!state.value.confirmed&&!state.value.verified)editCode(delivery.code)
+    }}}
     fun deviceKey()=PhoneOtpDevice.key(app)
     fun loadConfig(){configuration?.cancel();configuration=viewModelScope.launch{
         state.update{it.copy(configuring=true,error=null)}
         try{val config=api.phoneOtpConfig().phoneOtpBody();state.update{it.copy(config=config,configuring=false,error=if(config.enabled)null else "Доставка кодов пока недоступна. Повторите подключение позже")}}
         catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(configuring=false,error=phoneOtpError(e))}}
     }}
-    fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,error=null,note=null)}}
-    fun editCode(code:String){state.update{it.copy(code=code.filter(Char::isDigit).take(6),error=null)}}
+    fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,verifying=false,confirmed=false,error=null,note=null)}}
+    fun editCode(code:String){state.update{it.copy(code=code.filter(Char::isDigit).take(4),error=null)}}
     fun requestCode(){
         if(state.value.busy||otpSecondsRemaining(nextSend,SystemClock.elapsedRealtime())>0||state.value.config?.enabled!=true)return
         val phone=state.value.phone
@@ -44,14 +47,14 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
             state.update{it.copy(busy=true,error=null,receipt="")}
             try{
                 val firebase=state.value.config?.delivery=="firebase"
-                val requestId=if(firebase)UUID.randomUUID().toString()else ""
+                requestId=if(firebase)UUID.randomUUID().toString()else ""
                 val pushToken=if(firebase)withTimeout(15000){FirebaseMessaging.getInstance().token.await()}else ""
                 if(firebase){OtpNotifications.clear(app);OtpNotifications.expect(app,requestId)}
                 val result=api.requestPhoneOtp(PhoneOtpRequest(phone,deviceKey(),pushToken,requestId)).phoneOtpBody()
                 if(phone!=state.value.phone)return@launch
                 pendingCode=result.development_code
                 val now=SystemClock.elapsedRealtime();nextSend=now+result.retry_after*1000L;expires=now+result.expires_in*1000L;receiptExpires=0
-                state.update{it.copy(challenge=result.challenge_id,code="",retryIn=result.retry_after,note=if(firebase)"Код отправлен через Firebase. Откройте уведомление Trudomix"else if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
+                state.update{it.copy(challenge=result.challenge_id,confirmed=false,code=(OtpNotifications.received.value?.takeIf{it.requestId==requestId&&it.phone==phone}?.code?:result.development_code).orEmpty(),retryIn=result.retry_after,note=if(firebase)"Код отправлен через Firebase. Откройте уведомление Trudomix"else if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
                 if(result.development_code!=null&&!OtpNotifications.show(app,phone,result.development_code,result.expires_in))state.update{it.copy(error="Уведомления Android запрещены. Разрешите их и нажмите «Показать уведомление»")}
                 startClock()
             }catch(e:TimeoutCancellationException){state.update{it.copy(error="Firebase не ответил. Проверьте интернет и повторите получение кода")}}
@@ -62,22 +65,27 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     fun showAgain(){val code=pendingCode?:return;val remaining=((expires-SystemClock.elapsedRealtime())/1000).toInt();if(remaining>0&&OtpNotifications.show(app,state.value.phone,code,remaining))state.update{it.copy(error=null,note="Код показан в уведомлении Trudomix")}}
     fun verify(){
         val current=state.value
-        if(current.busy||current.challenge.isBlank()||current.code.length!=6)return
+        if(current.busy||current.verified||current.challenge.isBlank()||current.code.length!=4)return
         operation=viewModelScope.launch{
-            state.update{it.copy(busy=true,error=null)}
+            state.update{it.copy(busy=true,verifying=true,confirmed=false,error=null)}
             try{
+                val started=SystemClock.elapsedRealtime()
                 val result=api.verifyPhoneOtp(PhoneOtpVerify(current.challenge,current.code,deviceKey())).phoneOtpBody()
                 if(!result.verified)error("Номер не подтверждён")
+                expires=0
+                delay((650-(SystemClock.elapsedRealtime()-started)).coerceAtLeast(0))
+                state.update{it.copy(verifying=false,confirmed=true)}
+                delay(450)
                 receiptExpires=SystemClock.elapsedRealtime()+result.expires_in*1000L;pendingCode=null;OtpNotifications.clear(app)
                 state.update{it.copy(receipt=result.verification_receipt,code=current.code,note="Код подтверждён. Можно продолжить")};startClock()
             }catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(error=phoneOtpError(e))}}
-            finally{state.update{it.copy(busy=false)}}
+            finally{state.update{it.copy(busy=false,verifying=false)}}
         }
     }
     private fun startClock(){clock?.cancel();clock=viewModelScope.launch{
         otpClockTicks({maxOf(nextSend,expires,receiptExpires)},{SystemClock.elapsedRealtime()}).collect{now->
             state.update{it.copy(retryIn=otpSecondsRemaining(nextSend,now))}
-            if(receiptExpires>0&&now>=receiptExpires){receiptExpires=0;state.update{it.copy(receipt="",challenge="",code="",error="Подтверждение истекло. Запросите новый код")}}
+            if(receiptExpires>0&&now>=receiptExpires){receiptExpires=0;state.update{it.copy(receipt="",challenge="",code="",confirmed=false,error="Подтверждение истекло. Запросите новый код")}}
             if(expires>0&&now>=expires){expires=0;pendingCode=null;OtpNotifications.clear(app);if(!state.value.verified)state.update{it.copy(challenge="",code="",error="Код истёк. Запросите новый код")}}
         }
     }}

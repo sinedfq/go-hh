@@ -18,20 +18,19 @@ import androidx.compose.ui.unit.dp
     fun login(){if(proof.verified){submitted=proof.receipt;auth.loginPhone(proof.phone,proof.receipt,phone.deviceKey())}}
     LaunchedEffect(proof.receipt){if(proof.verified&&submitted!=proof.receipt)login()}
     BoxWithConstraints(Modifier.fillMaxSize()){
-        val compact=maxHeight<620.dp||maxWidth<360.dp
+        val compact=maxHeight<820.dp||maxWidth<360.dp
         AuthBackdrop(Modifier.fillMaxSize())
-        Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=24.dp),verticalArrangement=Arrangement.spacedBy(if(compact)20.dp else 32.dp,Alignment.CenterVertically),horizontalAlignment=Alignment.CenterHorizontally){
+        Column(Modifier.fillMaxSize().safeDrawingPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal=20.dp,vertical=10.dp),verticalArrangement=Arrangement.spacedBy(if(compact)10.dp else 24.dp,Alignment.CenterVertically),horizontalAlignment=Alignment.CenterHorizontally){
             Box(Modifier.widthIn(max=480.dp).fillMaxWidth()){LoginHero(compact)}
             Surface(Modifier.widthIn(max=480.dp).fillMaxWidth(),shape=MaterialTheme.shapes.extraLarge,border=androidx.compose.foundation.BorderStroke(1.dp,MaterialTheme.colorScheme.outlineVariant),shadowElevation=4.dp){
-                Column(Modifier.padding(24.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){
+                Column(Modifier.padding(18.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
                     Text("С возвращением",style=MaterialTheme.typography.titleLarge,fontWeight=androidx.compose.ui.text.font.FontWeight.Bold)
-                    Text("Войди в свой аккаунт",style=MaterialTheme.typography.bodyMedium,color=MaterialTheme.colorScheme.onSurfaceVariant)
                     AuthMethodPicker(true,{if(!it)onEmail()},state !is AuthUiState.Loading)
-                    Text("В тестовом режиме вход доступен на устройстве регистрации. После смены устройства используйте почту и пароль.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-                    PhoneOtpForm(phone,enabled=state !is AuthUiState.Loading)
+                    Text("Вход с привязанным номером на этом устройстве. На новом устройстве используй почту.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+                    PhoneOtpForm(phone,enabled=state !is AuthUiState.Loading,compact=true)
                     if(state is AuthUiState.Error)Text((state as AuthUiState.Error).message,color=MaterialTheme.colorScheme.error)
                     if(proof.verified)Button(onClick={login()},enabled=state !is AuthUiState.Loading,modifier=Modifier.fillMaxWidth()){Text(if(state is AuthUiState.Loading)"Входим…"else "Войти")}
-                    TextButton(onClick=onRegister,enabled=state !is AuthUiState.Loading){Text("Создать аккаунт")}
+                    FilledTonalButton(onClick=onRegister,enabled=state !is AuthUiState.Loading,modifier=Modifier.fillMaxWidth()){Text("Создать аккаунт")}
                 }
             }
         }

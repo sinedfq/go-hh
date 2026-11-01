@@ -130,7 +130,7 @@ fun TimedStoriesBar(stories:List<TimedCompanyStory>,onRefresh:()->Unit={}){
                     Box(Modifier.fillMaxWidth().height(120.dp).testTag("story-preview-${group.key}"),contentAlignment=Alignment.Center){
                         val preview=group.value.maxBy{it.id}
                         if(preview.media_type=="video")VideoPreview(preview.media_url,null,Modifier.fillMaxSize(),showPlay=false)
-                        else AsyncImage(ApiClient.mediaUrl(preview.media_url),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
+                        else com.example.trudomix.ui.loading.StartupAsyncImage(ApiClient.mediaUrl(preview.media_url),null,Modifier.fillMaxSize(),contentScale=ContentScale.Crop)
                         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha=.22f)))
                         CompanyAvatar(first.company_logo,first.company_name,48.dp)
                     }
@@ -159,7 +159,7 @@ fun SocialPostCard(post:SocialPost,busy:Boolean,onLike:()->Unit,onDelete:()->Uni
             if(post.body.isNotBlank())Text(post.body,style=MaterialTheme.typography.bodyLarge)
             if(post.media_url.isNotBlank())OutlinedCard(onClick={media=true},shape=RoundedCornerShape(16.dp)){
                 if(post.media_type=="video")VideoPreview(post.media_url,"Смотреть видео",Modifier.fillMaxWidth().height(200.dp))
-                else AsyncImage(ApiClient.mediaUrl(post.media_url),"Фото публикации",Modifier.fillMaxWidth().heightIn(min=120.dp,max=320.dp))
+                else com.example.trudomix.ui.loading.StartupAsyncImage(ApiClient.mediaUrl(post.media_url),"Фото публикации",Modifier.fillMaxWidth().heightIn(min=120.dp,max=320.dp))
             }
             HorizontalDivider()
             FlowRow(horizontalArrangement=Arrangement.spacedBy(8.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){

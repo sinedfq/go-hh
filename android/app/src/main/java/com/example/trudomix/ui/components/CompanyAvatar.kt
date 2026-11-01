@@ -14,14 +14,17 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import com.example.trudomix.startup.StartupReadiness
 import com.example.trudomix.data.api.ApiClient
 
 @Composable
 fun CompanyAvatar(logo: String?, name: String, size: Dp = 48.dp) {
     val url=logo?.let(ApiClient::mediaUrl)
+    val ticket=remember(url){Any()}
+    DisposableEffect(ticket){if(!url.isNullOrBlank())StartupReadiness.begin(ticket);onDispose{StartupReadiness.finish(ticket)}}
     var failed by remember(url) { mutableStateOf(false) }
     Box(Modifier.size(size).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),contentAlignment=Alignment.Center) {
-        if(url==null || failed) Icon(Icons.Default.Business,contentDescription="Компания: $name",tint=MaterialTheme.colorScheme.onPrimaryContainer,modifier=Modifier.size(size/2))
-        else AsyncImage(url,contentDescription="Логотип: $name",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Fit,alignment=Alignment.Center,onError={failed=true})
+        if(url.isNullOrBlank() || failed) Icon(Icons.Default.Business,contentDescription="Компания: $name",tint=MaterialTheme.colorScheme.onPrimaryContainer,modifier=Modifier.size(size/2))
+        else AsyncImage(url,contentDescription="Логотип: $name",modifier=Modifier.fillMaxSize(),contentScale=ContentScale.Fit,alignment=Alignment.Center,onSuccess={StartupReadiness.finish(ticket)},onError={failed=true;StartupReadiness.finish(ticket)})
     }
 }
