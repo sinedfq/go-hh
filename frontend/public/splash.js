@@ -122,6 +122,7 @@
         ctx.beginPath();ctx.arc(w/2,h/2,start+(end-start)*smooth(f.wave),0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0
     }
     function draw(t){
+        if(motion.matches)t=DURATION
         last=t
         const f=frame(t,motion.matches,style)
         ctx.clearRect(0,0,w,h)
