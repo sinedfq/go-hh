@@ -14,24 +14,31 @@
 .app :is(.theme-toggle,.notification-bell){border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary)}
 .app :is(input,textarea,select){accent-color:var(--accent)}
 @media(min-width:769px){
- .app>.sidebar,.app>.sidebar:hover{width:224px;height:calc(100dvh - 32px);margin:16px 0 16px 16px;border:1px solid color-mix(in srgb,var(--text-primary) 13%,transparent);border-radius:30px;background:color-mix(in srgb,var(--surface) 72%,transparent);backdrop-filter:blur(16px) saturate(135%);box-shadow:inset 0 1px 0 #ffffff24,0 8px 24px #0000000a;transition:none}
- .app .sidebar-logo{padding:20px 18px;border:0;gap:10px}.app .sidebar-logo img{width:38px;height:38px;object-fit:contain;border-radius:0}
- .app .sidebar-nav{padding:8px 10px;gap:5px;scrollbar-width:thin}
- .app .sidebar .nav-item{justify-content:flex-start;min-height:48px;border:1px solid transparent;border-radius:18px;padding:10px 13px;gap:12px;flex-shrink:0}
- .app .sidebar .nav-label,.app .sidebar .user-profile-label,.app .sidebar .login-text{opacity:1;max-width:160px}
- .app .sidebar .nav-subtitle{display:none}.app .sidebar .nav-title{font-size:.84rem;color:var(--text-secondary)}
- .app .sidebar .nav-icon{color:var(--text-secondary);flex-shrink:0}
- .app .sidebar .nav-item.active{background:color-mix(in srgb,var(--accent) 15%,transparent);border-color:color-mix(in srgb,var(--accent) 23%,transparent);box-shadow:inset 0 1px 0 #ffffff18}
- .app .sidebar .nav-item.active :is(.nav-title,.nav-icon){color:var(--accent)}
- .app .sidebar .nav-item:hover{background:color-mix(in srgb,var(--accent) 9%,transparent)}
- .app .sidebar-footer{padding:14px 12px;border-color:color-mix(in srgb,var(--border) 65%,transparent);align-items:stretch}
- .app .sidebar:not(:hover) .user-profile-btn{justify-content:flex-start}
-}
-@media(min-width:769px) and (max-width:1050px){
- .app>.sidebar,.app>.sidebar:hover{width:76px;margin-left:10px;border-radius:26px}
- .app .sidebar .nav-label,.app .sidebar .user-profile-label,.app .sidebar .login-text{display:none}
- .app .sidebar .nav-item{justify-content:center;padding:10px}.app .sidebar-logo{padding:20px 12px}.app .sidebar-logo h1{display:none}
- .app .sidebar-footer{align-items:center;padding:12px 6px}
+ .app{padding-left:108px;background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--accent) 8%,transparent),transparent 55%),var(--bg)}
+ .app>.sidebar{position:fixed;left:16px;top:16px;bottom:16px;width:76px;height:calc(100dvh - 32px);margin:0;border:1px solid color-mix(in srgb,var(--text-primary) 13%,transparent);border-radius:28px;background:color-mix(in srgb,var(--surface) 67%,transparent);backdrop-filter:blur(18px) saturate(145%);box-shadow:inset 0 1px 0 #ffffff30,0 12px 36px #00000012;transition:width .24s cubic-bezier(.2,.8,.2,1);z-index:80;overflow:hidden}
+ .app>.sidebar:is(:hover,:has(:focus-visible)){width:244px}
+ .app .sidebar .sidebar-logo{display:flex;align-items:center;gap:0;padding:18px;border:0;white-space:nowrap}
+ .app .sidebar .sidebar-logo img{width:38px;height:38px;min-width:38px;object-fit:contain;border-radius:0}
+ .app .sidebar .sidebar-logo h1{display:block;opacity:0;width:0;overflow:hidden;transition:opacity .18s,width .24s,margin .24s;margin:0;color:var(--text-primary)}
+ .app .sidebar:is(:hover,:has(:focus-visible)) .sidebar-logo h1{opacity:1;width:150px;margin-left:12px}
+ .app .sidebar-nav{padding:8px;gap:5px;scrollbar-width:thin}
+ .app .sidebar .nav-item{display:flex;justify-content:flex-start;align-items:center;width:100%;min-height:50px;border:1px solid transparent;border-radius:18px;padding:12px 17px;gap:12px;flex-shrink:0;background:transparent;color:var(--text-secondary);font:inherit;text-align:left;cursor:pointer;overflow:hidden}
+ .app .sidebar :is(.nav-label,.user-profile-label,.login-text){display:flex;opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transform:translateX(-6px);transition:opacity .18s,max-width .24s,transform .24s}
+ .app .sidebar:is(:hover,:has(:focus-visible)) :is(.nav-label,.user-profile-label,.login-text){opacity:1;max-width:164px;transform:none}
+ .app .sidebar .nav-subtitle{display:none}.app .sidebar .nav-title{font-size:.84rem;color:inherit}
+ .app .sidebar .nav-icon{color:inherit;flex:0 0 22px;line-height:0}
+ .app .sidebar .nav-item.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 1px 0 #ffffff24}
+ .app .sidebar .nav-item:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
+ .app .sidebar-footer{padding:12px 8px;border-color:color-mix(in srgb,var(--border) 60%,transparent);align-items:stretch;gap:8px}
+ .app .sidebar .user-profile-btn{display:flex;justify-content:flex-start;gap:12px;padding:8px 10px;width:100%;border-radius:16px}
+ .app .sidebar .user-avatar{flex:0 0 36px;width:36px;height:36px}
+ .app .sidebar .login-btn{display:flex;justify-content:flex-start;gap:16px;width:100%;height:44px;min-height:44px;padding:10px 18px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--accent)}
+ .app .sidebar .login-icon{flex:0 0 18px}
+ .app .sidebar .logout-btn{min-height:40px;font-size:0;border:1px solid transparent;background:transparent;color:var(--danger);border-radius:14px}
+ .app .sidebar .logout-btn::before{content:"⎋";font-size:20px}
+ .app .sidebar:is(:hover,:has(:focus-visible)) .logout-btn{font-size:13px}
+ .app .sidebar:is(:hover,:has(:focus-visible)) .logout-btn::before{content:none}
+ .app :is(.home-hero,.home-resume,.home-job,.social-composer,.social-post,.profile-section,.search-result-card,.company-card,.favorite-card,.workspace-metric){background:color-mix(in srgb,var(--surface) 90%,transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text-primary) 5%,transparent);border-color:color-mix(in srgb,var(--text-primary) 12%,transparent)}
 }
 @media(max-width:768px){.app .top-header{min-height:88px;padding:18px 20px}.app>.sidebar{background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(12px) saturate(130%);border-color:var(--border)}.app .content{padding-top:6px}}
 @supports not (backdrop-filter:blur(1px)){.app>.sidebar{background:var(--surface)}}

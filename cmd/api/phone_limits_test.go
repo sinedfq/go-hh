@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/sinedfq/go-hh/internal/phoneotp"
 	"net/http"
 	"net/http/httptest"
@@ -62,5 +63,42 @@ func TestOTPResetIsScopedAndRequiresAdmin(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &body)
 	if w.Code != 403 {
 		t.Fatal("production allowed all reset")
+	}
+}
+
+func TestOTPResponseUsesActualCooldown(t *testing.T) {
+	s := &Server{}
+	w := httptest.NewRecorder()
+	s.phoneVerificationFailure(w, &phoneotp.RateLimitError{RetryAfter: 3500})
+	if w.Code != 429 || w.Header().Get("Retry-After") != "3500" {
+		t.Fatal("real cooldown was not returned")
+	}
+}
+
+func TestOTPPostgresReportsTheActualHourlyWindow(t *testing.T) {
+	pool := phoneOTPTestPool(t)
+	ctx := context.Background()
+	service, _ := phoneotp.NewAppNotificationService(phoneVerificationStore{pool: pool}, strings.Repeat("s", 32))
+	for i := 0; i < 5; i++ {
+		if _, err := service.Request(ctx, "+79990000001", "ip"); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := pool.Exec(ctx, `UPDATE phone_verification_challenges SET created_at=created_at-INTERVAL '61 seconds'`); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, err := pool.Exec(ctx, `UPDATE phone_verification_challenges SET created_at=NOW()-INTERVAL '2 minutes'`); err != nil {
+		t.Fatal(err)
+	}
+	_, err := service.Request(ctx, "+79990000001", "ip")
+	var limit *phoneotp.RateLimitError
+	if !errors.As(err, &limit) || limit.RetryAfter < 3400 || limit.RetryAfter > 3500 {
+		t.Fatal("hourly limit must not claim a 60 second retry", err)
+	}
+	if _, err = phoneotp.ResetLimits(ctx, pool, "", true); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = service.Request(ctx, "+79990000001", "ip"); err != nil {
+		t.Fatal("reset did not reopen sending", err)
 	}
 }

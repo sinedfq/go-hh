@@ -45,9 +45,9 @@ import com.example.trudomix.ui.loading.AppLoader
         if(state.challenge.isNotBlank()){
             OtpCodeField(state.code,viewModel::editCode,if(state.verifying)"Проверяем код…"else if(state.confirmed||state.verified)"Код подтверждён"else if(state.config?.test_mode==true)"Код из уведомления"else "Код из SMS",state.confirmed||state.verified,enabled&&!state.busy,verifying=state.verifying)
             if(!state.verified&&!state.confirmed)Button(onClick=viewModel::verify,enabled=enabled&&!state.busy&&state.code.length==OTP_LENGTH,modifier=Modifier.fillMaxWidth()){Text(if(state.verifying)"Проверяем…"else "Подтвердить код")}
-            if(state.config?.test_mode==true&&state.config?.delivery!="firebase"&&!state.verified)TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
+            if(state.config?.test_mode==true&&state.canShowCode&&!state.verified)TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
         }
-        state.note?.takeIf{!compact||state.verified}?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=if(state.verified)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}
+        state.note?.takeIf{!compact||state.verified||state.config?.delivery=="firebase"}?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=if(state.verified)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}
         (permissionError?:state.error)?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)}
         if(permissionError!=null||(!compact&&state.config?.test_mode==true&&state.challenge.isNotBlank()))TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))}){Text("Уведомления Android")}
         if(state.busy&&!state.verifying&&!state.confirmed)Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){AppLoader(Modifier.size(24.dp))}

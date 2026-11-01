@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/sinedfq/go-hh/internal/phoneotp"
 	"net"
 	"net/http"
@@ -90,7 +91,7 @@ func (s *Server) phoneVerificationConfig(w http.ResponseWriter, _ *http.Request)
 	if s.phoneVerificationFirebase {
 		delivery = "firebase"
 	}
-	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery, "web_login_enabled": s.phoneVerificationFirebase && s.pushSender != nil})
+	json.NewEncoder(w).Encode(map[string]any{"enabled": s.phoneVerification != nil, "test_mode": s.phoneVerificationTest, "delivery": delivery, "web_login_enabled": s.phoneVerificationFirebase && s.pushSender != nil, "code_length": phoneotp.CodeLength})
 }
 func (s *Server) phoneVerificationRequest(w http.ResponseWriter, r *http.Request) {
 	if s.phoneVerification == nil {
@@ -181,8 +182,13 @@ func (s *Server) phoneVerificationFailure(w http.ResponseWriter, err error) {
 	case errors.Is(err, phoneotp.ErrInvalid):
 		phoneVerificationError(w, 400, "Код неверный, истёк или уже использован. Запросите новый код")
 	case errors.Is(err, phoneotp.ErrRateLimit):
-		w.Header().Set("Retry-After", "60")
-		phoneVerificationError(w, 429, "Слишком много запросов. Подождите перед повторной отправкой")
+		retry := 60
+		var limit *phoneotp.RateLimitError
+		if errors.As(err, &limit) && limit.RetryAfter > 0 {
+			retry = limit.RetryAfter
+		}
+		w.Header().Set("Retry-After", strconv.Itoa(retry))
+		phoneVerificationError(w, 429, fmt.Sprintf("Слишком много запросов. Повторите через %d с", retry))
 	case errors.Is(err, phoneotp.ErrTestPhone):
 		phoneVerificationError(w, 400, "Этот номер не включён в список тестовых номеров")
 	default:

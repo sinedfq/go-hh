@@ -1,6 +1,10 @@
 import { BrandLogo } from '../../contexts/BrandContext'
 import { useState } from 'react'
 
+function NavItem({children,className,onClick}){
+    return <button type="button" className={className} onClick={onClick}>{children}</button>
+}
+
 function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
     const [showMore, setShowMore] = useState(false)
 
@@ -25,9 +29,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                 </div>
 
                 <nav className="sidebar-nav">
-                    <div className={`nav-item ${mode === 'home' ? 'active' : ''}`} onClick={() => handleMode('home')} role="button" tabIndex={0} onKeyDown={event=>{if(event.key==='Enter'||event.key===' ')handleMode('home')}}><span className="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 10 9-7 9 7v11H3Z"/><path d="M9 21v-8h6v8"/></svg></span><div className="nav-label"><span className="nav-title">Главная</span></div></div>
+                    <NavItem className={`nav-item ${mode === 'home' ? 'active' : ''}`} onClick={() => handleMode('home')}><span className="nav-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m3 10 9-7 9 7v11H3Z"/><path d="M9 21v-8h6v8"/></svg></span><div className="nav-label"><span className="nav-title">Главная</span></div></NavItem>
                     {/* ====== ОБЩЕЕ ДЛЯ ВСЕХ РОЛЕЙ ====== */}
-                    <div className={`nav-item desktop-only ${mode === 'browse' ? 'active' : ''}`} onClick={() => handleMode('browse')}>
+                    <NavItem className={`nav-item desktop-only ${mode === 'browse' ? 'active' : ''}`} onClick={() => handleMode('browse')}>
                         <div className="nav-bar"></div>
                         <span className="nav-icon">
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -40,12 +44,12 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                             <span className="nav-title">Просмотр</span>
                             <span className="nav-subtitle">Карта вакансий</span>
                         </div>
-                    </div>
+                    </NavItem>
 
                     {/* ====== КАНДИДАТ (десктоп-пункты) ====== */}
                     {(!user || user.role === 'candidate' || user.role === 'admin') && (
                         <>
-                            <div className={`nav-item ${mode === 'search' ? 'active' : ''}`} onClick={() => handleMode('search')}>
+                            <NavItem className={`nav-item ${mode === 'search' ? 'active' : ''}`} onClick={() => handleMode('search')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -57,9 +61,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Поиск</span>
                                     <span className="nav-subtitle">Фильтры</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item desktop-only ${mode === 'swipe' ? 'active' : ''}`} onClick={() => handleMode('swipe')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'swipe' ? 'active' : ''}`} onClick={() => handleMode('swipe')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -70,9 +74,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Свайпы</span>
                                     <span className="nav-subtitle">Быстрый подбор</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item ${mode === 'favorites' ? 'active' : ''}`} onClick={() => handleMode('favorites')}>
+                            <NavItem className={`nav-item ${mode === 'favorites' ? 'active' : ''}`} onClick={() => handleMode('favorites')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -83,9 +87,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Избранное</span>
                                     <span className="nav-subtitle">Твой выбор</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item ${mode === 'my-applications' ? 'active' : ''}`} onClick={() => handleMode('my-applications')}>
+                            <NavItem className={`nav-item ${mode === 'my-applications' ? 'active' : ''}`} onClick={() => handleMode('my-applications')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -96,12 +100,12 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Мои отклики</span>
                                     <span className="nav-subtitle">Куда откликнулся</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
 
 
                             {/* Только десктоп */}
-                            <div className={`nav-item desktop-only ${mode === 'recommendations' ? 'active' : ''}`} onClick={() => handleMode('recommendations')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'recommendations' ? 'active' : ''}`} onClick={() => handleMode('recommendations')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -112,9 +116,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Рекомендации</span>
                                     <span className="nav-subtitle">AI-подбор</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item desktop-only ${mode === 'companies' ? 'active' : ''}`} onClick={() => handleMode('companies')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'companies' ? 'active' : ''}`} onClick={() => handleMode('companies')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -126,7 +130,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Компании</span>
                                     <span className="nav-subtitle">Работодатели</span>
                                 </div>
-                            </div>
+                            </NavItem>
                         </>
                     )}
 
@@ -135,7 +139,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                     {/* ====== РАБОТОДАТЕЛЬ (десктоп-пункты) ====== */}
                     {isEmployer && (
                         <>
-                            <div className={`nav-item ${mode === 'my-vacancies' ? 'active' : ''}`} onClick={() => handleMode('my-vacancies')}>
+                            <NavItem className={`nav-item ${mode === 'my-vacancies' ? 'active' : ''}`} onClick={() => handleMode('my-vacancies')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -149,9 +153,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Мои вакансии</span>
                                     <span className="nav-subtitle">Управление</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item ${mode === 'create-vacancy' ? 'active' : ''}`} onClick={() => handleMode('create-vacancy')}>
+                            <NavItem className={`nav-item ${mode === 'create-vacancy' ? 'active' : ''}`} onClick={() => handleMode('create-vacancy')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -164,10 +168,10 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Создать</span>
                                     <span className="nav-subtitle">Новую вакансию</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
                             {/* Только десктоп — на мобильном в "Ещё" */}
-                            <div className={`nav-item desktop-only ${mode === 'my-company' ? 'active' : ''}`} onClick={() => handleMode('my-company')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'my-company' ? 'active' : ''}`} onClick={() => handleMode('my-company')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -179,9 +183,9 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Моя компания</span>
                                     <span className="nav-subtitle">Настройки</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
-                            <div className={`nav-item desktop-only ${mode === 'applications' ? 'active' : ''}`} onClick={() => handleMode('applications')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'applications' ? 'active' : ''}`} onClick={() => handleMode('applications')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -192,11 +196,11 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Отклики</span>
                                     <span className="nav-subtitle">Кандидаты</span>
                                 </div>
-                            </div>
+                            </NavItem>
 
 
 
-                            <div className={`nav-item desktop-only ${mode === 'stats' ? 'active' : ''}`} onClick={() => handleMode('stats')}>
+                            <NavItem className={`nav-item desktop-only ${mode === 'stats' ? 'active' : ''}`} onClick={() => handleMode('stats')}>
                                 <div className="nav-bar"></div>
                                 <span className="nav-icon">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -209,7 +213,7 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin }) {
                                     <span className="nav-title">Аналитика</span>
                                     <span className="nav-subtitle">Статистика</span>
                                 </div>
-                            </div>
+                            </NavItem>
                         </>
                     )}
 

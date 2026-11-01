@@ -1,4 +1,4 @@
-param([switch]$RequirePush)
+param([switch]$RequirePush,[switch]$Restart)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot 'otp-local.ps1')
@@ -20,7 +20,24 @@ try {
     if($listener){
         try{$health=Invoke-RestMethod "http://127.0.0.1:$apiPort/health" -TimeoutSec 3}catch{$health=$null}
         if($health.status -eq 'ok'){
-            if($RequirePush -and !$health.push_enabled){throw "API is already running (PID $($listener.OwningProcess)), but does not confirm Firebase readiness. Restart that API with -RequirePush."}
+            if($RequirePush -and !$health.push_enabled -and !$Restart){throw "API is already running (PID $($listener.OwningProcess)), but does not confirm Firebase readiness. Restart that API with -RequirePush."}
+            if($Restart){
+                $running=Get-Process -Id $listener.OwningProcess -ErrorAction Stop
+                $allowedRoot=[IO.Path]::GetFullPath($projectRoot).TrimEnd('\')+'\'
+                if(!$running.Path -or ![IO.Path]::GetFullPath($running.Path).StartsWith($allowedRoot,[StringComparison]::OrdinalIgnoreCase)){throw "Refusing to stop an API outside this workspace (PID $($running.Id)). Stop it manually."}
+                $target=Join-Path $projectRoot ('.cache/trudomix-api-'+[DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff')+'.exe')
+                & go build -o $target ./cmd/api
+                if($LASTEXITCODE -ne 0){throw 'API build failed; the running API has not been stopped'}
+                Stop-Process -Id $running.Id -ErrorAction Stop
+                Wait-Process -Id $running.Id -ErrorAction SilentlyContinue
+                & $target
+                if($LASTEXITCODE -ne 0){throw "API exited with code $LASTEXITCODE"}
+                return
+            }
+            if($env:OTP_MODE -eq 'firebase'){
+                $otp=Invoke-RestMethod "http://127.0.0.1:$apiPort/api/phone-verification/config" -TimeoutSec 3
+                if($otp.code_length -ne 4){throw "An old OTP API is running (PID $($listener.OwningProcess)). Run this script with -RequirePush -Restart to rebuild and restart it."}
+            }
             Write-Host "API is already running on port $apiPort (PID $($listener.OwningProcess)). Reusing the running server; no second instance started."
             return
         }
