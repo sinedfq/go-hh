@@ -100,8 +100,10 @@ fun TrudomixTheme(
     }
 
     val accent by AccentColors.selected.collectAsStateWithLifecycle()
-    val primary=if(darkTheme)accent.dark else accent.light
-    val themed=colorScheme.copy(primary=primary,secondary=primary,onPrimary=if(darkTheme)Color(0xFF11101B)else Color.White,primaryContainer=primary.copy(alpha=1f).let{androidx.compose.ui.graphics.lerp(colorScheme.surface,it,if(darkTheme).20f else .10f)},onPrimaryContainer=colorScheme.onSurface)
+    val custom by AccentColors.custom.collectAsStateWithLifecycle()
+    val primary=custom?.let{com.example.trudomix.data.local.readableAccent(it,darkTheme)}?:if(darkTheme)accent.dark else accent.light
+    val foreground=if(custom!=null)com.example.trudomix.data.local.accentForeground(primary)else if(darkTheme)Color(0xFF11101B)else Color.White
+    val themed=colorScheme.copy(primary=primary,secondary=primary,onPrimary=foreground,onSecondary=if(custom!=null)foreground else colorScheme.onSecondary,primaryContainer=primary.copy(alpha=1f).let{androidx.compose.ui.graphics.lerp(colorScheme.surface,it,if(darkTheme).20f else .10f)},onPrimaryContainer=colorScheme.onSurface)
     MaterialTheme(
         colorScheme = themed,
         typography = Typography,
