@@ -78,7 +78,7 @@ export default function LoginPage({ onClose }) {
                         {error && <p className="auth-error" role="alert">{error}</p>}
                         <button type="submit" className="btn btn-primary auth-submit" disabled={busy}>{busy ? 'Подожди…' : isLogin ? 'Войти' : 'Зарегистрироваться'}<span aria-hidden="true">↗</span></button>
                     </form>}
-                    <button type="button" className="auth-switch" disabled={busy} onClick={switchMode}>{isLogin ? 'Нет аккаунта? Создать' : 'Уже есть аккаунт? Войти'}</button>
+                    <button type="button" className="auth-switch" disabled={busy} onClick={switchMode}>{isLogin ? 'Создать аккаунт' : 'Уже есть аккаунт? Войти'}</button>
                     {onClose && <button type="button" className="auth-guest" disabled={busy} onClick={onClose}>Пока просто посмотреть вакансии</button>}
                 </div>
             </section>

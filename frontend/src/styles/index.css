@@ -11,3 +11,5 @@
 @import './theme-dark.css';
 @import './refresh.css';
 @import './theme-surfaces.css';
+
+@import './platform.css';

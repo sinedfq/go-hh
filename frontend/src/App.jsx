@@ -1,3 +1,4 @@
+import {useStartupVisuals} from './utils/useStartupVisuals'
 import { useApp } from './hooks/useApp'
 const HomePage=lazyScreen(()=>import('./pages/home/HomePage'))
 const SavedSearchesPage=lazyScreen(()=>import('./pages/search/SavedSearchesPage'))
@@ -37,6 +38,7 @@ import './styles/theme-wave.css'
 
 function App() {
     const app = useApp()
+    useStartupVisuals(!app.authLoading)
     const startupLoading=useSyncExternalStore(subscribeStartup,startupSnapshot)
 
 
@@ -91,7 +93,8 @@ function App() {
     if (app.authLoading) return null
 
     return (
-        <StartupBoundary><div className="app">            {app.showLoginModal && (
+        <StartupBoundary><div className="app">
+            {app.showLoginModal && (
                 <LoginPage onClose={() => app.setShowLoginModal(false)} />
             )}
 

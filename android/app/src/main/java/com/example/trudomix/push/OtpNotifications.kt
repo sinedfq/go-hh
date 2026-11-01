@@ -1,6 +1,7 @@
 package com.example.trudomix.push
 
 import android.app.*
+import kotlinx.coroutines.flow.asStateFlow
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
@@ -12,13 +13,19 @@ import com.example.trudomix.R
 import com.example.trudomix.data.local.AppIcons
 
 /** User-requested development codes are separate from optional business-event notifications. */
+data class ReceivedOtp(val requestId:String,val phone:String,val code:String)
 object OtpNotifications{
-    fun expect(context:Context,id:String){context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().putString("request",id).putLong("expires",System.currentTimeMillis()+300000).commit()}
+    private val incoming=kotlinx.coroutines.flow.MutableStateFlow<ReceivedOtp?>(null)
+    val received=incoming.asStateFlow()
+    fun expect(context:Context,id:String){incoming.value=null;context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().putString("request",id).putLong("expires",System.currentTimeMillis()+300000).commit()}
     fun receive(context:Context,data:Map<String,String>){
         val preferences=context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE)
         val expires=data["expires_at"]?.toLongOrNull()?:return
         if(data["request_id"]!=preferences.getString("request",null)||System.currentTimeMillis()>=preferences.getLong("expires",0)||expires*1000<=System.currentTimeMillis())return
-        show(context,data["phone"].orEmpty(),data["code"].orEmpty(),((expires*1000-System.currentTimeMillis())/1000).toInt().coerceIn(1,300))
+        val code=data["code"].orEmpty()
+        if(!code.matches(Regex("[0-9]{4}")))return
+        incoming.value=ReceivedOtp(data["request_id"].orEmpty(),data["phone"].orEmpty(),code)
+        show(context,data["phone"].orEmpty(),code,((expires*1000-System.currentTimeMillis())/1000).toInt().coerceIn(1,300))
     }
     fun receiveWeb(context:Context,data:Map<String,String>){
         val expires=data["expires_at"]?.toLongOrNull()?:return
@@ -35,7 +42,7 @@ object OtpNotifications{
         return NotificationManagerCompat.from(context).areNotificationsEnabled()&&(android.os.Build.VERSION.SDK_INT<33||ContextCompat.checkSelfPermission(context,android.Manifest.permission.POST_NOTIFICATIONS)==android.content.pm.PackageManager.PERMISSION_GRANTED)&&context.getSystemService(NotificationManager::class.java).getNotificationChannel(CHANNEL).importance!=NotificationManager.IMPORTANCE_NONE
     }
     fun show(context:Context,phone:String,code:String,expiresIn:Int,web:Boolean=false):Boolean{
-        if(!allowed(context)||!code.matches(Regex("[0-9]{6}")))return false
+        if(!allowed(context)||!code.matches(Regex("[0-9]{4}")))return false
         val open=PendingIntent.getActivity(context,ID,Intent(context,MainActivity::class.java).setAction("com.example.trudomix.OTP").addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
         val notification=NotificationCompat.Builder(context,CHANNEL).setSmallIcon(R.drawable.ic_notification)
             .setLargeIcon(ContextCompat.getDrawable(context,AppIcons.current(context).resource)?.toBitmap(192,192))
@@ -45,5 +52,5 @@ object OtpNotifications{
             .setCategory(NotificationCompat.CATEGORY_STATUS).setPriority(NotificationCompat.PRIORITY_HIGH).setTimeoutAfter(expiresIn*1000L).build()
         return try{context.getSystemService(NotificationManager::class.java).notify("trudomix-otp",ID,notification);true}catch(_:SecurityException){false}
     }
-    fun clear(context:Context){context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().clear().apply();context.getSystemService(NotificationManager::class.java).cancel("trudomix-otp",ID)}
+    fun clear(context:Context){incoming.value=null;context.getSharedPreferences("otp_delivery",Context.MODE_PRIVATE).edit().clear().apply();context.getSystemService(NotificationManager::class.java).cancel("trudomix-otp",ID)}
 }

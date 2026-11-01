@@ -83,7 +83,7 @@ func TestProductionNeverExposesCodeAndHashesAreDomainSeparated(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if result.DevelopmentCode != "" || !regexp.MustCompile(`^\d{6}$`).MatchString(sender.code) || store.challenge.CodeHash == sender.code || len(store.challenge.CodeHash) != 64 {
+	if result.DevelopmentCode != "" || !regexp.MustCompile(`^\d{4}$`).MatchString(sender.code) || store.challenge.CodeHash == sender.code || len(store.challenge.CodeHash) != 64 {
 		t.Fatal("code confidentiality or format")
 	}
 	if digest(service.secret, "code", result.ChallengeID, sender.code) == digest(service.secret, "receipt", result.ChallengeID, sender.code) {
@@ -150,5 +150,24 @@ func TestHTTPGatewayContractAndRedirectProtection(t *testing.T) {
 	sender, _ = NewHTTPSender(redirect.URL, "test-token", true)
 	if err = sender.SendCode(context.Background(), "+79990000001", "123456", CodeTTL); err == nil || sent {
 		t.Fatal("SMS POST followed redirect")
+	}
+}
+
+func TestFourDigitCodeRejectsOtherLengthsAndNonDigits(t *testing.T) {
+	store := &spyStore{}
+	service, err := New(store, &captureSender{}, strings.Repeat("s", 32), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, code := range []string{"", "123", "12345", "123456", "１２３４", "12a4"} {
+		if _, err := service.Verify(context.Background(), strings.Repeat("a", 64), code); !errors.Is(err, ErrInvalid) {
+			t.Fatalf("accepted invalid code format %q", code)
+		}
+	}
+	for i := 0; i < 100; i++ {
+		code, err := randomCode()
+		if err != nil || !regexp.MustCompile(`^[0-9]{4}$`).MatchString(code) {
+			t.Fatal("invalid generated code format")
+		}
 	}
 }

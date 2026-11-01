@@ -13,13 +13,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.trudomix.push.OtpNotifications
 import com.example.trudomix.ui.loading.AppLoader
 
-@Composable fun PhoneOtpForm(viewModel:PhoneOtpViewModel,enabled:Boolean=true){
+@Composable fun PhoneOtpForm(viewModel:PhoneOtpViewModel,enabled:Boolean=true,compact:Boolean=false){
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context=LocalContext.current
     var permissionError by remember{mutableStateOf<String?>(null)}
@@ -31,25 +32,24 @@ import com.example.trudomix.ui.loading.AppLoader
             else permissionError="В Android отключены уведомления с кодами. Откройте настройки уведомлений"
         }else viewModel.requestCode()
     }
-    Column(verticalArrangement=Arrangement.spacedBy(10.dp)){
+    Column(verticalArrangement=Arrangement.spacedBy(if(compact)6.dp else 10.dp)){
         CountryPhoneField(state.phone,viewModel::editPhone,enabled&&!state.busy)
-        if(state.config?.test_mode==true)Text(if(state.config?.delivery=="firebase")"Код придёт с сервера через Firebase в уведомлении Trudomix. Это тестовый способ: SMS не отправляется и владение номером не проверяется."else "Временно код приходит в уведомлении Trudomix. SMS не отправляется; владение номером у оператора не проверяется.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
-        if(state.configuring)Row(horizontalArrangement=Arrangement.spacedBy(10.dp)){AppLoader(Modifier.size(20.dp));Text("Подключаем доставку кода…",style=MaterialTheme.typography.bodySmall)}
+        if(state.config?.test_mode==true)Text(if(compact)"Тестовая доставка: уведомление Trudomix"else if(state.config?.delivery=="firebase")"Код придёт с сервера через Firebase в уведомлении Trudomix. Это тестовый способ: SMS не отправляется и владение номером не проверяется."else "Временно код приходит в уведомлении Trudomix. SMS не отправляется; владение номером у оператора не проверяется.",style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.onSurfaceVariant)
+        if(state.configuring)Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(10.dp,Alignment.CenterHorizontally),verticalAlignment=Alignment.CenterVertically){AppLoader(Modifier.size(20.dp));Text("Подключаем доставку кода…",style=MaterialTheme.typography.bodySmall)}
         else if(state.config?.enabled!=true)TextButton(onClick=viewModel::loadConfig){Text("Повторить подключение")}
         else if(!state.verified){
             OutlinedButton(onClick={request()},enabled=enabled&&!state.busy&&state.retryIn==0&&state.phone.length>=8,modifier=Modifier.fillMaxWidth()){
                 Text(if(state.retryIn>0)"Повторить через ${state.retryIn} с"else if(state.challenge.isNotBlank())"Запросить новый код"else "Получить код")
             }
-            if(state.challenge.isNotBlank()){
-                OtpCodeField(state.code,viewModel::editCode,if(state.config?.test_mode==true)"Код из уведомления"else "Код из SMS",false,enabled&&!state.busy)
-                Button(onClick=viewModel::verify,enabled=enabled&&!state.busy&&state.code.length==6,modifier=Modifier.fillMaxWidth()){Text("Подтвердить код")}
-                if(state.config?.test_mode==true&&state.config?.delivery!="firebase")TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
-            }
         }
-        if(state.verified)OtpCodeField(state.code,viewModel::editCode,"Код подтверждён",true,false)
-        state.note?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=if(state.verified)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}
+        if(state.challenge.isNotBlank()){
+            OtpCodeField(state.code,viewModel::editCode,if(state.verifying)"Проверяем код…"else if(state.confirmed||state.verified)"Код подтверждён"else if(state.config?.test_mode==true)"Код из уведомления"else "Код из SMS",state.confirmed||state.verified,enabled&&!state.busy,verifying=state.verifying)
+            if(!state.verified&&!state.confirmed)Button(onClick=viewModel::verify,enabled=enabled&&!state.busy&&state.code.length==OTP_LENGTH,modifier=Modifier.fillMaxWidth()){Text(if(state.verifying)"Проверяем…"else "Подтвердить код")}
+            if(state.config?.test_mode==true&&state.config?.delivery!="firebase"&&!state.verified)TextButton(onClick=viewModel::showAgain,enabled=enabled&&!state.busy){Text("Показать уведомление")}
+        }
+        state.note?.takeIf{!compact||state.verified}?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=if(state.verified)MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)}
         (permissionError?:state.error)?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.error)}
-        if(permissionError!=null||(state.config?.test_mode==true&&state.challenge.isNotBlank()))TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))}){Text("Уведомления Android")}
-        if(state.busy)AppLoader(Modifier.size(24.dp))
+        if(permissionError!=null||(!compact&&state.config?.test_mode==true&&state.challenge.isNotBlank()))TextButton(onClick={context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,context.packageName))}){Text("Уведомления Android")}
+        if(state.busy&&!state.verifying&&!state.confirmed)Box(Modifier.fillMaxWidth(),contentAlignment=Alignment.Center){AppLoader(Modifier.size(24.dp))}
     }
 }

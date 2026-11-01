@@ -124,6 +124,7 @@ export function useApp() {
             const res = await axios.get('/api/vacancies')
             const data = Array.isArray(res.data) ? res.data : []
             setVacancies(data)
+            setCities([...new Set(data.map(v=>v.location).filter(Boolean))].sort())
             setCurrentIndex(data.length - 1)
             setLoading(false)
         } catch (err) {
@@ -134,11 +135,6 @@ export function useApp() {
 
     const loadFilterOptions = async () => {
         try {
-            const res = await axios.get('/api/vacancies')
-            const allVacancies = Array.isArray(res.data) ? res.data : []
-            const uniqueCities = [...new Set(allVacancies.map(v => v.location).filter(Boolean))]
-            setCities(uniqueCities.sort())
-
             const skillsRes = await axios.get('/api/skills')
             const skills = Array.isArray(skillsRes.data) ? skillsRes.data : []
             setAllSkills(skills.map(s => s.name).sort())

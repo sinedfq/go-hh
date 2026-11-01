@@ -34,10 +34,10 @@ func TestFirebaseCodeIsDeliveredWithoutLeakingIntoHTTP(t *testing.T) {
 	var response phoneotp.RequestResult
 	json.Unmarshal(w.Body.Bytes(), &response)
 	event := <-sender.deliveries
-	if event.data["type"] != "auth_code" || event.token != "fixture-firebase-device-token" || len(event.data["code"]) != 6 || event.data["expires_at"] == "" {
+	if event.data["type"] != "auth_code" || event.token != "fixture-firebase-device-token" || len(event.data["code"]) != phoneotp.CodeLength || event.data["expires_at"] == "" {
 		t.Fatal("incorrect Firebase payload")
 	}
-	if response.DevelopmentCode != "" || strings.Contains(w.Body.String(), event.data["code"]) {
+	if response.DevelopmentCode != "" || strings.Contains(w.Body.String(), `"development_code"`) || strings.Contains(w.Body.String(), `"code"`) {
 		t.Fatal("code leaked into HTTP response")
 	}
 	// Bind a verified code to an existing signed-in user.

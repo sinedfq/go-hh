@@ -44,11 +44,11 @@ func randomID() (string, error) {
 	return hex.EncodeToString(bytes[:]), nil
 }
 func randomCode() (string, error) {
-	n, err := rand.Int(rand.Reader, big.NewInt(1_000_000))
+	n, err := rand.Int(rand.Reader, big.NewInt(10_000))
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%06d", n.Int64()), nil
+	return fmt.Sprintf("%0*d", CodeLength, n.Int64()), nil
 }
 func digest(secret []byte, parts ...string) string {
 	m := hmac.New(sha256.New, secret)

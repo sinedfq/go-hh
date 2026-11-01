@@ -14,7 +14,7 @@ try{
     const config=await request('/api/phone-verification/config')
     assert.ok(config.enabled&&config.test_mode,'This check requires explicit development OTP mode; no real SMS will be sent')
     const challenge=await request('/api/phone-verification/request',{phone,device_key})
-    assert.match(challenge.development_code,/^\d{6}$/)
+    assert.match(challenge.development_code,/^\d{4}$/)
     const verified=await request('/api/phone-verification/verify',{challenge_id:challenge.challenge_id,code:challenge.development_code,device_key})
     assert.ok(verified.verified&&verified.verification_receipt)
     const replay=await fetch(base+'/api/phone-verification/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({challenge_id:challenge.challenge_id,code:challenge.development_code}),signal:AbortSignal.timeout(12000)})
