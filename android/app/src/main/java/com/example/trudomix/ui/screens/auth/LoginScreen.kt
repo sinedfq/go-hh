@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.AppLoader
 
 import androidx.compose.animation.*
@@ -36,7 +38,7 @@ import com.example.trudomix.ui.screens.settings.ServerConnectionButton
 fun LoginScreen(viewModel: AuthViewModel, onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
     var phoneMode by rememberSaveable{mutableStateOf(false)}
     val phone=androidx.lifecycle.viewmodel.compose.viewModel<PhoneOtpViewModel>(key="login-phone")
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     LaunchedEffect(state) {
         if (state is AuthUiState.Success) { viewModel.resetState(); onLoginSuccess() }
     }

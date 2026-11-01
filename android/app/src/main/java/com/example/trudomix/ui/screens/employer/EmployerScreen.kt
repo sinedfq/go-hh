@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.employer
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,7 +17,7 @@ import kotlinx.coroutines.*
 @Composable
 fun EmployerScreen(onBack:()->Unit,onChat:(Int)->Unit,initialTab:Int=0,embedded:Boolean=false){
     val model:EmployerViewModel=viewModel()
-    val state by model.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
     var tab by remember(initialTab){mutableIntStateOf(initialTab)}
     var editing by remember{mutableStateOf<Vacancy?>(null)}
     var form by remember{mutableStateOf(false)}

@@ -25,16 +25,11 @@ import androidx.compose.ui.platform.LocalDensity
 import dev.chrisbanes.haze.*
 
 @Composable
-private fun Modifier.glass(state:HazeState,shape:Shape,blue:Boolean=false):Modifier {
+private fun Modifier.glass(shape:Shape):Modifier {
     val colors=MaterialTheme.colorScheme
-    val tint=if(blue) colors.primary.copy(alpha=.22f) else colors.surface.copy(alpha=.27f)
-    return shadow(12.dp,shape).clip(shape).hazeChild(state) {
-        backgroundColor=colors.surface
-        tints=listOf(HazeTint(tint))
-        blurRadius=14.dp
-        noiseFactor=.008f
-        fallbackTint=HazeTint(colors.surface.copy(alpha=.96f))
-    }.background(Brush.verticalGradient(listOf(Color.White.copy(alpha=.08f),Color.Transparent)))
+    // Translucent tint preserves the capsule without capturing/blurring the scrolling screen.
+    return shadow(3.dp,shape).clip(shape).background(colors.surface.copy(alpha=.94f))
+        .background(Brush.verticalGradient(listOf(Color.White.copy(alpha=.06f),Color.Transparent)))
         .border(1.dp,Brush.verticalGradient(listOf(Color.White.copy(alpha=.36f),colors.outline.copy(alpha=.45f))),shape)
 }
 
@@ -46,13 +41,12 @@ fun GlassNavigation(state:HazeState,selected:Int,unread:Int,onSelect:(Int)->Unit
     val icons=listOf(Icons.Default.Home,if(employer)Icons.Default.Business else Icons.Default.Swipe,if(employer)Icons.Default.WorkOutline else Icons.Default.Search,Icons.Default.Assignment,Icons.Default.ChatBubbleOutline)
     Row(modifier.fillMaxWidth().navigationBarsPadding().padding(horizontal=12.dp,vertical=12.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)) {
         // This hit target absorbs empty-space taps; children retain their own clicks.
-        Row(Modifier.weight(1f).height(if(showLabels) 72.dp else 60.dp).glass(state,CircleShape).pointerInput(Unit){detectTapGestures{}},verticalAlignment=Alignment.CenterVertically) {
+        Row(Modifier.weight(1f).height(if(showLabels) 72.dp else 60.dp).glass(CircleShape).pointerInput(Unit){detectTapGestures{}},verticalAlignment=Alignment.CenterVertically) {
             labels.forEachIndexed { index,label ->
                 if(index==2){
                     Column(Modifier.weight(1.15f),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
-                        FilledIconButton(onClick={onSelect(0)},modifier=Modifier.size(56.dp),colors=IconButtonDefaults.filledIconButtonColors(containerColor=Color(0xFF3478F6),contentColor=Color.White)){
-                            Icon(icons[index],label,Modifier.size(30.dp))
-                        }
+                        if(employer)FilledIconButton(onClick={onSelect(0)},modifier=Modifier.size(56.dp),colors=IconButtonDefaults.filledIconButtonColors(containerColor=Color(0xFF3478F6),contentColor=Color.White)){Icon(icons[index],label,Modifier.size(30.dp))}
+                        else DotSearchButton(onClick={onSelect(0)},label=label)
                     }
                 }else{
                 val color by animateColorAsState(if(selected==destinations[index]||(selected==5&&index==0)) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,label="tab")

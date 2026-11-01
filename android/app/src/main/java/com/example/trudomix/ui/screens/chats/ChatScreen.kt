@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.chat
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.InlineLoadingState
 
 import com.example.trudomix.ui.loading.AppLoader
@@ -33,7 +35,7 @@ import com.example.trudomix.ui.screens.chats.*
 @Composable
 fun ChatScreen(conversationId:Int,onBackClick:()->Unit,onVacancyClick:(Int)->Unit = {}){
     val model:ConversationViewModel=viewModel(key="conversation-$conversationId")
-    val state by model.state.collectAsState()
+    val state by model.state.collectAsStateWithLifecycle()
     val lifecycle=LocalLifecycleOwner.current.lifecycle
     val context = androidx.compose.ui.platform.LocalContext.current.applicationContext
     LaunchedEffect(conversationId,lifecycle){

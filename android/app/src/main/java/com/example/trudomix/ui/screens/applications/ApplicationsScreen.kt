@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.applications
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -24,9 +26,9 @@ import com.example.trudomix.ui.components.AppSnackbarHost
 
 @Composable
 fun ApplicationsScreen(viewModel: ApplicationsViewModel = viewModel(), onVacancyClick:(Int)->Unit={}, onChatClick:(Int)->Unit={}) {
-    val state by viewModel.uiState.collectAsState()
-    val busy by viewModel.busy.collectAsState()
-    val histories by viewModel.histories.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val busy by viewModel.busy.collectAsStateWithLifecycle()
+    val histories by viewModel.histories.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel,lifecycle) { lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { viewModel.observe() } }
     val snackbar=remember{SnackbarHostState()}

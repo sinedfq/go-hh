@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.ui.semantics.Role
@@ -15,7 +17,7 @@ import com.example.trudomix.push.*
 
 @Composable fun NotificationEventSettings(masterEnabled:Boolean){
     val context=LocalContext.current
-    val values by NotificationPreferences.events.collectAsState()
+    val values by NotificationPreferences.events.collectAsStateWithLifecycle()
     Text("Какие события показывать",style=MaterialTheme.typography.titleSmall)
     NotificationEvent.entries.forEach{event->
         val checked=values[event]?:NotificationPreferences.eventEnabled(context,event)

@@ -93,7 +93,7 @@ fun VacancyFeed(
                     if (state.vacancies.isEmpty()) item(span = { GridItemSpan(maxLineSpan) }) {
                         FeedNotice(if (favorites) "Здесь будут избранные" else "Пока ничего не найдено", if (favorites) "Сохраняй интересные вакансии нажатием на сердечко" else "Попробуй другой запрос или измени фильтры", if (favorites) "К поиску" else "Изменить фильтры", if (favorites) onFavorites else onFilters)
                     }
-                    items(state.vacancies, key = { it.id }) { vacancy ->
+                    items(state.vacancies, key = { it.id }, contentType = { "vacancy" }) { vacancy ->
                         Box(Modifier.animateItem()) { VacancyCard(vacancy, { onVacancy(vacancy.id) }, { onFavorite(vacancy.id, it) }) }
                     }
                     item(span = { GridItemSpan(maxLineSpan) }) {

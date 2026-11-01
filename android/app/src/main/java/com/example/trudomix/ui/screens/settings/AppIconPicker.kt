@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
@@ -16,7 +18,7 @@ import com.example.trudomix.data.local.AppIcons
 @Composable
 fun AppIconPicker() {
     val context = LocalContext.current
-    val appearance by AppIcons.appearance.collectAsState()
+    val appearance by AppIcons.appearance.collectAsStateWithLifecycle()
     val selected = appearance.icon
     val effective = com.example.trudomix.ui.components.selectedBrand()
     var open by remember { mutableStateOf(false) }

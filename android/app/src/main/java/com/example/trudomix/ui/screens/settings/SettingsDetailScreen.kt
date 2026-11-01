@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.settings
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,7 +30,7 @@ import kotlinx.coroutines.*
 
 @Composable fun PhoneAccountScreen(onBack:()->Unit){
     val otp:PhoneOtpViewModel=androidx.lifecycle.viewmodel.compose.viewModel()
-    val state by otp.uiState.collectAsState()
+    val state by otp.uiState.collectAsStateWithLifecycle()
     var account by remember{mutableStateOf<AccountPhone?>(null)}
     var loading by remember{mutableStateOf(true)}
     var saving by remember{mutableStateOf(false)}

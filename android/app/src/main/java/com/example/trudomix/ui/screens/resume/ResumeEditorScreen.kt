@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.resume
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.InlineLoadingState
 
 import com.example.trudomix.ui.loading.AppLoader
@@ -26,11 +28,11 @@ import com.example.trudomix.ui.components.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumeEditorScreen(viewModel: ResumeViewModel,onNavigateBack:()->Unit) {
-    val state by viewModel.uiState.collectAsState()
-    val saving by viewModel.isSaving.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val saving by viewModel.isSaving.collectAsStateWithLifecycle()
     val snackbar=remember{SnackbarHostState()}
     val directory:DirectoryViewModel=viewModel()
-    val options by directory.state.collectAsState()
+    val options by directory.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel){viewModel.messageEvent.collect{snackbar.showSnackbar(it)}}
     Scaffold(topBar={AppScreenHeader(title={Text("Редактирование резюме")},navigationIcon={IconButton(onClick=onNavigateBack){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})},snackbarHost={AppSnackbarHost(snackbar)}) { padding ->
         Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.TopCenter) {

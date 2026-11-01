@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.social
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.InlineLoadingState
 
 import android.content.Context
@@ -88,7 +90,7 @@ fun activeStories(items:List<TimedCompanyStory>,now:Long=System.currentTimeMilli
 @Composable
 fun SocialHomeHeader(state:SocialState,model:SocialViewModel){
     var composePost by rememberSaveable{mutableStateOf(false)};var composeStory by rememberSaveable{mutableStateOf(false)}
-    val identity by SessionIdentity.user.collectAsState()
+    val identity by SessionIdentity.user.collectAsStateWithLifecycle()
     val employer=identity?.role in listOf("employer","admin")
     Column(verticalArrangement=Arrangement.spacedBy(16.dp)){
         Text("Люди и команды",style=MaterialTheme.typography.headlineSmall,fontWeight=FontWeight.Bold)

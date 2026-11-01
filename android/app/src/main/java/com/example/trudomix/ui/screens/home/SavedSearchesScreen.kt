@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.home
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.compose.foundation.layout.*
@@ -39,7 +41,7 @@ class SavedSearchesViewModel:ViewModel(){
 
 @Composable
 fun SavedSearchesScreen(model:SavedSearchesViewModel,onBack:()->Unit,onOpen:(SavedSearchFilters)->Unit){
-    val items by model.searches.collectAsState();val loading by model.loading.collectAsState();val error by model.error.collectAsState();val busy by model.busy.collectAsState()
+    val items by model.searches.collectAsStateWithLifecycle();val loading by model.loading.collectAsStateWithLifecycle();val error by model.error.collectAsStateWithLifecycle();val busy by model.busy.collectAsStateWithLifecycle()
     var deleting by remember{mutableStateOf<SavedSearch?>(null)}
     RefreshContent(loading,model::load){
         LazyColumn(Modifier.fillMaxSize().statusBarsPadding(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=16.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(16.dp)){

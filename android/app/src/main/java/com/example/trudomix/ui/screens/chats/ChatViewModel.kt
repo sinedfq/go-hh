@@ -17,13 +17,15 @@ class ChatViewModel:ViewModel(){
     val uiState=_uiState.asStateFlow()
     var userId by androidx.compose.runtime.mutableIntStateOf(0);private set
     private var loading=false
+    private var loadedAt=0L
+    fun refreshIfStale(){if(android.os.SystemClock.elapsedRealtime()-loadedAt>=10000)loadConversations(silent=true)}
     init{loadConversations()}
     fun loadConversations(silent:Boolean=false){
         if(loading)return
         loading=true
         viewModelScope.launch{
             if(!silent)_uiState.value=ChatListUiState.Loading
-            try{if(userId==0)userId=com.example.trudomix.data.local.SessionIdentity.user.value?.id?:repo.me().id;_uiState.value=ChatListUiState.Success(repo.conversations())}
+            try{if(userId==0)userId=com.example.trudomix.data.local.SessionIdentity.user.value?.id?:repo.me().id;_uiState.value=ChatListUiState.Success(repo.conversations());loadedAt=android.os.SystemClock.elapsedRealtime()}
             catch(e:CancellationException){throw e}
             catch(e:Exception){if(!silent || _uiState.value !is ChatListUiState.Success)_uiState.value=ChatListUiState.Error(com.example.trudomix.data.api.userErrorMessage(e))}
             finally{loading=false}

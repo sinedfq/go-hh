@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.theme
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.os.Build
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -97,7 +99,7 @@ fun TrudomixTheme(
         else -> LightColorScheme
     }
 
-    val accent by AccentColors.selected.collectAsState()
+    val accent by AccentColors.selected.collectAsStateWithLifecycle()
     val primary=if(darkTheme)accent.dark else accent.light
     val themed=colorScheme.copy(primary=primary,secondary=primary,onPrimary=if(darkTheme)Color(0xFF11101B)else Color.White,primaryContainer=primary.copy(alpha=1f).let{androidx.compose.ui.graphics.lerp(colorScheme.surface,it,if(darkTheme).20f else .10f)},onPrimaryContainer=colorScheme.onSurface)
     MaterialTheme(

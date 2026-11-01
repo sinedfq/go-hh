@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.auth
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import android.Manifest
 import android.content.Intent
 import android.os.Build
@@ -18,7 +20,7 @@ import com.example.trudomix.push.OtpNotifications
 import com.example.trudomix.ui.loading.AppLoader
 
 @Composable fun PhoneOtpForm(viewModel:PhoneOtpViewModel,enabled:Boolean=true){
-    val state by viewModel.uiState.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
     val context=LocalContext.current
     var permissionError by remember{mutableStateOf<String?>(null)}
     val permission=rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()){granted->if(granted){permissionError=null;viewModel.requestCode()}else permissionError="Разрешите уведомления Android, чтобы получить код"}

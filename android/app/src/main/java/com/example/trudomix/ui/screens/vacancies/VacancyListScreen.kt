@@ -1,5 +1,7 @@
 package com.example.trudomix.ui.screens.vacancies
 
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 import com.example.trudomix.ui.loading.InlineLoadingState
 
 import androidx.compose.foundation.layout.*
@@ -19,26 +21,26 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class,ExperimentalLayoutApi::class)
 @Composable
 fun VacancyListScreen(viewModel: VacanciesViewModel = viewModel(), onVacancyClick: (Int)->Unit = {},onSavedSearches:()->Unit={},onMap:()->Unit={}) {
-    val state by viewModel.uiState.collectAsState()
-    val query by viewModel.searchQuery.collectAsState()
-    val favorites by viewModel.favoritesOnly.collectAsState()
-    val total by viewModel.total.collectAsState()
-    val loading by viewModel.isRefreshing.collectAsState()
-    val error by viewModel.error.collectAsState()
-    val restoredVersion by viewModel.restoredSearchVersion.collectAsState()
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val query by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val favorites by viewModel.favoritesOnly.collectAsStateWithLifecycle()
+    val total by viewModel.total.collectAsStateWithLifecycle()
+    val loading by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val error by viewModel.error.collectAsStateWithLifecycle()
+    val restoredVersion by viewModel.restoredSearchVersion.collectAsStateWithLifecycle()
     var filters by remember { mutableStateOf(false) }
     var saveDialog by remember{mutableStateOf(false)}
     var name by rememberSaveable{mutableStateOf("")}
     var saveError by remember{mutableStateOf<String?>(null)}
     val searches:SavedSearchesViewModel=viewModel(key="saved-searches")
-    val saving by searches.busy.collectAsState()
+    val saving by searches.busy.collectAsStateWithLifecycle()
     val scope=rememberCoroutineScope()
     VacancyFeed(state,query,favorites,total,loading,error,viewModel::onSearchQueryChanged,viewModel::toggleFavorites,{filters=true},
         {viewModel.loadVacancies(true)},viewModel::loadMore,onVacancyClick,viewModel::toggleFavorite,onSavedSearches,{name=query.ifBlank{viewModel.location.value.ifBlank{"Подходящие вакансии"}};saveError=null;saveDialog=true},restoredVersion,onMap)
     if(saveDialog)AlertDialog(onDismissRequest={if(!saving)saveDialog=false},title={Text("Сохранить поиск")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)){OutlinedTextField(name,{name=it.take(100)},label={Text("Название")},singleLine=true);Text(viewModel.snapshotFilters().summary(),style=MaterialTheme.typography.bodySmall);saveError?.let{Text(it,color=MaterialTheme.colorScheme.error)}}},confirmButton={TextButton(enabled=name.isNotBlank()&&!saving,onClick={scope.launch{try{searches.save(name,viewModel.snapshotFilters());saveDialog=false}catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){saveError=com.example.trudomix.data.api.userErrorMessage(e)}}}){Text(if(saving)"Сохранение…" else "Сохранить")}},dismissButton={TextButton(enabled=!saving,onClick={saveDialog=false}){Text("Отмена")}})
     if(filters) {
         val directory:DirectoryViewModel=viewModel()
-        val options by directory.state.collectAsState()
+        val options by directory.state.collectAsStateWithLifecycle()
         var city by remember{mutableStateOf(viewModel.location.value)}
         var company by remember{mutableStateOf(viewModel.company.value)}
         var experience by remember{mutableStateOf(viewModel.experience.value.split('|').filter{it.isNotBlank()}.toSet())}
