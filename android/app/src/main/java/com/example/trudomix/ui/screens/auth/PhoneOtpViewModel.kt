@@ -14,7 +14,7 @@ import kotlinx.coroutines.tasks.await
 import com.google.firebase.messaging.FirebaseMessaging
 import java.util.UUID
 
-data class PhoneOtpState(val phone:String="+7",val code:String="",val config:PhoneOtpConfig?=null,val configuring:Boolean=true,val verifying:Boolean=false,val confirmed:Boolean=false,val busy:Boolean=false,val challenge:String="",val receipt:String="",val retryIn:Int=0,val error:String?=null,val note:String?=null){val verified get()=receipt.isNotBlank()}
+data class PhoneOtpState(val phone:String="+7",val code:String="",val config:PhoneOtpConfig?=null,val configuring:Boolean=true,val verifying:Boolean=false,val confirmed:Boolean=false,val canShowCode:Boolean=false,val busy:Boolean=false,val challenge:String="",val receipt:String="",val retryIn:Int=0,val error:String?=null,val note:String?=null){val verified get()=receipt.isNotBlank()}
 
 class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     private val api=ApiClient.api
@@ -27,24 +27,31 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     private var nextSend=0L
     private var expires=0L
     private var receiptExpires=0L
+    private var deliveryWait:Job?=null
     private var pendingCode:String?=null
     private var requestId=""
     init{loadConfig();viewModelScope.launch{OtpNotifications.received.collect{delivery->
-        if(delivery!=null&&delivery.requestId==requestId&&delivery.phone==state.value.phone&&state.value.challenge.isNotBlank()&&!state.value.verifying&&!state.value.confirmed&&!state.value.verified)editCode(delivery.code)
+        if(delivery!=null&&delivery.requestId==requestId&&delivery.phone==state.value.phone){
+            pendingCode=delivery.code;deliveryWait?.cancel()
+            if(state.value.challenge.isNotBlank()&&!state.value.verifying&&!state.value.confirmed&&!state.value.verified){
+                editCode(delivery.code)
+                state.update{it.copy(canShowCode=true,note="Код получен через Firebase",error=if(OtpNotifications.allowed(app))null else "Код получен, но уведомления Android отключены. Разрешите их и нажмите «Показать уведомление»")}
+            }
+        }
     }}}
     fun deviceKey()=PhoneOtpDevice.key(app)
     fun loadConfig(){configuration?.cancel();configuration=viewModelScope.launch{
         state.update{it.copy(configuring=true,error=null)}
-        try{val config=api.phoneOtpConfig().phoneOtpBody();state.update{it.copy(config=config,configuring=false,error=if(config.enabled)null else "Доставка кодов пока недоступна. Повторите подключение позже")}}
+        try{val response=api.phoneOtpConfig().phoneOtpBody();val outdated=response.enabled&&response.code_length!=OTP_LENGTH;val config=if(outdated)response.copy(enabled=false)else response;state.update{it.copy(config=config,configuring=false,error=if(outdated)"На сервере запущена старая версия OTP. Перезапустите API и повторите подключение"else if(config.enabled)null else "Доставка кодов пока недоступна. Повторите подключение позже")}}
         catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(configuring=false,error=phoneOtpError(e))}}
     }}
-    fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,verifying=false,confirmed=false,error=null,note=null)}}
+    fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();deliveryWait?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,verifying=false,confirmed=false,canShowCode=false,error=null,note=null)}}
     fun editCode(code:String){state.update{it.copy(code=code.filter(Char::isDigit).take(4),error=null)}}
     fun requestCode(){
         if(state.value.busy||otpSecondsRemaining(nextSend,SystemClock.elapsedRealtime())>0||state.value.config?.enabled!=true)return
         val phone=state.value.phone
         operation=viewModelScope.launch{
-            state.update{it.copy(busy=true,error=null,receipt="")}
+            deliveryWait?.cancel();state.update{it.copy(busy=true,error=null,receipt="",challenge="",code="",canShowCode=false)}
             try{
                 val firebase=state.value.config?.delivery=="firebase"
                 requestId=if(firebase)UUID.randomUUID().toString()else ""
@@ -52,11 +59,12 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
                 if(firebase){OtpNotifications.clear(app);OtpNotifications.expect(app,requestId)}
                 val result=api.requestPhoneOtp(PhoneOtpRequest(phone,deviceKey(),pushToken,requestId)).phoneOtpBody()
                 if(phone!=state.value.phone)return@launch
-                pendingCode=result.development_code
+                pendingCode=OtpNotifications.received.value?.takeIf{it.requestId==requestId&&it.phone==phone}?.code?:result.development_code
                 val now=SystemClock.elapsedRealtime();nextSend=now+result.retry_after*1000L;expires=now+result.expires_in*1000L;receiptExpires=0
-                state.update{it.copy(challenge=result.challenge_id,confirmed=false,code=(OtpNotifications.received.value?.takeIf{it.requestId==requestId&&it.phone==phone}?.code?:result.development_code).orEmpty(),retryIn=result.retry_after,note=if(firebase)"Код отправлен через Firebase. Откройте уведомление Trudomix"else if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
+                state.update{it.copy(challenge=result.challenge_id,confirmed=false,canShowCode=pendingCode!=null,code=(OtpNotifications.received.value?.takeIf{it.requestId==requestId&&it.phone==phone}?.code?:result.development_code).orEmpty(),retryIn=result.retry_after,note=if(firebase)if(pendingCode!=null)"Код получен через Firebase"else "Запрос принят. Ожидаем код через Firebase"else if(result.development_code!=null)"Код отправлен в уведомление Trudomix. Откройте шторку уведомлений"else "Код отправлен по SMS")}
                 if(result.development_code!=null&&!OtpNotifications.show(app,phone,result.development_code,result.expires_in))state.update{it.copy(error="Уведомления Android запрещены. Разрешите их и нажмите «Показать уведомление»")}
                 startClock()
+                if(firebase&&pendingCode==null){val challenge=result.challenge_id;deliveryWait=viewModelScope.launch{delay(12000);if(state.value.challenge==challenge&&pendingCode==null&&!state.value.verified)state.update{it.copy(note="Код пока не получен на устройстве. Проверьте интернет и уведомления; повторная отправка доступна после таймера")}}}
             }catch(e:TimeoutCancellationException){state.update{it.copy(error="Firebase не ответил. Проверьте интернет и повторите получение кода")}}
             catch(e:CancellationException){throw e}catch(e:Exception){if(e is PhoneOtpException&&e.retryAfter>0){nextSend=SystemClock.elapsedRealtime()+e.retryAfter*1000L;startClock()};state.update{it.copy(error=phoneOtpError(e))}}
             finally{state.update{it.copy(busy=false)}}
@@ -76,8 +84,8 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
                 delay((650-(SystemClock.elapsedRealtime()-started)).coerceAtLeast(0))
                 state.update{it.copy(verifying=false,confirmed=true)}
                 delay(450)
-                receiptExpires=SystemClock.elapsedRealtime()+result.expires_in*1000L;pendingCode=null;OtpNotifications.clear(app)
-                state.update{it.copy(receipt=result.verification_receipt,code=current.code,note="Код подтверждён. Можно продолжить")};startClock()
+                receiptExpires=SystemClock.elapsedRealtime()+result.expires_in*1000L;pendingCode=null;deliveryWait?.cancel();OtpNotifications.clear(app)
+                state.update{it.copy(receipt=result.verification_receipt,code=current.code,canShowCode=false,note="Код подтверждён. Можно продолжить")};startClock()
             }catch(e:CancellationException){throw e}catch(e:Exception){state.update{it.copy(error=phoneOtpError(e))}}
             finally{state.update{it.copy(busy=false,verifying=false)}}
         }

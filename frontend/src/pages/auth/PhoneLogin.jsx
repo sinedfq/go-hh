@@ -4,7 +4,7 @@ import {useAuth} from '../../contexts/AuthContext'
 import {browserPhoneKey} from '../../utils/phone'
 import CountryPhoneInput from './CountryPhoneInput'
 import AppLoader from '../../components/common/AppLoader'
-import {otpDigits,OTP_LENGTH} from '../../utils/otp'
+import {otpDigits,OTP_LENGTH,otpRetryAfter} from '../../utils/otp'
 import {userError} from '../../utils/userError'
 
 export default function PhoneLogin({onSuccess,onBusy}){
@@ -27,7 +27,7 @@ export default function PhoneLogin({onSuccess,onBusy}){
         if(busy||retry)return
         setBusy(true);setError('');setReceipt('')
         try{const {data}=await axios.post('/api/auth/phone/web/request',{phone,device_key:deviceKey});setChallenge({...data,expiresAt:Date.now()+data.expires_in*1000});setCode('');setRetryAt(Date.now()+data.retry_after*1000);setNow(Date.now());requestAnimationFrame(()=>codeField.current?.focus({preventScroll:true}))}
-        catch(e){setError(userError(e));if(e.response?.status===429){setRetryAt(Date.now()+60000);setNow(Date.now())}}finally{setBusy(false)}
+        catch(e){setError(userError(e));if(e.response?.status===429){setRetryAt(Date.now()+otpRetryAfter(e.response?.headers?.["retry-after"])*1000);setNow(Date.now())}}finally{setBusy(false)}
     }
     async function submit(event){
         event.preventDefault();if(busy||expired||code.length!==OTP_LENGTH)return

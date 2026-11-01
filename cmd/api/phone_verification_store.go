@@ -28,18 +28,29 @@ func (s phoneVerificationStore) Reserve(ctx context.Context, c phoneotp.Challeng
 		}
 	}
 	var phoneCount, ipCount int
-	var latest *time.Time
-	err = tx.QueryRow(ctx, `SELECT count(*),max(created_at) FROM phone_verification_challenges WHERE phone=$1 AND created_at>$2`, c.Phone, c.CreatedAt.Add(-time.Hour)).Scan(&phoneCount, &latest)
+	var latest, oldestPhone, oldestIP *time.Time
+	err = tx.QueryRow(ctx, `SELECT count(*),max(created_at),min(created_at) FROM phone_verification_challenges WHERE phone=$1 AND created_at>$2`, c.Phone, c.CreatedAt.Add(-time.Hour)).Scan(&phoneCount, &latest, &oldestPhone)
 	if err != nil {
 		return err
 	}
-	err = tx.QueryRow(ctx, `SELECT count(*) FROM phone_verification_challenges WHERE ip_hash=$1 AND created_at>$2`, c.IPHash, c.CreatedAt.Add(-time.Hour)).Scan(&ipCount)
+	err = tx.QueryRow(ctx, `SELECT count(*),min(created_at) FROM phone_verification_challenges WHERE ip_hash=$1 AND created_at>$2`, c.IPHash, c.CreatedAt.Add(-time.Hour)).Scan(&ipCount, &oldestIP)
 	if err != nil {
 		return err
 	}
-	if phoneCount >= 5 || ipCount >= 30 || (latest != nil && c.CreatedAt.Sub(*latest) < phoneotp.ResendAfter) {
-		return phoneotp.ErrRateLimit
+	retryAt := c.CreatedAt
+	if latest != nil && latest.Add(phoneotp.ResendAfter).After(retryAt) {
+		retryAt = latest.Add(phoneotp.ResendAfter)
 	}
+	if phoneCount >= 5 && oldestPhone != nil && oldestPhone.Add(time.Hour).After(retryAt) {
+		retryAt = oldestPhone.Add(time.Hour)
+	}
+	if ipCount >= 30 && oldestIP != nil && oldestIP.Add(time.Hour).After(retryAt) {
+		retryAt = oldestIP.Add(time.Hour)
+	}
+	if retryAt.After(c.CreatedAt) {
+		return &phoneotp.RateLimitError{RetryAfter: int((retryAt.Sub(c.CreatedAt) + time.Second - 1) / time.Second)}
+	}
+
 	if _, err = tx.Exec(ctx, `UPDATE phone_verification_challenges SET consumed_at=$2 WHERE phone=$1 AND verified_at IS NULL AND consumed_at IS NULL`, c.Phone, c.CreatedAt); err != nil {
 		return err
 	}

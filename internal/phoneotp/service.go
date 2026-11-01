@@ -14,6 +14,12 @@ var (
 	ErrDelivery  = errors.New("SMS delivery unavailable")
 )
 
+// RateLimitError carries the real cooldown for both clients, preserving errors.Is.
+type RateLimitError struct{ RetryAfter int }
+
+func (e *RateLimitError) Error() string { return ErrRateLimit.Error() }
+func (e *RateLimitError) Unwrap() error { return ErrRateLimit }
+
 const (
 	CodeLength  = 4
 	CodeTTL     = 5 * time.Minute
