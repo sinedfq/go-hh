@@ -24,12 +24,19 @@ class OtpPresentationTest{
   compose.mainClock.advanceTimeBy(350)
   compose.runOnUiThread{checking=false;verified=true}
   compose.mainClock.autoAdvance=true
-  compose.onNodeWithText("0").assertExists()
+  compose.onNodeWithContentDescription("Одноразовый код").assertTextEquals("0123").assertIsNotEnabled()
+  shot("otp-four-success.png")
   compose.runOnIdle{assertEquals("0123",code)}
  }
  @Test fun loginActionsAreVisibleWithoutScrolling(){
   compose.setContent{TrudomixTheme{LoginContent(AuthUiState.Idle,{_,_->},{},onPhoneLogin={})}}
   compose.onNodeWithText("Войти").assertIsDisplayed()
   compose.onNodeWithText("Создать аккаунт").assertIsDisplayed()
+  shot("compact-login14.png")
+ }
+ private fun shot(name:String){
+  val bitmap=androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+  java.io.File(compose.activity.getExternalFilesDir(null),name).outputStream().use{bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG,100,it)}
+  bitmap.recycle()
  }
 }
