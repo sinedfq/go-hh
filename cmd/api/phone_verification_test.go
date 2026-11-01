@@ -119,9 +119,9 @@ func TestPhoneVerificationPostgresConcurrentAttemptsAndReceipts(t *testing.T) {
 	}
 	results := make(chan error, 12)
 	var group sync.WaitGroup
-	wrong := "000000"
+	wrong := strings.Repeat("0", phoneotp.CodeLength)
 	if request.DevelopmentCode == wrong {
-		wrong = "111111"
+		wrong = strings.Repeat("1", phoneotp.CodeLength)
 	}
 	for i := 0; i < 12; i++ {
 		group.Add(1)
