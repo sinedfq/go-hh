@@ -48,16 +48,12 @@ export default function LoginPage({ onClose }) {
     return <ModalPortal>
         <div className="auth-overlay">
             <section className="auth-dialog" role="dialog" aria-modal="true" aria-labelledby="auth-title" onKeyDown={onKeyDown} ref={dialog}>
-                <aside className="auth-story">
+                <header className="auth-brand">
                     <BrandLogo alt="Trudomix" className="auth-logo" />
-                    <span className="eyebrow">TRUDOMIX / КАРЬЕРА</span>
-                    <h1>Твоя следующая<br />команда — здесь.</h1>
-                    <p>Находи работу по своим правилам. Знакомься с людьми, с которыми хочется делать больше.</p>
-                    <div className="auth-story-tags"><span>Вакансии</span><span>Отклики</span><span>Общение</span></div>
-                </aside>
+                    <div><strong>ТРУДОМИКС</strong><span>Люди. Работа. Возможности.</span></div>
+                </header>
                 <div className="auth-form-panel">
                     {onClose && <button type="button" className="auth-close" aria-label="Закрыть вход" onClick={onClose} disabled={busy}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg></button>}
-                    <span className="eyebrow">НАЧНИ СВОЮ ИСТОРИЮ</span>
                     <h2 id="auth-title">{isLogin ? 'С возвращением' : 'Создать аккаунт'}</h2>
                     <p className="auth-caption">{isLogin ? 'Войди, чтобы продолжить свой путь.' : 'Один профиль — новые возможности.'}</p>
                     {isLogin&&<div className={`auth-methods ${method==='phone'?'by-phone':''}`} role="tablist" aria-label="Способ входа">

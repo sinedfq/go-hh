@@ -50,25 +50,8 @@ fun LoginScreen(viewModel: AuthViewModel, onLoginSuccess: () -> Unit, onNavigate
 
 @Composable
 fun LoginContent(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit = {},onPhoneLogin:(()->Unit)?=null) {
-    var appeared by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { appeared = true }
-    val appearance by animateFloatAsState(if (appeared) 1f else 0f, tween(600, easing = FastOutSlowInEasing), label = "login-entry")
-    val colors = MaterialTheme.colorScheme
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val wide = maxWidth >= 840.dp && LocalDensity.current.fontScale < 1.4f
-        val compact = maxHeight < 820.dp || maxWidth < 360.dp
-        AuthBackdrop(Modifier.fillMaxSize())
-        Box(Modifier.fillMaxSize().safeDrawingPadding().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = if (wide) 48.dp else 20.dp, vertical = 10.dp), contentAlignment = Alignment.Center) {
-            val entrance = Modifier.graphicsLayer { alpha = appearance; translationY = (1f - appearance) * 32.dp.toPx() }
-            if (wide) Row(entrance.widthIn(max = 1040.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(64.dp)) {
-                Column(Modifier.weight(1f)) { LoginHero(false) }
-                LoginForm(state, onLogin, onRegister, onServerChanged, Modifier.weight(1f),onPhoneLogin)
-            } else Column(entrance.widthIn(max = 480.dp).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(if (compact) 10.dp else 24.dp)) {
-                LoginHero(compact)
-                LoginForm(state, onLogin, onRegister, onServerChanged,onPhoneLogin=onPhoneLogin)
-                if(!compact)Text("Вакансии · Отклики · Общение", color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
-            }
-        }
+    AuthScaffold(false,onPhoneLogin?.let{callback->{byPhone->if(byPhone)callback()}},state !is AuthUiState.Loading,onRegister){
+        LoginFields(state,onLogin,onServerChanged)
     }
 }
 
@@ -99,7 +82,7 @@ internal fun LoginHero(compact: Boolean) {
 }
 
 @Composable
-private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onRegister: () -> Unit, onServerChanged: () -> Unit, modifier: Modifier = Modifier,onPhoneLogin:(()->Unit)?=null) {
+private fun LoginFields(state:AuthUiState,onLogin:(String,String)->Unit,onServerChanged:()->Unit){
     var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
@@ -107,11 +90,7 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
     val busy = state is AuthUiState.Loading
     val colors = MaterialTheme.colorScheme
     fun submit() { if (!busy) { focus.clearFocus(); onLogin(email.trim(), password) } }
-    Surface(modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), color = colors.surface, contentColor = colors.onSurface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, colors.outlineVariant), shadowElevation = 4.dp) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("С возвращением", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            if(onPhoneLogin!=null)AuthMethodPicker(false,{if(it)onPhoneLogin()},!busy)
+    Column(Modifier.fillMaxWidth(),verticalArrangement=Arrangement.spacedBy(12.dp)){
             OutlinedTextField(email, { email = it }, label = { Text("Почта") }, placeholder={Text("you@example.com")}, leadingIcon = { Icon(Icons.Default.Email, null) }, singleLine = true,
                 enabled = !busy, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next), shape = RoundedCornerShape(16.dp), modifier = Modifier.fillMaxWidth())
             OutlinedTextField(password, { password = it }, label = { Text("Пароль") }, leadingIcon = { Icon(Icons.Default.Lock, null) }, singleLine = true, enabled = !busy,
@@ -127,8 +106,6 @@ private fun LoginForm(state: AuthUiState, onLogin: (String, String) -> Unit, onR
                 if (busy) AppLoader(Modifier.size(22.dp), color = colors.onPrimary, strokeWidth = 2.dp)
                 else { Text("Войти", Modifier.weight(1f), style = MaterialTheme.typography.titleMedium); Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
             }
-            FilledTonalButton(onClick = onRegister, enabled = !busy, modifier = Modifier.fillMaxWidth()) { Text("Создать аккаунт", textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { ServerConnectionButton(onServerChanged) }
-        }
     }
 }
