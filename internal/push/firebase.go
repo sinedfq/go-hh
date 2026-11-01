@@ -3,6 +3,7 @@ package push
 
 import (
 	"context"
+	"errors"
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/messaging"
 	"fmt"
@@ -37,4 +38,6 @@ func notificationMessage(token, title, body string, data map[string]string) *mes
 	return &messaging.Message{Token: token, Data: fields, Android: &messaging.AndroidConfig{Priority: "high"}}
 }
 
-func InvalidToken(err error) bool { return messaging.IsRegistrationTokenNotRegistered(err) }
+func InvalidToken(err error) bool {
+	return errors.Is(err, errInvalidRemoteToken) || messaging.IsRegistrationTokenNotRegistered(err)
+}

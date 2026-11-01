@@ -4,8 +4,12 @@ WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY cmd/api ./cmd/api
+COPY cmd/otp-reset ./cmd/otp-reset
+COPY cmd/notifications ./cmd/notifications
 COPY internal ./internal
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go build -trimpath -o /out/api ./cmd/api
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go build -trimpath -o /out/otp-reset ./cmd/otp-reset
+RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build go build -trimpath -o /out/notifications ./cmd/notifications
 
 FROM build AS goose-build
 ARG GOOSE_VERSION=v3.24.3
@@ -22,8 +26,16 @@ USER app
 ENTRYPOINT ["goose", "-dir", "/app/migrations"]
 CMD ["up"]
 
+FROM runtime AS notifications
+COPY --from=build /out/notifications /usr/local/bin/trudomix-notifications
+USER app
+EXPOSE 8082
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s CMD wget -q -O /dev/null http://127.0.0.1:8082/health || exit 1
+ENTRYPOINT ["trudomix-notifications"]
+
 FROM runtime AS api
 COPY --from=build /out/api /usr/local/bin/trudomix-api
+COPY --from=build /out/otp-reset /usr/local/bin/otp-reset
 COPY --chown=app:app uploads/demo_*.png /app/uploads/
 USER app
 EXPOSE 8080

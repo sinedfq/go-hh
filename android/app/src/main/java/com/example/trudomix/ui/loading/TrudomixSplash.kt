@@ -112,7 +112,7 @@ class SplashViewModel:ViewModel(){val elapsed=mutableFloatStateOf(0f);var animat
     BoxWithConstraints(modifier.fillMaxSize().background(background).then(if(blockInput)Modifier.pointerInput(Unit){awaitPointerEventScope{while(true){awaitPointerEvent().changes.forEach{it.consume()}}}}else Modifier).semantics{liveRegion=LiveRegionMode.Polite;contentDescription="Загрузка Трудомикс";stateDescription=stage}){
         val width=SplashTiming.logoSize(maxWidth.value,maxHeight.value).dp
         val height=width*850f/1000f
-        SlotImpact(time,Modifier.fillMaxSize(),effective)
+        SlotImpact(time,Modifier.fillMaxSize(),effective,dark)
 
         SlotLogo(dark,time,Modifier.align(Alignment.Center).size(width,height),effective)
         AnimatedWordmark(time,foreground,Modifier.align(Alignment.Center).offset(y=height/2+25.dp))

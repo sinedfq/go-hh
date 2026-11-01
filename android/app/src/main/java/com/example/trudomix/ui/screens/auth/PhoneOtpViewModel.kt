@@ -38,7 +38,7 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
     fun editPhone(value:String){val phone=normalizedPhoneInput(value);if(phone==state.value.phone)return;operation?.cancel();clock?.cancel();OtpNotifications.clear(app);pendingCode=null;nextSend=0;expires=0;receiptExpires=0;state.update{it.copy(phone=phone,code="",challenge="",receipt="",retryIn=0,busy=false,error=null,note=null)}}
     fun editCode(code:String){state.update{it.copy(code=code.filter(Char::isDigit).take(6),error=null)}}
     fun requestCode(){
-        if(state.value.busy||state.value.retryIn>0||state.value.config?.enabled!=true)return
+        if(state.value.busy||otpSecondsRemaining(nextSend,SystemClock.elapsedRealtime())>0||state.value.config?.enabled!=true)return
         val phone=state.value.phone
         operation=viewModelScope.launch{
             state.update{it.copy(busy=true,error=null,receipt="")}
@@ -75,13 +75,11 @@ class PhoneOtpViewModel(application:Application):AndroidViewModel(application){
         }
     }
     private fun startClock(){clock?.cancel();clock=viewModelScope.launch{
-        do{
-            val now=SystemClock.elapsedRealtime()
-            state.update{it.copy(retryIn=((nextSend-now+999)/1000).toInt().coerceAtLeast(0))}
+        otpClockTicks({maxOf(nextSend,expires,receiptExpires)},{SystemClock.elapsedRealtime()}).collect{now->
+            state.update{it.copy(retryIn=otpSecondsRemaining(nextSend,now))}
             if(receiptExpires>0&&now>=receiptExpires){receiptExpires=0;state.update{it.copy(receipt="",challenge="",code="",error="Подтверждение истекло. Запросите новый код")}}
             if(expires>0&&now>=expires){expires=0;pendingCode=null;OtpNotifications.clear(app);if(!state.value.verified)state.update{it.copy(challenge="",code="",error="Код истёк. Запросите новый код")}}
-            delay(1000)
-        }while(SystemClock.elapsedRealtime()<maxOf(nextSend,expires,receiptExpires))
+        }
     }}
     override fun onCleared(){OtpNotifications.clear(app);pendingCode=null;super.onCleared()}
 }

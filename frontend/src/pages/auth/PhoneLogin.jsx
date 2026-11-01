@@ -1,7 +1,8 @@
 import {useEffect,useRef,useState} from 'react'
 import axios from 'axios'
 import {useAuth} from '../../contexts/AuthContext'
-import {normalizePhone,formatPhone,browserPhoneKey} from '../../utils/phone'
+import {browserPhoneKey} from '../../utils/phone'
+import CountryPhoneInput from './CountryPhoneInput'
 import {userError} from '../../utils/userError'
 
 export default function PhoneLogin({onSuccess,onBusy}){
@@ -16,12 +17,8 @@ export default function PhoneLogin({onSuccess,onBusy}){
     const retry=Math.max(0,Math.ceil((retryAt-now)/1000))
     const expired=challenge&&now>=challenge.expiresAt
     useEffect(()=>{if(expired){setChallenge(null);setReceipt('');setCode('');setError('Срок подтверждения истёк. Получи новый код')}},[expired])
-    function editPhone(event){
-        const input=event.target,raw=input.value,caret=input.selectionStart??raw.length
-        let next=normalizePhone(raw),ordinal=raw.slice(0,caret).replace(/\D/g,'').length
-        if(event.nativeEvent.inputType==='deleteContentBackward'&&next===phone&&ordinal>0){const digits=phone.slice(1);next='+'+digits.slice(0,ordinal-1)+digits.slice(ordinal);ordinal--}
+    function editPhone(next){
         setPhone(next);setChallenge(null);setReceipt('');setCode('');setError('');setRetryAt(0)
-        requestAnimationFrame(()=>{const value=formatPhone(next);let count=0,position=0;for(;position<value.length;position++){if(/\d/.test(value[position]))count++;if(count>=ordinal){position++;break}};input.setSelectionRange(position,position)})
     }
     async function send(){
         if(busy||retry)return
@@ -39,7 +36,7 @@ export default function PhoneLogin({onSuccess,onBusy}){
     }
     return <form className="auth-form auth-phone-form" onSubmit={submit}>
         <label htmlFor="auth-phone">Номер телефона</label>
-        <input id="auth-phone" type="tel" autoComplete="tel" placeholder="+7 (999) 123-45-67" value={formatPhone(phone)} onChange={editPhone} disabled={busy} required/>
+        <CountryPhoneInput value={phone} onChange={editPhone} disabled={busy}/>
         <p className="auth-phone-help">Код придёт через Firebase в приложение Trudomix на телефоне, где ты уже вошёл. Номер должен быть привязан в настройках приложения.</p>
         {!receipt&&<button type="button" className="auth-code-send" disabled={busy||retry>0||phone.length<8} onClick={send}>{retry?`Повторить через ${retry} с`:challenge?'Отправить новый код':'Получить код'}</button>}
         {challenge&&<><label htmlFor="auth-otp">Код из уведомления</label>

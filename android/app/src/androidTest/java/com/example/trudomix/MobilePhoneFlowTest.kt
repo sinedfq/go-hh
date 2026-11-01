@@ -101,7 +101,8 @@ class MobilePhoneFlowTest{
             compose.waitUntil(15000){phase.intValue==3}
             compose.onNodeWithText("Вход по телефону выполнен").assertIsDisplayed()
             compose.runOnIdle{phase.intValue=4}
-            compose.waitUntil(10000){compose.onAllNodesWithText("Привязан номер +79990000001").fetchSemanticsNodes().isNotEmpty()}
+            compose.waitUntil(10000){compose.onAllNodesWithText("+7 (999) 000-00-01").fetchSemanticsNodes().isNotEmpty()}
+            compose.onNodeWithText("Изменить номер").performScrollTo().performClick()
             compose.onNode(hasText("Номер телефона") and hasSetTextAction()).performScrollTo().performTextReplacement("+79990000002")
             compose.waitUntil(10000){compose.onAllNodesWithText("Получить код").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Получить код").performScrollTo().performClick()
@@ -111,7 +112,7 @@ class MobilePhoneFlowTest{
             compose.waitUntil(10000){compose.onAllNodesWithText("Код подтверждён. Можно продолжить").fetchSemanticsNodes().isNotEmpty()}
             compose.onNodeWithText("Привязать номер").performScrollTo().performClick()
             compose.waitUntil(10000){compose.onAllNodesWithText("Номер успешно привязан").fetchSemanticsNodes().isNotEmpty()}
-            compose.onNodeWithText("Привязан номер +79990000002").performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("+7 (999) 000-00-02").performScrollTo().assertIsDisplayed()
             screenshot("linked-phone.png")
             compose.runOnIdle{phase.intValue=5}
             compose.onNodeWithText("Получать уведомления").assertDoesNotExist()
@@ -149,7 +150,7 @@ class MobilePhoneFlowTest{
                 js("document.querySelector('.auth-methods button:last-child').click()")
                 waitFor("!!document.querySelector('#auth-phone')")
                 js("(()=>{const e=document.querySelector('#auth-phone');Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(e,'+79990000002');e.dispatchEvent(new Event('input',{bubbles:true}))})()")
-                waitFor("document.querySelector('#auth-phone').value==='+7 (999) 000-00-02'")
+                waitFor("document.querySelector('#auth-phone').value==='(999) 000-00-02'")
                 runBlocking{withContext(Dispatchers.IO){val c=URL(base.trimEnd('/')+"/test/resend-ready").openConnection() as HttpURLConnection;c.requestMethod="POST";assertEquals(204,c.responseCode);c.disconnect()}}
                 js("document.querySelector('.auth-code-send').click()")
                 waitFor("!!document.querySelector('#auth-otp')")

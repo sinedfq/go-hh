@@ -29,7 +29,11 @@ func TestMobilePhoneFixture(t *testing.T) {
 	s.phoneVerification = service
 	s.phoneVerificationTest = true
 	if os.Getenv("TRUDOMIX_MOBILE_PHONE_TEST_FIREBASE") == "1" {
-		s.pushSender, err = push.New(context.Background(), os.Getenv("FIREBASE_PROJECT_ID"))
+		if endpoint := os.Getenv("TRUDOMIX_MOBILE_PHONE_TEST_PUSH_URL"); endpoint != "" {
+			s.pushSender, err = push.NewRemote(endpoint, os.Getenv("PUSH_SERVICE_TOKEN"))
+		} else {
+			s.pushSender, err = push.New(context.Background(), os.Getenv("FIREBASE_PROJECT_ID"))
+		}
 		if err != nil {
 			t.Fatal(err)
 		}

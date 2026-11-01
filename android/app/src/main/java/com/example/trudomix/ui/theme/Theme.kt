@@ -12,6 +12,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.example.trudomix.data.local.AccentColors
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
@@ -94,8 +97,11 @@ fun TrudomixTheme(
         else -> LightColorScheme
     }
 
+    val accent by AccentColors.selected.collectAsState()
+    val primary=if(darkTheme)accent.dark else accent.light
+    val themed=colorScheme.copy(primary=primary,secondary=primary,onPrimary=if(darkTheme)Color(0xFF11101B)else Color.White,primaryContainer=primary.copy(alpha=1f).let{androidx.compose.ui.graphics.lerp(colorScheme.surface,it,if(darkTheme).20f else .10f)},onPrimaryContainer=colorScheme.onSurface)
     MaterialTheme(
-        colorScheme = colorScheme,
+        colorScheme = themed,
         typography = Typography,
         shapes = AppShapes,
     ) {

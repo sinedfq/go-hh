@@ -222,13 +222,15 @@ fun AppNavGraph() {
                 onNavigateBack = { navController.popBackStack() },
                 onNotifications={navController.navigate("settings/notifications")},
                 onDocuments={navController.navigate("settings/documents")},
-                onPhone={navController.navigate("settings/phone")}
+                onPhone={navController.navigate("settings/phone")},
+                onAppearance={navController.navigate("settings/appearance")}
             )
         }
 
         composable("settings/notifications"){SettingsDetailScreen("Уведомления",{navController.popBackStack()}){NotificationSettings()}}
         composable("settings/documents"){SettingsDetailScreen("Документы",{navController.popBackStack()}){LegalDocuments()}}
         composable("settings/phone"){PhoneAccountScreen{navController.popBackStack()}}
+        composable("settings/appearance"){com.example.trudomix.ui.screens.settings.AppearanceScreen(viewModel()){navController.popBackStack()}}
 
         composable(NavRoutes.LOGS) {
             LogViewerScreen(

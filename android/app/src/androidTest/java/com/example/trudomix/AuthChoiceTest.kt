@@ -14,8 +14,10 @@ class AuthChoiceTest{
         val auth=AuthViewModel()
         compose.setContent{TrudomixTheme{LoginScreen(auth,{}, {})}}
         compose.onNodeWithText("Пароль").assertExists()
+        compose.onNodeWithContentDescription("Trudomix").assertExists()
         compose.onNodeWithText("Телефон").performScrollTo().performClick()
         compose.onNodeWithText("Номер телефона").assertExists()
+        compose.onNodeWithContentDescription("Trudomix").assertExists()
         compose.onNodeWithText("Почта").performScrollTo().performClick()
         compose.onNodeWithText("Пароль").assertExists()
     }

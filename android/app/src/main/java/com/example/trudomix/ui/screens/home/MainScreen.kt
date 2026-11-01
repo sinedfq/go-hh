@@ -29,7 +29,7 @@ fun MainScreen(onLogout:()->Unit={},onVacancyClick:(Int)->Unit={},onNavigateToRe
     val selected by tabs.selectedTab(initialTab).collectAsState()
     val identity by com.example.trudomix.data.local.SessionIdentity.user.collectAsState()
     val employer=identity?.role in listOf("employer","admin")
-    LaunchedEffect(employer){if(!employer&&selected==6||employer&&selected==5)tabs.select(4)}
+    LaunchedEffect(employer){if(!employer&&selected==6||employer&&selected in listOf(5,7))tabs.select(4)}
     var savedSearchReturnTab by rememberSaveable{mutableIntStateOf(4)}
     androidx.activity.compose.BackHandler(enabled=selected==5){tabs.select(savedSearchReturnTab)}
     val tabState=androidx.compose.runtime.saveable.rememberSaveableStateHolder()
@@ -51,13 +51,14 @@ fun MainScreen(onLogout:()->Unit={},onVacancyClick:(Int)->Unit={},onNavigateToRe
             AnimatedContent(selected, transitionSpec = { fadeIn(tween(220)).togetherWith(fadeOut(tween(100))) }, label = "main-tab") { tab ->
                 tabState.SaveableStateProvider(tab) {
                 when(tab) {
-                    0->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,0,true)else VacancyListScreen(viewModel(),onVacancyClick,{savedSearchReturnTab=0;tabs.select(5)})
+                    0->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,0,true)else VacancyListScreen(viewModel(),onVacancyClick,{savedSearchReturnTab=0;tabs.select(5)},onMap)
                     1->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,1,true)else ApplicationsScreen(viewModel(),onVacancyClick,onChatClick)
                     2->ChatListScreen(viewModel(),onChatClick)
                     3->ProfileScreen(viewModel(),onLogout,onNavigateToSettings,onNavigateToLogs,onNavigateToResumeEditor,onEmployer,{tabs.select(1)},{tabs.select(0)})
                     4->DashboardScreen({tabs.select(0)},{savedSearchReturnTab=4;tabs.select(5)},{tabs.select(1)},onNavigateToResumeEditor,onEmployer,onVacancyClick)
                     5->SavedSearchesScreen(viewModel(key="saved-searches"),{tabs.select(savedSearchReturnTab)},{filter->androidx.lifecycle.ViewModelProvider(owner)[VacanciesViewModel::class.java].restoreSearch(filter);tabs.select(0)})
                     6->{val model:com.example.trudomix.ui.screens.employer.EmployerViewModel=viewModel();val companyState by model.state.collectAsState();if(companyState.company.id>0)com.example.trudomix.ui.screens.companies.CompanyScreen(companyState.company.id,{tabs.select(4)},onVacancyClick,148.dp,true)else com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,0,true)}
+                    7->SwipeScreen(onVacancyClick)
                 }
                 }
             }

@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class,ExperimentalLayoutApi::class)
 @Composable
-fun VacancyListScreen(viewModel: VacanciesViewModel = viewModel(), onVacancyClick: (Int)->Unit = {},onSavedSearches:()->Unit={}) {
+fun VacancyListScreen(viewModel: VacanciesViewModel = viewModel(), onVacancyClick: (Int)->Unit = {},onSavedSearches:()->Unit={},onMap:()->Unit={}) {
     val state by viewModel.uiState.collectAsState()
     val query by viewModel.searchQuery.collectAsState()
     val favorites by viewModel.favoritesOnly.collectAsState()
@@ -34,7 +34,7 @@ fun VacancyListScreen(viewModel: VacanciesViewModel = viewModel(), onVacancyClic
     val saving by searches.busy.collectAsState()
     val scope=rememberCoroutineScope()
     VacancyFeed(state,query,favorites,total,loading,error,viewModel::onSearchQueryChanged,viewModel::toggleFavorites,{filters=true},
-        {viewModel.loadVacancies(true)},viewModel::loadMore,onVacancyClick,viewModel::toggleFavorite,onSavedSearches,{name=query.ifBlank{viewModel.location.value.ifBlank{"Подходящие вакансии"}};saveError=null;saveDialog=true},restoredVersion)
+        {viewModel.loadVacancies(true)},viewModel::loadMore,onVacancyClick,viewModel::toggleFavorite,onSavedSearches,{name=query.ifBlank{viewModel.location.value.ifBlank{"Подходящие вакансии"}};saveError=null;saveDialog=true},restoredVersion,onMap)
     if(saveDialog)AlertDialog(onDismissRequest={if(!saving)saveDialog=false},title={Text("Сохранить поиск")},text={Column(verticalArrangement=Arrangement.spacedBy(12.dp)){OutlinedTextField(name,{name=it.take(100)},label={Text("Название")},singleLine=true);Text(viewModel.snapshotFilters().summary(),style=MaterialTheme.typography.bodySmall);saveError?.let{Text(it,color=MaterialTheme.colorScheme.error)}}},confirmButton={TextButton(enabled=name.isNotBlank()&&!saving,onClick={scope.launch{try{searches.save(name,viewModel.snapshotFilters());saveDialog=false}catch(e:kotlinx.coroutines.CancellationException){throw e}catch(e:Exception){saveError=com.example.trudomix.data.api.userErrorMessage(e)}}}){Text(if(saving)"Сохранение…" else "Сохранить")}},dismissButton={TextButton(enabled=!saving,onClick={saveDialog=false}){Text("Отмена")}})
     if(filters) {
         val directory:DirectoryViewModel=viewModel()

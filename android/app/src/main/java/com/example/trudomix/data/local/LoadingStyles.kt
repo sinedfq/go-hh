@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.asStateFlow
 enum class LoadingStyle(val id:String,val title:String,val description:String){
     IMPACT("impact","Контур + импульс","Прорисовка, фиксация и волна по экрану"),
     NEON("neon","Неоновая сборка","Светящиеся линии и электрический разряд"),
-    SHUTTER("shutter","Световые створки","Две световые панели открывают знак");
+    SHUTTER("shutter","Световые створки","Две световые панели открывают знак"),
+    PIXEL("pixel","Пиксельная сборка + глитч","Пиксели и цифровые сдвиги собираются в логотип");
 
     companion object{fun fromId(id:String?)=entries.firstOrNull{it.id==id}?:IMPACT}
 }
