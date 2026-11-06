@@ -46,6 +46,7 @@
 .dock-panel-logout svg{color:inherit}.dock-panel-logout:hover{background:color-mix(in srgb,var(--danger) 7%,transparent)}
 @media(max-width:720px){.bottom-navigation{width:calc(100% - 20px);max-width:560px;bottom:calc(10px + env(safe-area-inset-bottom,0px))}.web-dock{gap:1px;padding:5px;border-radius:22px}.glass-tab{flex:1;height:54px;flex-direction:column;gap:4px;padding:6px 2px;border-radius:14px}.glass-tab-label{font-size:10px}.glass-tab .dock-chevron{display:none}.glass-chat-badge{left:52%}.dock-panel{bottom:calc(90px + env(safe-area-inset-bottom,0px))}}
 @media(max-width:768px){.app .top-header{min-height:88px;padding:18px 20px}.app .content{padding-top:6px}}
+@media(max-width:380px){.dock-panel-links{grid-template-columns:1fr}}
 @media(max-height:480px){.bottom-navigation{bottom:6px}.glass-tab{height:40px;flex-direction:row;gap:6px}.dock-panel{bottom:72px;max-height:calc(100dvh - 90px)}}
 @supports not (backdrop-filter:blur(1px)){.web-dock{background:var(--surface)}}
 @media(prefers-reduced-transparency:reduce){.web-dock{background:var(--surface);backdrop-filter:none}}
