@@ -4,8 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "pretest": "node scripts/source-encoding.mjs",
     "test": "node --test src/utils/*.test.js",
     "dev": "vite",
+    "prebuild": "node scripts/source-encoding.mjs",
     "build": "vite build",
     "lint": "oxlint",
     "preview": "vite preview"
