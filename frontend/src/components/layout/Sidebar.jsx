@@ -1,5 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
-import { BrandLogo } from '../../contexts/BrandContext'
+import { useEffect, useRef, useState } from 'react'
 import ChatButton from '../chat/ChatButton'
 
 const paths = {
@@ -18,86 +17,63 @@ const paths = {
     profile: 'M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
     logout: 'M9 4H4v16h5M10 12h11m-4-4 4 4-4 4',
     chat: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z',
-    left: 'm14 6-6 6 6 6',
-    right: 'm10 6 6 6-6 6',
 }
 function Icon({ name }) {
     return <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} /></svg>
 }
 
 function Sidebar({ mode, onModeChange, user, onLogout, onLogin, onOpenChat, onCloseChat, isChatOpen }) {
-    const rail = useRef(null)
-    const links = useRef(null)
-    const [edges, setEdges] = useState({ start: false, end: false })
+    const [openMenu, setOpenMenu] = useState(null)
+    const dialog = useRef(null)
     const employer = user && ['employer', 'admin'].includes(user.role)
     const candidate = !user || ['candidate', 'admin'].includes(user.role)
-    const groups = [
-        { label: 'Главная', items: [['home', 'Главная', 'home']] },
-        ...(candidate ? [{ label: 'Поиск работы', items: [['search', 'Поиск', 'search'], ['browse', 'Карта', 'map'], ['swipe', 'Свайпы', 'swipe']] },
-            { label: 'Моя карьера', items: [['favorites', 'Избранное', 'favorite'], ['saved-searches', 'Мои поиски', 'saved'], ['recommendations', 'Рекомендации', 'sparkles'], ['companies', 'Компании', 'company'], ['my-applications', 'Мои отклики', 'applications']] }]
-            : [{ label: 'Карта вакансий', items: [['browse', 'Карта', 'map']] }]),
-        ...(employer ? [{ label: 'Работодателю', items: [['my-company', 'Компания', 'company'], ['my-vacancies', 'Вакансии', 'work'], ['create-vacancy', 'Создать', 'plus'], ['applications', 'Отклики', 'applications'], ['stats', 'Аналитика', 'chart']] }] : []),
-    ]
+    const discover = [['browse', '????? ????????', 'map'], ['swipe', '??????', 'swipe'], ['recommendations', '????????????', 'sparkles'], ['companies', '????????', 'company']]
+    const work = [['my-vacancies', '??? ????????', 'work'], ['create-vacancy', '??????? ????????', 'plus'], ['stats', '?????????', 'chart'],
+        ...(candidate ? [['search', '????? ????????', 'search'], ...discover] : [['browse', '????? ????????', 'map']])]
+    const personal = [['profile', '??? ???????', 'profile'], ...(candidate ? [['favorites', '?????????', 'favorite'], ['saved-searches', '??? ??????', 'saved']] : [])]
+    const menuItems = openMenu === 'discover' ? discover : openMenu === 'work' ? work : personal
+    const menuTitle = openMenu === 'discover' ? '?????' : openMenu === 'work' ? '?????? ? ??????????' : '??????'
     useEffect(() => {
-        const element = rail.current
-        const update = () => {
-            const overflow = links.current.scrollWidth > element.parentElement.clientWidth - 4
-            const start = overflow && element.scrollLeft > 2
-            const end = overflow && element.scrollWidth - element.clientWidth - element.scrollLeft > 2
-            setEdges(previous => previous.start === start && previous.end === end ? previous : { start, end })
-        }
-        const observer = new ResizeObserver(update)
-        observer.observe(element)
-        observer.observe(links.current)
-        element.addEventListener('scroll', update, { passive: true })
-        update()
-        return () => { observer.disconnect(); element.removeEventListener('scroll', update) }
-    }, [user?.role, user?.id])
-    useEffect(() => {
-        links.current?.querySelector('[aria-current="page"], [aria-pressed="true"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' })
-    }, [mode, isChatOpen, user?.role])
+        if(openMenu && !dialog.current.open)dialog.current.showModal()
+        else if(!openMenu && dialog.current.open)dialog.current.close()
+    }, [openMenu])
+    useEffect(() => { setOpenMenu(null) }, [mode, isChatOpen, user?.id, user?.role])
     const navigate = destination => {
+        setOpenMenu(null)
         onCloseChat()
         if (!user && !['home', 'search', 'browse', 'companies'].includes(destination)) onLogin()
         else onModeChange(destination)
     }
-    const scroll = direction => rail.current.scrollBy({ left: direction * rail.current.clientWidth * .7,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
-    const overflow = edges.start || edges.end
-    return <div className="bottom-navigation">
-        <nav className="web-dock" aria-label="Основная навигация">
-            <button type="button" className="dock-brand" aria-label="Trudomix — главная" title="Главная Trudomix" onClick={() => navigate('home')}>
-                <BrandLogo width="32" height="32" alt="" /><span>Trudomix</span>
-            </button>
-            <div className={`dock-scroll-region ${overflow ? 'has-overflow' : ''}`}>
-                {overflow && <button type="button" className="dock-scroll-arrow dock-scroll-previous" disabled={!edges.start} aria-label="Предыдущие разделы" onClick={() => scroll(-1)}><Icon name="left" /></button>}
-                <div className="dock-scroll" ref={rail}>
-                    <div className="dock-links" ref={links}>
-                        {groups.map(group => <div className="dock-group" role="group" aria-label={group.label} key={group.label}>
-                            {group.items.map(([destination, label, icon]) => <button key={destination} type="button"
-                                className={`glass-tab ${destination === (employer ? 'create-vacancy' : 'search') ? 'dock-featured' : ''}`}
-                                aria-current={!isChatOpen && mode === destination ? 'page' : undefined}
-                                title={destination === 'recommendations' ? 'Рекомендации для тебя' : label} onClick={() => navigate(destination)}>
-                                <span className="glass-tab-icon"><Icon name={icon} /></span><span className="glass-tab-label">{label}</span>
-                            </button>)}
-                        </div>)}
-                        <div className="dock-group dock-account" role="group" aria-label="Общение и аккаунт">
-                            {user ? <>
-                                <ChatButton currentUser={user} onOpenChatApp={onOpenChat} onCloseChatApp={onCloseChat} isChatOpen={isChatOpen} navigation />
-                                <button type="button" className="glass-tab" aria-current={!isChatOpen && mode === 'profile' ? 'page' : undefined} onClick={() => navigate('profile')}>
-                                    <span className="glass-tab-icon">{user.photo_url ? <img className="dock-avatar" src={user.photo_url} alt="" /> : <Icon name="profile" />}</span><span className="glass-tab-label">Профиль</span>
-                                </button>
-                                <button type="button" className="glass-tab dock-logout" onClick={() => { onCloseChat(); onLogout() }}><span className="glass-tab-icon"><Icon name="logout" /></span><span className="glass-tab-label">Выйти</span></button>
-                            </> : <>
-                                <button type="button" className="glass-tab" onClick={onLogin}><span className="glass-tab-icon"><Icon name="chat" /></span><span className="glass-tab-label">Чаты</span></button>
-                                <button type="button" className="glass-tab dock-sign-in" onClick={onLogin}><span className="glass-tab-icon"><Icon name="profile" /></span><span className="glass-tab-label">Войти</span></button>
-                            </>}
-                        </div>
-                    </div>
-                </div>
-                {overflow && <button type="button" className="dock-scroll-arrow dock-scroll-next" disabled={!edges.end} aria-label="Следующие разделы" onClick={() => scroll(1)}><Icon name="right" /></button>}
-            </div>
-        </nav>
-    </div>
+    const tab = (destination, label, icon) => <button key={destination} type="button" className="glass-tab"
+        aria-current={!isChatOpen && mode === destination ? 'page' : undefined} onClick={() => navigate(destination)}>
+        <Icon name={icon} /><span className="glass-tab-label">{label}</span>
+    </button>
+    const group = (name, label, icon, items) => <button type="button" className="glass-tab dock-menu-trigger"
+        aria-haspopup="dialog" aria-expanded={openMenu === name}
+        data-active={!isChatOpen && items.some(([destination]) => destination === mode) || undefined}
+        onClick={() => setOpenMenu(name)}>
+        {name === 'personal' && user?.photo_url ? <img className="dock-avatar" src={user.photo_url} alt="" /> : <Icon name={icon} />}
+        <span className="glass-tab-label">{label}</span><svg className="dock-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m7 14 5-5 5 5" /></svg>
+    </button>
+    return <>
+        <div className="bottom-navigation">
+            <nav className="web-dock" aria-label="???????? ?????????">
+                {tab('home', '???????', 'home')}
+                {employer ? group('work', '????????', 'work', work) : tab('search', '?????', 'search')}
+                {employer ? tab('my-company', '????????', 'company') : group('discover', '?????', 'company', discover)}
+                {tab(employer ? 'applications' : 'my-applications', '???????', 'applications')}
+                {user ? <ChatButton currentUser={user} onOpenChatApp={onOpenChat} onCloseChatApp={onCloseChat} isChatOpen={isChatOpen} navigation />
+                    : <button type="button" className="glass-tab" onClick={onLogin}><Icon name="chat" /><span className="glass-tab-label">????</span></button>}
+                {user ? group('personal', '??????', 'profile', personal)
+                    : <button type="button" className="glass-tab dock-sign-in" onClick={onLogin}><Icon name="profile" /><span className="glass-tab-label">?????</span></button>}
+            </nav>
+        </div>
+        <dialog ref={dialog} className="dock-panel" aria-labelledby="dock-panel-title" onClose={() => setOpenMenu(null)}
+            onClick={event => { if(event.target === event.currentTarget)setOpenMenu(null) }}>
+            <header><div><span className="dock-panel-caption">??????? TRUDOMIX</span><h2 id="dock-panel-title">{menuTitle}</h2></div><button type="button" className="dock-panel-close" aria-label="??????? ???????" onClick={() => setOpenMenu(null)}>?</button></header>
+            <div className="dock-panel-links">{menuItems.map(([destination, label, icon]) => <button type="button" key={destination} aria-current={mode === destination ? 'page' : undefined} onClick={() => navigate(destination)}><Icon name={icon} /><span>{label}</span></button>)}</div>
+            {openMenu === 'personal' && <button type="button" className="dock-panel-logout" onClick={() => { setOpenMenu(null); onCloseChat(); onLogout() }}><Icon name="logout" />????? ?? ????????</button>}
+        </dialog>
+    </>
 }
 export default Sidebar
