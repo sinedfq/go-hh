@@ -58,6 +58,7 @@ class InitialDataReadinessTest {
         try {
             runBlocking { ApiClient.setServer(server.url("/").toString()); manager.saveToken("readiness-test") }
             SessionIdentity.user.value = null
+            com.example.trudomix.startup.StartupReadiness.usingCachedData.value = false
             instrumentation.runOnMainSync { model = ViewModelProvider(store, ViewModelProvider.NewInstanceFactory())[InitialDataViewModel::class.java] }
             assertTrue("Offscreen image must be requested during preload", imageRequested.await(15, TimeUnit.SECONDS))
             assertTrue("Loader must remain while the image is unavailable", model.loading.value)

@@ -25,7 +25,11 @@ class OfflineSessionTest {
         try {
             ApiClient.setServer(server.url("/").toString())
             manager.saveToken("offline-test-session")
-            server.enqueue(MockResponse().setHeader("Content-Type", "application/json").setBody("{\"id\":9001,\"email\":\"offline@example.test\",\"role\":\"candidate\"}"))
+            server.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest) = if (request.requestUrl?.encodedPath == "/api/me")
+                    MockResponse().setHeader("Content-Type", "application/json").setBody("{\"id\":9001,\"email\":\"offline@example.test\",\"role\":\"candidate\"}")
+                else MockResponse().setResponseCode(404)
+            }
             assertEquals(9001, ApiClient.api.getMe().body()!!.id)
             ApiClient.snapshots.clearWarm()
             server.shutdown()
@@ -33,8 +37,12 @@ class OfflineSessionTest {
             assertTrue(saved.isSuccessful)
             assertEquals(9001, saved.body()!!.id)
             assertEquals("offline-test-session", manager.getToken())
+            // A successful reconnect ends the startup-only offline shortcut.
+            com.example.trudomix.startup.StartupReadiness.usingCachedData.value = false
             replacement = MockWebServer().also { it.start(port) }
-            replacement.enqueue(MockResponse().setResponseCode(401).setBody("expired"))
+            replacement.dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest) = MockResponse().setResponseCode(if(request.requestUrl?.encodedPath == "/api/me")401 else 404)
+            }
             assertEquals(401, ApiClient.api.getMe().code())
             assertNull(manager.getToken())
         } finally {
@@ -42,6 +50,7 @@ class OfflineSessionTest {
             runCatching { server.shutdown() }
             ApiClient.setServer(oldServer)
             if (oldToken != null) manager.saveToken(oldToken) else manager.clearSession()
+            com.example.trudomix.startup.StartupReadiness.usingCachedData.value = false
         }
     }
 
@@ -51,17 +60,20 @@ class OfflineSessionTest {
         val oldToken = manager.getToken()
         val server = MockWebServer(); server.start()
         val releaseResponse = CountDownLatch(1)
+        val meRequested = CountDownLatch(1)
         try {
             ApiClient.setServer(server.url("/").toString())
             manager.saveToken("previous-session")
             server.dispatcher = object : Dispatcher() {
                 override fun dispatch(request: RecordedRequest): MockResponse {
+                    if(request.requestUrl?.encodedPath != "/api/me")return MockResponse().setResponseCode(404)
+                    meRequested.countDown()
                     releaseResponse.await(10, TimeUnit.SECONDS)
                     return MockResponse().setResponseCode(401)
                 }
             }
             val request = async(Dispatchers.IO) { ApiClient.api.getMe() }
-            assertNotNull(server.takeRequest(5, TimeUnit.SECONDS))
+            assertTrue(meRequested.await(5, TimeUnit.SECONDS))
             manager.saveToken("new-session")
             releaseResponse.countDown()
             assertEquals(401, request.await().code())
@@ -71,6 +83,7 @@ class OfflineSessionTest {
             server.shutdown()
             ApiClient.setServer(oldServer)
             if (oldToken != null) manager.saveToken(oldToken) else manager.clearSession()
+            com.example.trudomix.startup.StartupReadiness.usingCachedData.value = false
         }
     }
 }
