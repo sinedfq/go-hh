@@ -27,12 +27,12 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin, onOpenChat, onCl
     const dialog = useRef(null)
     const employer = user && ['employer', 'admin'].includes(user.role)
     const candidate = !user || ['candidate', 'admin'].includes(user.role)
-    const discover = [['browse', '????? ????????', 'map'], ['swipe', '??????', 'swipe'], ['recommendations', '????????????', 'sparkles'], ['companies', '????????', 'company']]
-    const work = [['my-vacancies', '??? ????????', 'work'], ['create-vacancy', '??????? ????????', 'plus'], ['stats', '?????????', 'chart'],
-        ...(candidate ? [['search', '????? ????????', 'search'], ...discover] : [['browse', '????? ????????', 'map']])]
-    const personal = [['profile', '??? ???????', 'profile'], ...(candidate ? [['favorites', '?????????', 'favorite'], ['saved-searches', '??? ??????', 'saved']] : [])]
+    const discover = [['browse', 'Карта вакансий', 'map'], ['swipe', 'Свайпы', 'swipe'], ['recommendations', 'Рекомендации', 'sparkles'], ['companies', 'Компании', 'company']]
+    const work = [['my-vacancies', 'Мои вакансии', 'work'], ['create-vacancy', 'Создать вакансию', 'plus'], ['stats', 'Аналитика', 'chart'],
+        ...(candidate ? [['search', 'Поиск вакансий', 'search'], ...discover] : [['browse', 'Карта вакансий', 'map']])]
+    const personal = [['profile', 'Мой профиль', 'profile'], ...(candidate ? [['favorites', 'Избранное', 'favorite'], ['saved-searches', 'Мои поиски', 'saved']] : [])]
     const menuItems = openMenu === 'discover' ? discover : openMenu === 'work' ? work : personal
-    const menuTitle = openMenu === 'discover' ? '?????' : openMenu === 'work' ? '?????? ? ??????????' : '??????'
+    const menuTitle = openMenu === 'discover' ? 'Обзор' : openMenu === 'work' ? 'Работа с вакансиями' : 'Личное'
     useEffect(() => {
         if(openMenu && !dialog.current.open)dialog.current.showModal()
         else if(!openMenu && dialog.current.open)dialog.current.close()
@@ -57,22 +57,22 @@ function Sidebar({ mode, onModeChange, user, onLogout, onLogin, onOpenChat, onCl
     </button>
     return <>
         <div className="bottom-navigation">
-            <nav className="web-dock" aria-label="???????? ?????????">
-                {tab('home', '???????', 'home')}
-                {employer ? group('work', '????????', 'work', work) : tab('search', '?????', 'search')}
-                {employer ? tab('my-company', '????????', 'company') : group('discover', '?????', 'company', discover)}
-                {tab(employer ? 'applications' : 'my-applications', '???????', 'applications')}
+            <nav className="web-dock" aria-label="Основная навигация">
+                {tab('home', 'Главная', 'home')}
+                {employer ? group('work', 'Вакансии', 'work', work) : tab('search', 'Поиск', 'search')}
+                {employer ? tab('my-company', 'Компания', 'company') : group('discover', 'Обзор', 'company', discover)}
+                {tab(employer ? 'applications' : 'my-applications', 'Отклики', 'applications')}
                 {user ? <ChatButton currentUser={user} onOpenChatApp={onOpenChat} onCloseChatApp={onCloseChat} isChatOpen={isChatOpen} navigation />
-                    : <button type="button" className="glass-tab" onClick={onLogin}><Icon name="chat" /><span className="glass-tab-label">????</span></button>}
-                {user ? group('personal', '??????', 'profile', personal)
-                    : <button type="button" className="glass-tab dock-sign-in" onClick={onLogin}><Icon name="profile" /><span className="glass-tab-label">?????</span></button>}
+                    : <button type="button" className="glass-tab" onClick={onLogin}><Icon name="chat" /><span className="glass-tab-label">Чаты</span></button>}
+                {user ? group('personal', 'Личное', 'profile', personal)
+                    : <button type="button" className="glass-tab dock-sign-in" onClick={onLogin}><Icon name="profile" /><span className="glass-tab-label">Войти</span></button>}
             </nav>
         </div>
         <dialog ref={dialog} className="dock-panel" aria-labelledby="dock-panel-title" onClose={() => setOpenMenu(null)}
             onClick={event => { if(event.target === event.currentTarget)setOpenMenu(null) }}>
-            <header><div><span className="dock-panel-caption">??????? TRUDOMIX</span><h2 id="dock-panel-title">{menuTitle}</h2></div><button type="button" className="dock-panel-close" aria-label="??????? ???????" onClick={() => setOpenMenu(null)}>?</button></header>
+            <header><div><span className="dock-panel-caption">РАЗДЕЛЫ TRUDOMIX</span><h2 id="dock-panel-title">{menuTitle}</h2></div><button type="button" className="dock-panel-close" aria-label="Закрыть разделы" onClick={() => setOpenMenu(null)}>×</button></header>
             <div className="dock-panel-links">{menuItems.map(([destination, label, icon]) => <button type="button" key={destination} aria-current={mode === destination ? 'page' : undefined} onClick={() => navigate(destination)}><Icon name={icon} /><span>{label}</span></button>)}</div>
-            {openMenu === 'personal' && <button type="button" className="dock-panel-logout" onClick={() => { setOpenMenu(null); onCloseChat(); onLogout() }}><Icon name="logout" />????? ?? ????????</button>}
+            {openMenu === 'personal' && <button type="button" className="dock-panel-logout" onClick={() => { setOpenMenu(null); onCloseChat(); onLogout() }}><Icon name="logout" />Выйти из аккаунта</button>}
         </dialog>
     </>
 }
