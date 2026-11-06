@@ -3,7 +3,11 @@ package com.example.trudomix
 import android.app.Application
 import com.example.trudomix.data.api.ApiClient
 
-class TrudomixApp : Application() {
+class TrudomixApp : Application(), coil.ImageLoaderFactory {
+    override fun newImageLoader():coil.ImageLoader=coil.ImageLoader.Builder(this)
+        .memoryCache{coil.memory.MemoryCache.Builder(this).maxSizePercent(.12).build()}
+        .diskCache{coil.disk.DiskCache.Builder().directory(cacheDir.resolve("media-images")).maxSizeBytes(96L*1024*1024).build()}
+        .respectCacheHeaders(false).build()
     override fun onConfigurationChanged(newConfig:android.content.res.Configuration){
         super.onConfigurationChanged(newConfig)
         com.example.trudomix.data.local.AppIcons.initialize(this)

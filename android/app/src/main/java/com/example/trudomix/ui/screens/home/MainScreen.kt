@@ -27,6 +27,14 @@ import kotlinx.coroutines.*
 
 @Composable
 fun MainScreen(onLogout:()->Unit={},onVacancyClick:(Int)->Unit={},onNavigateToResumeEditor:()->Unit={},onNavigateToSettings:()->Unit={},onNavigateToLogs:()->Unit={},onChatClick:(Int)->Unit={},onMap:()->Unit={},initialTab:Int=4,onEmployer:()->Unit={}) {
+    val initial:com.example.trudomix.startup.InitialDataViewModel=viewModel()
+    val preparing by initial.loading.collectAsStateWithLifecycle()
+    if(preparing){com.example.trudomix.ui.loading.TrudomixLoadingScreen();return}
+    val vacancies:VacanciesViewModel=viewModel(factory=remember(initial){object:androidx.lifecycle.ViewModelProvider.Factory{
+        override fun <T:androidx.lifecycle.ViewModel> create(modelClass:Class<T>):T {
+            @Suppress("UNCHECKED_CAST") return VacanciesViewModel(initial.catalog) as T
+        }
+    }})
     val tabs:MainTabsViewModel=viewModel()
     val selected by tabs.selectedTab(initialTab).collectAsStateWithLifecycle()
     val identity by com.example.trudomix.data.local.SessionIdentity.user.collectAsStateWithLifecycle()
@@ -41,7 +49,7 @@ fun MainScreen(onLogout:()->Unit={},onVacancyClick:(Int)->Unit={},onNavigateToRe
             AnimatedContent(selected, transitionSpec = { fadeIn(tween(220)).togetherWith(fadeOut(tween(100))) }, label = "main-tab") { tab ->
                 tabState.SaveableStateProvider(tab) {
                 when(tab) {
-                    0->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,0,true)else VacancyListScreen(viewModel(),onVacancyClick,{savedSearchReturnTab=0;tabs.select(5)},onMap)
+                    0->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,0,true)else VacancyListScreen(vacancies,onVacancyClick,{savedSearchReturnTab=0;tabs.select(5)},onMap)
                     1->if(employer)com.example.trudomix.ui.screens.employer.EmployerScreen({tabs.select(4)},onChatClick,1,true)else ApplicationsScreen(viewModel(),onVacancyClick,onChatClick)
                     2->ChatListScreen(viewModel(),onChatClick)
                     3->ProfileScreen(viewModel(),onLogout,onNavigateToSettings,onNavigateToLogs,onNavigateToResumeEditor,onEmployer,{tabs.select(1)},{tabs.select(0)})

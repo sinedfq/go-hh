@@ -18,7 +18,7 @@ class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
             original
         }
         val response = chain.proceed(request)
-        if (response.code == 401 && token != null) runBlocking { tokenManager.clearSession() }
+        if (response.code == 401 && token != null && !original.url.encodedPath.startsWith("/api/auth/") && !original.url.encodedPath.startsWith("/api/phone-verification/")) runBlocking { tokenManager.clearSession(token) }
         return response
     }
 }

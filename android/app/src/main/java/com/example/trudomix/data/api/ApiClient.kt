@@ -27,8 +27,14 @@ object ApiClient {
     val baseUrl: String get() = serverUrl.toString()
 
     private lateinit var tokenManager: TokenManager
+    lateinit var snapshots: com.example.trudomix.data.local.ResponseSnapshots
+        private set
+    lateinit var applicationContext: Context
+        private set
 
     fun init(context: Context) {
+        applicationContext = context.applicationContext
+        snapshots = com.example.trudomix.data.local.ResponseSnapshots(java.io.File(context.noBackupFilesDir, "offline-responses"))
         tokenManager = TokenManager(context.applicationContext)
         preferences = context.getSharedPreferences("server_connection", Context.MODE_PRIVATE)
         serverUrl = if (BuildConfig.DEBUG) runCatching {
@@ -54,6 +60,10 @@ object ApiClient {
                 chain.proceed(original.newBuilder().url(url).build())
             }
             .addInterceptor(AuthInterceptor(tokenManager))
+            .addInterceptor(OfflineReadInterceptor(snapshots,
+                warming = { com.example.trudomix.startup.StartupReadiness.visible.value || com.example.trudomix.startup.StartupReadiness.preloading.value },
+                offlineStartup = { com.example.trudomix.startup.StartupReadiness.usingCachedData.value },
+                onFallback = { com.example.trudomix.startup.StartupReadiness.useCachedData() }))
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BASIC
             })

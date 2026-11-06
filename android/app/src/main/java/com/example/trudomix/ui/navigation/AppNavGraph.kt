@@ -273,7 +273,7 @@ fun SplashScreen(onAuthCheckComplete: (Boolean) -> Unit) {
         else try {
             val response = ApiClient.api.getMe()
             if (response.isSuccessful) {com.example.trudomix.data.local.SessionIdentity.user.value=response.body();complete(true)}
-            else if (response.code() == 401) { tokenManager.clearSession(); complete(false) }
+            else if (response.code() == 401) { tokenManager.clearSession(token); complete(false) }
             else error = true
         } catch (e: kotlinx.coroutines.CancellationException) { throw e }
         catch (failure: Exception) { android.util.Log.e("TrudomixNavigation","Session startup failed",failure);error = true }

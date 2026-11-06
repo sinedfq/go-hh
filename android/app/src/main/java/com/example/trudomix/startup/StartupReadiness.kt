@@ -27,6 +27,13 @@ object StartupReadiness {
     val busy=MutableStateFlow(false)
     val attempt=MutableStateFlow(0)
     val animationDone=MutableStateFlow(false)
+    val usingCachedData=MutableStateFlow(false)
+    val preloading=MutableStateFlow(false)
+    fun useCachedData(){
+        usingCachedData.value=true
+        connection.value=NetworkIssue(StartupState.OFFLINE,"OFFLINE_CACHE","Сохранённые данные","Сервер недоступен. Показаны данные последней загрузки.")
+        failure.value=null
+    }
     private val pending=mutableSetOf<Any>("session")
     private val calls=mutableSetOf<Call>()
     private val scope=CoroutineScope(SupervisorJob()+Dispatchers.Main.immediate)
@@ -57,7 +64,7 @@ object StartupReadiness {
     fun report(error:Throwable?=null,status:Int?=null){
         val issue=NetworkIssue.from(error,offline(),status?:(error as? ServerCheckException)?.status)
         if(issue.kind=="AUTH")return // Existing session/navigation logic handles authorization.
-        if(visible.value){failure.value=issue;ready.value=false;busy.value=false}else connection.value=issue
+        if(visible.value&&!usingCachedData.value){failure.value=issue;ready.value=false;busy.value=false}else if(!usingCachedData.value)connection.value=issue
     }
     fun retry(){
         if(busy.value||retryJob?.isActive==true)return
@@ -65,6 +72,7 @@ object StartupReadiness {
         retryJob=scope.launch{
             try{
                 ApiClient.checkServer(ApiClient.baseUrl)
+                usingCachedData.value=false
                 if(visible.value){
                     val oldCalls=synchronized(this@StartupReadiness){attempt.value++;val old=calls.toList();calls.clear();pending.clear();pending.add("session");quiet?.cancel();ready.value=false;failure.value=null;old}
                     oldCalls.forEach{it.cancel()};watchdog()
@@ -72,12 +80,12 @@ object StartupReadiness {
             }catch(error:Exception){report(error,(error as? ServerCheckException)?.status);busy.value=false}
         }
     }
-    @Synchronized fun dismiss(){visible.value=false;pending.clear();calls.clear();quiet?.cancel();watchdog?.cancel();connection.value=null;busy.value=false}
+    @Synchronized fun dismiss(){visible.value=false;pending.clear();calls.clear();quiet?.cancel();watchdog?.cancel();if(!usingCachedData.value)connection.value=null;busy.value=false}
     fun listener():EventListener {
         val generation=attempt.value
         return object:EventListener(){
             override fun callStart(call:Call){if(visible.value&&generation==attempt.value){call.timeout().timeout(15,TimeUnit.SECONDS);synchronized(this@StartupReadiness){calls.add(call)};begin(call)}}
-            override fun responseHeadersEnd(call:Call,response:Response){if(generation!=attempt.value)return;if(response.code>=500)report(status=response.code)else if(response.isSuccessful&&!visible.value)connection.value=null}
+            override fun responseHeadersEnd(call:Call,response:Response){if(generation!=attempt.value)return;if(response.code>=500)report(status=response.code)else if(response.isSuccessful&&!visible.value){usingCachedData.value=false;connection.value=null}}
             override fun callEnd(call:Call){synchronized(this@StartupReadiness){calls.remove(call)};if(generation==attempt.value)finish(call)}
             override fun callFailed(call:Call,ioe:IOException){synchronized(this@StartupReadiness){calls.remove(call)};if(generation==attempt.value){if(!call.isCanceled()||ioe is java.io.InterruptedIOException)report(ioe);finish(call)}}
         }
