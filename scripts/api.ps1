@@ -43,6 +43,10 @@ try {
         }
         throw "Port $apiPort is occupied by PID $($listener.OwningProcess). Stop that process or set HTTP_ADDR (for example :8082)."
     }
-    & go run ./cmd/api
+    # Keep the executable in the workspace so -Restart can verify ownership later.
+    $target=Join-Path $projectRoot ('.cache/trudomix-api-'+[DateTime]::UtcNow.ToString('yyyyMMddHHmmssfff')+'.exe')
+    & go build -o $target ./cmd/api
+    if($LASTEXITCODE -ne 0){throw 'API build failed'}
+    & $target
     if ($LASTEXITCODE -ne 0) { throw "API exited with code $LASTEXITCODE" }
 } finally { Pop-Location }
