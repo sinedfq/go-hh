@@ -24,7 +24,7 @@ import androidx.compose.ui.graphics.luminance
 @Composable
 fun RefreshContent(refreshing:Boolean,onRefresh:()->Unit,content:@Composable BoxScope.()->Unit){
     val state=rememberPullToRefreshState()
-    PullToRefreshBox(isRefreshing=refreshing,onRefresh=onRefresh,state=state,modifier=Modifier.fillMaxSize(),indicator={
+    PullToRefreshBox(isRefreshing=refreshing,onRefresh={com.example.trudomix.data.api.ApiClient.snapshots.clearWarm();onRefresh()},state=state,modifier=Modifier.fillMaxSize(),indicator={
         if(refreshing||state.distanceFraction>0f){
             Box(Modifier.align(Alignment.TopCenter).pullToRefreshIndicator(state,refreshing,containerColor=MaterialTheme.colorScheme.surface).semantics{contentDescription=if(refreshing)"Обновление"else "Потяните для обновления"},contentAlignment=Alignment.Center){
                 if(refreshing)AppLoader(Modifier.size(36.dp))

@@ -13,7 +13,7 @@ sealed interface VacancyListUiState {
     data class Success(val vacancies: List<Vacancy>) : VacancyListUiState
     data class Error(val message: String) : VacancyListUiState
 }
-class VacanciesViewModel : ViewModel() {
+class VacanciesViewModel(private val initialCatalog:com.example.trudomix.data.models.VacancySearchResponse?=null) : ViewModel() {
     private val repository = VacancyRepository()
     private val _uiState = MutableStateFlow<VacancyListUiState>(VacancyListUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -38,7 +38,20 @@ class VacanciesViewModel : ViewModel() {
     private var cachedFavorites:List<Vacancy>?=null
     private var favoritesLoadedAt=0L
     private val favoriteJobs = mutableSetOf<Int>()
-    init { loadVacancies() }
+    init {
+        if(initialCatalog==null)loadVacancies() else {
+            offset=initialCatalog.vacancies.size;total.value=initialCatalog.total_count
+            _uiState.value=VacancyListUiState.Success(initialCatalog.vacancies)
+            viewModelScope.launch {
+                try {
+                    val favorites=repository.favorites();cachedFavorites=favorites;favoritesLoadedAt=System.currentTimeMillis()
+                    favoriteIds=favorites.map{it.id}.toSet()
+                    val current=_uiState.value as? VacancyListUiState.Success
+                    if(current!=null)_uiState.value=VacancyListUiState.Success(current.vacancies.map{it.copy(is_favorite=it.id in favoriteIds)})
+                }catch(e:CancellationException){throw e}catch(_:Exception){}
+            }
+        }
+    }
     fun loadVacancies(isPullToRefresh: Boolean = false) { if(isPullToRefresh)favoritesLoadedAt=0;reload(0) }
     private fun reload(delayMs: Long) {
         loadJob?.cancel()
@@ -70,7 +83,10 @@ class VacanciesViewModel : ViewModel() {
                 if(favoritesOnly.value) total.value = items.size
                 if(request == generation) _uiState.value = VacancyListUiState.Success(items.map { it.copy(is_favorite = it.id in favoriteIds) })
             } catch(e: CancellationException) { throw e }
-            catch(e: Exception) { if(request == generation) _uiState.value = VacancyListUiState.Error(com.example.trudomix.data.api.userErrorMessage(e)) }
+            catch(e: Exception) { if(request == generation) {
+                val message=com.example.trudomix.data.api.userErrorMessage(e)
+                if(_uiState.value is VacancyListUiState.Success)error.value=message else _uiState.value = VacancyListUiState.Error(message)
+            } }
             finally { if(request == generation) isRefreshing.value = false }
         }
     }

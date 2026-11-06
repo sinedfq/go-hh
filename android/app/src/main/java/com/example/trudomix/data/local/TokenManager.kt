@@ -31,9 +31,16 @@ class TokenManager(private val context: Context) {
         return context.dataStore.data.first()[TOKEN_KEY]
     }
 
-    suspend fun clearSession() {
+    suspend fun clearSession(expectedToken: String? = null) {
+        var cleared = false
         context.dataStore.edit { prefs ->
-            prefs.remove(TOKEN_KEY)
+            if (expectedToken == null || prefs[TOKEN_KEY] == expectedToken) {
+                prefs.remove(TOKEN_KEY)
+                cleared = true
+            }
+        }
+        if (cleared) kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+            com.example.trudomix.data.api.ApiClient.snapshots.clear()
         }
     }
 }
