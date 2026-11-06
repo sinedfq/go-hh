@@ -53,7 +53,8 @@ fun ConversationCard(conversation:Conversation,currentUserId:Int=0,onClick:()->U
     val time=conversation.last_message_time?.takeIf{it.isNotBlank()}?:conversation.last_message_at.orEmpty()
     OutlinedCard(onClick=onClick,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(24.dp)) {
         Row(Modifier.padding(18.dp),horizontalArrangement=Arrangement.spacedBy(12.dp)) {
-            Surface(shape=RoundedCornerShape(16.dp),color=MaterialTheme.colorScheme.primaryContainer,modifier=Modifier.size(48.dp)){Box(contentAlignment=Alignment.Center){Text(name.take(1).uppercase(),style=MaterialTheme.typography.titleLarge,color=MaterialTheme.colorScheme.onPrimaryContainer)}}
+            if(conversation.candidate_id==currentUserId)com.example.trudomix.ui.components.CompanyAvatar(conversation.company_logo,conversation.company_name,48.dp)
+            else Box(Modifier.size(48.dp),contentAlignment=Alignment.Center){com.example.trudomix.ui.components.SenderAvatar(conversation.candidate_photo,name)}
             Column(Modifier.weight(1f),verticalArrangement=Arrangement.spacedBy(6.dp)) {
                 Row { Text(name,Modifier.weight(1f),style=MaterialTheme.typography.titleMedium,fontWeight=FontWeight.SemiBold,maxLines=1,overflow=TextOverflow.Ellipsis);if(time.isNotBlank())Text(formatMessageTime(time),style=MaterialTheme.typography.labelSmall,color=MaterialTheme.colorScheme.onSurfaceVariant) }
                 conversation.vacancy_title?.takeIf{it.isNotBlank()}?.let{Text(it,style=MaterialTheme.typography.bodySmall,color=MaterialTheme.colorScheme.primary,maxLines=2,overflow=TextOverflow.Ellipsis)}

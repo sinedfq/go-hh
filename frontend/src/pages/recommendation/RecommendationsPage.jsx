@@ -1,8 +1,21 @@
 import AppLoader from '../../components/common/AppLoader'
+import { useState } from 'react'
+import { userError } from '../../utils/userError'
 import VacancyDetail from '../../components/vacancy/VacancyDetail'
 import './RecommendationsPage.css'
 
-function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy, loading, onRefresh, onOpenVacancy }) {
+function RecommendationsPage({ recommendations = [], selectedVacancy, onSelectVacancy, loading, onRefresh, onOpenVacancy, hiddenCount=0, error, onDismiss, onRestore }) {
+  const [busy, setBusy] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const action = async (id, callback) => {
+    if(busy !== null)return
+    setBusy(id);setActionError(null)
+    try { await callback() } catch(failure) { setActionError(userError(failure)) } finally { setBusy(null) }
+  }
+  const controls = <div className="recommendation-feedback" role="status">
+    {(error || actionError) && <p>{error || actionError}</p>}
+    {hiddenCount > 0 && <button type="button" className="btn btn-secondary" disabled={busy !== null || loading} onClick={() => action('restore', onRestore)}>Вернуть скрытые ({hiddenCount})</button>}
+  </div>
   const getScoreColor = (score) => {
     if (score >= 0.7) return '#2e7d32'
     if (score >= 0.4) return '#f57c00'
@@ -25,7 +38,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
       <div className="recommendations-page">
         <div className="loading">
           <AppLoader inline/>
-          <p>AI анализирует вакансии под ваше резюме...</p>
+          <p>Подбираем вакансии по вашему резюме…</p>
           <p className="loading-subtitle">Это может занять несколько секунд</p>
         </div>
       </div>
@@ -37,13 +50,14 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
       <div className="recommendations-page">
         <div className="empty-recommendations">
           <div className="empty-icon">🤖</div>
-          <h2>Рекомендации недоступны</h2>
+          <h2>{hiddenCount ? 'Найденные рекомендации скрыты' : 'Подходящие вакансии пока не найдены'}</h2>
           <p>
-            Создайте резюме в профиле, чтобы получить персональные рекомендации от AI
+            Рекомендации учитывают навыки и пожелания из резюме. Его можно дополнить в профиле.
           </p>
           <button className="btn btn-primary" onClick={onRefresh}>
             Обновить
           </button>
+          {controls}
         </div>
       </div>
     )
@@ -83,6 +97,7 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
           </div>
 
           <div className="recommendation-items">
+            {controls}
             {recommendations.map((rec) => (
               <div
                 key={rec.vacancy.id}
@@ -104,6 +119,8 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
                   <p className="recommendation-label" style={{ color: getScoreColor(rec.score) }}>
                     {getScoreLabel(rec.score)}
                   </p>
+                  {rec.insights?.matched_skills?.length > 0 && <p className="recommendation-skill-summary">Совпадают: {rec.insights.matched_skills.join(', ')}</p>}
+                  <button type="button" className="recommendation-dismiss" disabled={busy !== null} onClick={event => { event.stopPropagation();action(rec.vacancy.id, () => onDismiss(rec.vacancy.id)) }}>{busy === rec.vacancy.id ? 'Скрываем…' : 'Не интересно'}</button>
                 </div>
               </div>
             ))}
@@ -141,6 +158,10 @@ function RecommendationsPage({ recommendations, selectedVacancy, onSelectVacancy
 
                   <h3>Почему эта вакансия подходит</h3>
                   <p>{currentRecommendation.reasoning}</p>
+                  {currentRecommendation.insights && <div className="recommendation-insights">
+                    {currentRecommendation.insights.reasons?.length > 0 && <div><h4>Что совпадает</h4><ul>{currentRecommendation.insights.reasons.map(reason => <li key={reason}>{reason}</li>)}</ul></div>}
+                    {currentRecommendation.insights.considerations?.length > 0 && <div><h4>Что стоит уточнить</h4><ul>{currentRecommendation.insights.considerations.map(reason => <li key={reason}>{reason}</li>)}</ul></div>}
+                  </div>}
 
                   <div className="ai-footer">
                     <span className="ai-model-info">

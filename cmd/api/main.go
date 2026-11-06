@@ -112,6 +112,9 @@ func main() {
 
 	// Рекомендации
 	mux.HandleFunc("GET /api/recommendations", server.authMiddleware(server.recommendationsHandler))
+	mux.HandleFunc("PUT /api/recommendations/{id}/hidden", server.authMiddleware(server.recommendationPreferenceHandler))
+	mux.HandleFunc("DELETE /api/recommendations/{id}/hidden", server.authMiddleware(server.recommendationPreferenceHandler))
+	mux.HandleFunc("DELETE /api/recommendations/hidden", server.authMiddleware(server.recommendationPreferenceHandler))
 
 	// Фото
 	mux.HandleFunc("POST /api/users/me/photo", server.authMiddleware(server.uploadUserPhotoHandler))

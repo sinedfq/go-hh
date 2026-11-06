@@ -112,7 +112,9 @@ data class Conversation(
     val last_message_time: String? = null,
     val last_message_at: String? = null,
     val unread_count: Int = 0,
-    val application_status: String? = null
+    val application_status: String? = null,
+    val company_logo: String = "",
+    val candidate_photo: String = ""
 )
 
 @Serializable

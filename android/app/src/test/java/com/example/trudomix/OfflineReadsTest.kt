@@ -96,4 +96,19 @@ class OfflineReadsTest {
         assertNotEquals(cache.key("one", "token", "/api/me"), cache.key("two", "token", "/api/me"))
         root.deleteRecursively()
     }
+
+    @Test fun `recommendation refresh bypasses warm reads and replaces the same offline snapshot`() {
+        val root=directory();val server=MockWebServer();server.start()
+        try {
+            val cache=ResponseSnapshots(root)
+            val client=OkHttpClient.Builder().addInterceptor(OfflineReadInterceptor(cache,warming={true})).build()
+            val normal=Request.Builder().url(server.url("/api/recommendations?refresh=false")).build()
+            server.enqueue(response("{\"hidden_count\":0}"));client.newCall(normal).execute().close()
+            val refresh=normal.newBuilder().url(server.url("/api/recommendations?refresh=true")).build()
+            server.enqueue(response("{\"hidden_count\":2}"))
+            client.newCall(refresh).execute().use{assertNull(it.header("X-Trudomix-Cache"));assertEquals("{\"hidden_count\":2}",it.body!!.string())}
+            client.newCall(normal).execute().use{assertEquals("startup",it.header("X-Trudomix-Cache"));assertEquals("{\"hidden_count\":2}",it.body!!.string())}
+            assertEquals(1,root.listFiles()!!.count{!it.name.endsWith(".tmp")})
+        }finally{server.shutdown();root.deleteRecursively()}
+    }
 }

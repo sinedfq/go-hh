@@ -163,9 +163,10 @@ type Position struct {
 }
 
 type Recommendation struct {
-	Vacancy   Vacancy `json:"vacancy"`
-	Score     float64 `json:"score"`
-	Reasoning string  `json:"reasoning"`
+	Vacancy   Vacancy                `json:"vacancy"`
+	Score     float64                `json:"score"`
+	Reasoning string                 `json:"reasoning"`
+	Insights  RecommendationInsights `json:"insights"`
 }
 
 type Company struct {
@@ -313,6 +314,7 @@ type ChatInfo struct {
 	ConversationID  int        `json:"conversation_id"`
 	ApplicationID   int        `json:"application_id"`
 	CompanyName     string     `json:"company_name"`
+	CompanyLogo     string     `json:"company_logo"`
 	VacancyTitle    string     `json:"vacancy_title"`
 	VacancyID       int        `json:"vacancy_id"`
 	CandidateName   string     `json:"candidate_name"`

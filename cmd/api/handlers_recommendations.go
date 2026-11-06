@@ -92,9 +92,13 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	log.Printf("✅ Resume loaded: %s, skills=%v", resume.FullName, resume.Skills)
+	hidden, err := s.storage.recommendationDismissals(ctx, claims.UserID)
+	if err != nil {
+		http.Error(w, "failed to load preferences", http.StatusInternalServerError)
+		return
+	}
 
-	resumeHash := HashResume(resume)
+	resumeHash := recommendationProfileKey(resume, hidden)
 	forceRefresh := r.URL.Query().Get("refresh") == "true"
 
 	if !forceRefresh {
@@ -103,7 +107,8 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 			log.Printf("✅ Cache HIT for user %d (%d recs)", claims.UserID, len(cached.Recommendations))
 			json.NewEncoder(w).Encode(map[string]any{
 				"resume":          resume,
-				"recommendations": cached.Recommendations,
+				"recommendations": visibleRecommendations(cached.Recommendations, hidden),
+				"hidden_count":    len(hidden),
 				"model_used":      cached.ModelUsed,
 				"from_cache":      true,
 			})
@@ -115,7 +120,11 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 	log.Printf("🔄 Cache MISS for user %d, computing recommendations", claims.UserID)
 
 	const candidateLimit = 15
-	candidates, err := s.storage.GetCandidateVacancies(ctx, resume.Skills, resume.DesiredPosition, resume.Experience, candidateLimit)
+	hiddenIDs := make([]int, 0, len(hidden))
+	for id := range hidden {
+		hiddenIDs = append(hiddenIDs, id)
+	}
+	candidates, err := s.storage.GetCandidateVacancies(ctx, resume.Skills, resume.DesiredPosition, resume.Experience, candidateLimit, hiddenIDs)
 	if err != nil {
 		log.Printf("❌ GetCandidateVacancies error: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -152,6 +161,7 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 						Vacancy:   v,
 						Score:     mlMatch.Score,
 						Reasoning: mlMatch.Reasoning,
+						Insights:  recommendationInsights(resume, v),
 					})
 					break
 				}
@@ -171,6 +181,7 @@ func (s *Server) recommendationsHandler(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(map[string]any{
 		"resume":          resume,
 		"recommendations": recommendations,
+		"hidden_count":    len(hidden),
 		"model_used":      modelUsed,
 		"from_cache":      false,
 	})
