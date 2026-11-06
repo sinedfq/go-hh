@@ -341,7 +341,7 @@ func (s *PostgresStorage) SearchVacancies(ctx context.Context, filters SearchFil
 
 // ============ КАНДИДАТЫ ДЛЯ РЕКОМЕНДАЦИЙ ============
 
-func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []string, desiredPosition string, experience string, limit int) ([]Vacancy, error) {
+func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []string, desiredPosition string, experience string, limit int, excluded ...[]int) ([]Vacancy, error) {
 	if len(skills) == 0 {
 		return []Vacancy{}, nil
 	}
@@ -353,6 +353,10 @@ func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []st
 
 	roleGroup := getRoleGroup(desiredPosition)
 	experienceLevel := getExperienceLevel(experience)
+	hiddenIDs := []int{}
+	if len(excluded) > 0 && excluded[0] != nil {
+		hiddenIDs = excluded[0]
+	}
 
 	query := `
 		WITH scored AS (
@@ -367,9 +371,9 @@ func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []st
 			       v.created_at,
 			       COALESCE((SELECT c.logo_url FROM companies c WHERE c.id=v.company_id), '') AS company_logo, COALESCE((SELECT c.profile->>'it_accredited' FROM companies c WHERE c.id=v.company_id),'false')='true' AS company_it_accredited, v.terms,
 			       COALESCE((
-			           SELECT COUNT(*)
+			           SELECT COUNT(DISTINCT LOWER(BTRIM(skill)))
 			           FROM unnest(v.skills) AS skill
-			           WHERE LOWER(skill) = ANY($1)
+			           WHERE LOWER(BTRIM(skill)) = ANY($1)
 			       ), 0) AS skill_overlap,
 			       CASE
 			           WHEN $2 = '' THEN TRUE
@@ -383,7 +387,8 @@ func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []st
 			           ELSE FALSE
 			       END AS experience_compatible
 			FROM vacancies v
-			WHERE v.is_archived = FALSE OR v.is_archived IS NULL
+			WHERE (v.is_archived = FALSE OR v.is_archived IS NULL)
+			  AND NOT (v.id = ANY($6::int[]))
 		)
 		SELECT id, title, company, company_id, location, experience, remote, skills, description,
 		       address, latitude, longitude, views, skill_overlap, company_logo, company_it_accredited, terms
@@ -410,7 +415,7 @@ func (s *PostgresStorage) GetCandidateVacancies(ctx context.Context, skills []st
 		roleKeywords = []string{}
 	}
 
-	rows, err := s.pool.Query(ctx, query, lowerSkills, roleGroup, roleKeywords, experienceLevel, limit)
+	rows, err := s.pool.Query(ctx, query, lowerSkills, roleGroup, roleKeywords, experienceLevel, limit, hiddenIDs)
 	if err != nil {
 		log.Printf("GetCandidateVacancies query error: %v", err)
 		return nil, err

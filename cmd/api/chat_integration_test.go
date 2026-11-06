@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -48,19 +49,24 @@ func TestChatAuthorizationWithPostgres(t *testing.T) {
 	defer pool.Close()
 	_, err = pool.Exec(ctx, `
  CREATE TABLE users(id INT PRIMARY KEY,email TEXT,role TEXT,company_id INT,photo_url TEXT);
- CREATE TABLE vacancies(id INT PRIMARY KEY,company_id INT);
- CREATE TABLE applications(id INT PRIMARY KEY,vacancy_id INT,candidate_user_id INT);
- CREATE TABLE conversations(id INT PRIMARY KEY,application_id INT);
+ CREATE TABLE companies(id INT PRIMARY KEY,logo_url TEXT);
+ CREATE TABLE resumes(id INT PRIMARY KEY,full_name TEXT);
+ CREATE TABLE vacancies(id INT PRIMARY KEY,company_id INT,title TEXT DEFAULT 'Test job',company TEXT DEFAULT 'Test Company',is_archived BOOLEAN DEFAULT FALSE);
+ CREATE TABLE applications(id INT PRIMARY KEY,vacancy_id INT,candidate_user_id INT,resume_id INT,cover_letter TEXT DEFAULT 'Cover letter');
+ CREATE TABLE conversations(id INT PRIMARY KEY,application_id INT,created_at TIMESTAMPTZ DEFAULT NOW());
  CREATE TABLE device_tokens(token TEXT PRIMARY KEY,user_id INT);
  CREATE TABLE messages(id SERIAL PRIMARY KEY,conversation_id INT,sender_id INT,content TEXT,is_read BOOLEAN DEFAULT FALSE,read_at TIMESTAMPTZ,created_at TIMESTAMPTZ DEFAULT NOW());
  INSERT INTO users VALUES(1,'candidate@example.test','candidate',NULL,''),(2,'employer@example.test','employer',10,''),(3,'outsider@example.test','employer',20,''),(4,'colleague@example.test','employer',10,''),(5,'unrelated@example.test','candidate',10,'');
  INSERT INTO vacancies VALUES(7,10);INSERT INTO applications VALUES(8,7,1);INSERT INTO conversations VALUES(9,8);
+ INSERT INTO companies VALUES(10,'/uploads/test-company.png');
+ UPDATE users SET photo_url='/uploads/candidate.png' WHERE id=1;
  INSERT INTO messages(conversation_id,sender_id,content) VALUES(9,2,'Hello');`)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := NewServer(&PostgresStorage{pool: pool}, nil)
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/conversations", s.authMiddleware(s.getUserConversationsHandler))
 	mux.HandleFunc("GET /api/conversations/{id}/messages", s.authMiddleware(s.conversationMiddleware(s.getChatMessagesHandler)))
 	mux.HandleFunc("POST /api/conversations/{id}/messages", s.authMiddleware(s.conversationMiddleware(s.sendMessageHandler)))
 	mux.HandleFunc("GET /api/conversations/{id}/typing", s.authMiddleware(s.conversationMiddleware(s.getTypingUsersHandler)))
@@ -96,6 +102,11 @@ func TestChatAuthorizationWithPostgres(t *testing.T) {
 		t.Fatal("outsider marked message read")
 	}
 	for _, user := range []int{1, 2, 4} {
+		list := request(user, "GET", "/api/conversations", "")
+		var conversations []ChatInfo
+		if list.Code != 200 || json.Unmarshal(list.Body.Bytes(), &conversations) != nil || len(conversations) != 1 || conversations[0].CompanyLogo != "/uploads/test-company.png" || conversations[0].CandidatePhoto != "/uploads/candidate.png" {
+			t.Fatalf("conversation media for %d: %d %s", user, list.Code, list.Body.String())
+		}
 		w := request(user, "GET", "/api/conversations/9/messages", "")
 		if w.Code != 200 {
 			t.Fatalf("participant %d history: %d", user, w.Code)

@@ -51,20 +51,24 @@ class DashboardViewModel:ViewModel(){
 fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,onResume:()->Unit,onEmployer:()->Unit,onVacancy:(Int)->Unit){
     val model:DashboardViewModel=viewModel();val state by model.state.collectAsStateWithLifecycle()
     val social:SocialViewModel=viewModel();val feed by social.state.collectAsStateWithLifecycle()
+    val recommendationModel:RecommendationsViewModel=viewModel()
+    val recommendations by recommendationModel.state.collectAsStateWithLifecycle()
+    var allRecommendations by androidx.compose.runtime.saveable.rememberSaveable{mutableStateOf(false)}
+    val recommendationItems=remember(recommendations.items,allRecommendations){if(allRecommendations)recommendations.items else recommendations.items.take(3)}
     val identity by SessionIdentity.user.collectAsStateWithLifecycle()
     val employer=(state.user?:identity)?.role in listOf("employer","admin")
     LaunchedEffect(Unit){model.refreshIfStale()}
     val lifecycle=LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(lifecycle){lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED){social.refreshIfStale();while(true){delay(60000);social.refreshStories()}}}
     var initialReady by remember{mutableStateOf(false)}
-    LaunchedEffect(state.loading,feed.loading,state.user,state.error){
-        if(!state.loading&&!feed.loading&&(state.user!=null||state.error))initialReady=true
+    LaunchedEffect(state.loading,feed.loading,recommendations.loading,state.user,state.error){
+        if(!state.loading&&!feed.loading&&!recommendations.loading&&(state.user!=null||state.error))initialReady=true
     }
     if(!initialReady){
         com.example.trudomix.ui.loading.TrudomixLoadingScreen()
         return
     }
-    RefreshContent(state.loading||feed.loading,{model.load();social.load()}){
+    RefreshContent(state.loading||feed.loading||recommendations.loading,{model.load();social.load();if(!employer)recommendationModel.load(true)}){
         LazyColumn(Modifier.fillMaxSize().statusBarsPadding(),contentPadding=PaddingValues(start=20.dp,end=20.dp,top=16.dp,bottom=148.dp),verticalArrangement=Arrangement.spacedBy(18.dp)){
             item(key="company-stories",contentType="stories"){TimedStoriesBar(feed.stories,onRefresh={social.refreshStories()})}
             item{AppScreenHeader(title={Text(if(employer)"Ваша команда"else "Твоя карьера")},subtitle=if(employer)"Вакансии, кандидаты и работа с командой"else "Возможности и следующие шаги в одном месте",applyInsets=false,contentPadding=PaddingValues(0.dp))}
@@ -84,6 +88,16 @@ fun DashboardScreen(onSearch:()->Unit,onSaved:()->Unit,onApplications:()->Unit,o
                 item{OutlinedCard(onClick=onSaved,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){Text("Мои поиски",style=MaterialTheme.typography.titleMedium);Text("Сохрани фильтры и возвращайся к подходящим вакансиям.",color=MaterialTheme.colorScheme.onSurfaceVariant)}}}
                 item{OutlinedCard(onClick=onResume,modifier=Modifier.fillMaxWidth(),shape=RoundedCornerShape(22.dp)){Column(Modifier.padding(20.dp),verticalArrangement=Arrangement.spacedBy(10.dp)){Text(state.resume?.desired_position?.ifBlank{"Моё резюме"}?:"Создай своё резюме",style=MaterialTheme.typography.titleMedium);val count=state.resume?.let(::resumeCompletionCount)?:0;LinearProgressIndicator(progress={count/8f},modifier=Modifier.fillMaxWidth());Text("Заполнено ${resumeCompletionLabel(count)}",color=MaterialTheme.colorScheme.onSurfaceVariant)}}}
             }else item{Button(onClick=onEmployer){Text("Управлять компанией")}}
+            if(!employer){
+                item(key="recommendation-header"){RecommendationsSection(recommendations,recommendationModel)}
+                items(recommendationItems,key={"recommendation-${it.vacancy.id}"},contentType={"recommendation"}){item->RecommendationCard(item,recommendations.busy,{onVacancy(item.vacancy.id)},{recommendationModel.dismiss(item.vacancy.id)})}
+                if(recommendations.items.size>3||recommendations.hidden>0)item(key="recommendation-actions"){
+                    Column{
+                        if(recommendations.items.size>3)TextButton(onClick={allRecommendations=!allRecommendations}){Text(if(allRecommendations)"Свернуть подборку"else "Все рекомендации (${recommendations.items.size})")}
+                        if(recommendations.hidden>0)OutlinedButton(onClick=recommendationModel::restore,enabled=!recommendations.loading&&!recommendations.busy){Text("Вернуть скрытые (${recommendations.hidden})")}
+                    }
+                }
+            }
             item{SocialHomeHeader(feed,social)}
             items(feed.posts,key={"post-${it.id}"}){post->SocialPostCard(post,post.id in feed.busy,{social.like(post)},{social.delete(post)},{social.commentCount(post.id,it)})}
             if(feed.next>0)item{OutlinedButton(onClick={social.load(more=true)},enabled=!feed.loading,modifier=Modifier.fillMaxWidth()){Text("Показать ещё публикации")}}

@@ -51,6 +51,16 @@ export function useApp() {
     const [selectedRecommendedVacancy, setSelectedRecommendedVacancy] = useState(null)
     const [recommendationsLoaded, setRecommendationsLoaded] = useState(false)
     const [recommendationsLoading, setRecommendationsLoading] = useState(false)
+    const [recommendationsHidden, setRecommendationsHidden] = useState(0)
+    const [recommendationsError, setRecommendationsError] = useState(null)
+    const recommendationRequest = useRef(0)
+    const recommendationAccount = useRef(user?.id)
+    recommendationAccount.current = user?.id
+    useEffect(() => {
+        recommendationRequest.current++
+        setRecommendations([]);setSelectedRecommendedVacancy(null);setRecommendationsHidden(0)
+        setRecommendationsLoaded(false);setRecommendationsLoading(false);setRecommendationsError(null)
+    }, [user?.id])
 
     // ====== РЕЗЮМЕ ======
     const [resume, setResume] = useState(null)
@@ -157,14 +167,18 @@ export function useApp() {
     }
 
     const loadRecommendations = async (force = false) => {
-        if (recommendationsLoaded && !force) return
-
+        if (!force && (recommendationsLoaded || recommendationsLoading)) return
+        const request = ++recommendationRequest.current
+        const account = recommendationAccount.current
+        setRecommendationsError(null)
         setRecommendationsLoading(true)
         try {
             const url = force ? '/api/recommendations?refresh=true' : '/api/recommendations'
             const res = await axios.get(url)
+            if(request !== recommendationRequest.current || account !== recommendationAccount.current)return
             const recs = res.data.recommendations || []
             setRecommendations(recs)
+            setRecommendationsHidden(res.data.hidden_count || 0)
 
             const scores = {}
             recs.forEach(rec => {
@@ -175,10 +189,29 @@ export function useApp() {
             setSelectedRecommendedVacancy(recs.length > 0 ? recs[0].vacancy : null)
             setRecommendationsLoaded(true)
         } catch (err) {
-            console.error('Ошибка загрузки рекомендаций:', err)
+            if(request === recommendationRequest.current && account === recommendationAccount.current)setRecommendationsError(err.response?.status === 404 ? 'Создай резюме в профиле, чтобы получать рекомендации.' : userError(err))
         } finally {
-            setRecommendationsLoading(false)
+            if(request === recommendationRequest.current)setRecommendationsLoading(false)
         }
+    }
+
+    const dismissRecommendation = async id => {
+        const account = recommendationAccount.current
+        await axios.put(`/api/recommendations/${id}/hidden`)
+        if(account !== recommendationAccount.current)return
+        recommendationRequest.current++
+        setRecommendationsLoading(false)
+        setRecommendations(current => current.filter(rec => rec.vacancy.id !== id))
+        setSelectedRecommendedVacancy(current => current?.id === id ? null : current)
+        setRecommendationsHidden(current => current + 1)
+        setMatchScores(current => { const next = {...current}; delete next[id]; return next })
+    }
+    const restoreRecommendations = async () => {
+        const account = recommendationAccount.current
+        await axios.delete('/api/recommendations/hidden')
+        if(account !== recommendationAccount.current)return
+        setRecommendationsHidden(0)
+        await loadRecommendations(true)
     }
 
     // ====== РАБОТОДАТЕЛЬ: загрузка данных ======
@@ -559,7 +592,7 @@ export function useApp() {
             loadRecommendations()
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [mode, user])
+    }, [mode, user, recommendationsLoaded])
 
     useEffect(() => {
         if (user && recommendationsLoaded && resume) {
@@ -680,6 +713,10 @@ export function useApp() {
         selectedRecommendedVacancy,
         setSelectedRecommendedVacancy,
         recommendationsLoading,
+        recommendationsHidden,
+        recommendationsError,
+        dismissRecommendation,
+        restoreRecommendations,
         recommendationsLoaded,
         setRecommendationsLoaded,
         loadRecommendations,

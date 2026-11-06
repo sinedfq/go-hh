@@ -53,6 +53,7 @@ class ResponseSnapshots(private val root: File, private val maxBytes: Long = 48L
         return until >= now
     }
     @Synchronized fun clearWarm() { warmed.clear() }
+    @Synchronized fun remove(key: String) { warmed.remove(key); File(root,key).delete() }
     @Synchronized fun clear() {
         generation++
         warmed.clear()

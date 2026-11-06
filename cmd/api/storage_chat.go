@@ -126,6 +126,7 @@ func (s *PostgresStorage) GetUserConversations(ctx context.Context, userID int) 
             a.vacancy_id,
             v.title AS vacancy_title,
             v.company AS company_name,
+            COALESCE(company.logo_url, '') AS company_logo,
             COALESCE(v.is_archived, FALSE) AS vacancy_archived,
             COALESCE(a.cover_letter, '') AS cover_letter,
             CASE
@@ -153,6 +154,7 @@ func (s *PostgresStorage) GetUserConversations(ctx context.Context, userID int) 
         FROM conversations c
         JOIN applications a ON a.id = c.application_id
         JOIN vacancies v ON v.id = a.vacancy_id
+        LEFT JOIN companies company ON company.id = v.company_id
         JOIN users u_candidate ON u_candidate.id = a.candidate_user_id
         LEFT JOIN resumes r ON r.id = a.resume_id
         WHERE a.candidate_user_id = $1
@@ -173,7 +175,7 @@ func (s *PostgresStorage) GetUserConversations(ctx context.Context, userID int) 
 		var isArchived bool
 		err := rows.Scan(
 			&chat.ConversationID, &chat.ApplicationID, &chat.VacancyID,
-			&chat.VacancyTitle, &chat.CompanyName, &isArchived, &chat.CoverLetter,
+			&chat.VacancyTitle, &chat.CompanyName, &chat.CompanyLogo, &isArchived, &chat.CoverLetter,
 			&userRole, &chat.CandidateID, &chat.CandidateEmail,
 			&chat.CandidatePhoto, &chat.CandidateName,
 			&chat.LastMessage, &chat.LastMessageAt, &chat.UnreadCount,

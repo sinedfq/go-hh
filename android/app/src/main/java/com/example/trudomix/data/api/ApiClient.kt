@@ -7,6 +7,10 @@ import com.example.trudomix.data.local.TokenManager
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.intOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -82,6 +86,23 @@ object ApiClient {
 
     val api: TrudomixApi by lazy {
         retrofit.create(TrudomixApi::class.java)
+    }
+
+    suspend fun updateRecommendationCache(dismissedId:Int?=null,expectedToken:String?=null)=withContext(Dispatchers.IO){
+        val token=tokenManager.getToken()?:return@withContext
+        if(expectedToken!=null&&token!=expectedToken)return@withContext
+        val request=Request.Builder().url(serverUrl.resolve("api/recommendations")!!).header("Authorization","Bearer $token").build()
+        val key=responseSnapshotKey(snapshots,request)
+        if(dismissedId==null){snapshots.remove(key);return@withContext}
+        val generation=snapshots.generation
+        val saved=snapshots.read(key)?:return@withContext
+        runCatching{
+            val body=json.parseToJsonElement(saved.body).jsonObject.toMutableMap()
+            val items=body["recommendations"] as? JsonArray?:error("Invalid saved recommendations")
+            body["recommendations"]=JsonArray(items.filter{it.jsonObject["vacancy"]?.jsonObject?.get("id")?.jsonPrimitive?.intOrNull!=dismissedId})
+            body["hidden_count"]=JsonPrimitive((body["hidden_count"]?.jsonPrimitive?.intOrNull?:0)+1)
+            snapshots.write(key,saved.copy(body=JsonObject(body).toString()),generation,false)
+        }.onFailure{snapshots.remove(key)}
     }
 
     fun mediaUrl(path: String): String? = path.takeIf { it.isNotBlank() }?.let { serverUrl.resolve(it)?.toString() }

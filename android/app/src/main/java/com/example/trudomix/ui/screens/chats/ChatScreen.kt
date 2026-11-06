@@ -55,7 +55,10 @@ fun ConversationContent(conversationId:Int,state:ConversationState,onBackClick:(
     val list=rememberLazyListState()
     val lastId=state.messages.lastOrNull()?.id
     LaunchedEffect(lastId,state.conversation?.cover_letter){if(state.messages.isNotEmpty())list.animateScrollToItem(state.messages.lastIndex + if(!state.conversation?.cover_letter.isNullOrBlank()) 1 else 0)}
-    Scaffold(topBar={AppScreenHeader(title={Text(state.conversation?.let{if(it.candidate_id==state.me)it.company_name else it.candidate_name}?.takeIf{it.isNotBlank()} ?: "Переписка",maxLines=2,overflow=TextOverflow.Ellipsis)},subtitle=if(state.typing)"Собеседник печатает…" else "Обсудите будущую работу",navigationIcon={IconButton(onClick=onBackClick){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})}){padding->
+    Scaffold(topBar={AppScreenHeader(title={Row(verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.spacedBy(10.dp)){
+        state.conversation?.let{conversation->if(conversation.candidate_id==state.me)com.example.trudomix.ui.components.CompanyAvatar(conversation.company_logo,conversation.company_name,36.dp)else SenderAvatar(conversation.candidate_photo,conversation.candidate_name.orEmpty())}
+        Text(state.conversation?.let{if(it.candidate_id==state.me)it.company_name else it.candidate_name}?.takeIf{it.isNotBlank()} ?: "Переписка",maxLines=2,overflow=TextOverflow.Ellipsis)
+    }},subtitle=if(state.typing)"Собеседник печатает…" else "Обсудите будущую работу",navigationIcon={IconButton(onClick=onBackClick){Icon(Icons.AutoMirrored.Filled.ArrowBack,"Назад")}})}){padding->
         Box(Modifier.fillMaxSize().padding(padding),contentAlignment=Alignment.TopCenter){Column(Modifier.widthIn(max=840.dp).fillMaxSize().imePadding()){
             state.conversation?.let { conversation ->
                 conversation.vacancy_id?.takeIf { it > 0 }?.let { vacancyId ->

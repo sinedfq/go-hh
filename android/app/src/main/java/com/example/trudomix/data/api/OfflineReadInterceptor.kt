@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit
 import okhttp3.Interceptor
 import okhttp3.Protocol
 import okhttp3.Response
+import okhttp3.Request
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.ResponseBody.Companion.toResponseBody
 
@@ -29,7 +30,7 @@ class OfflineReadInterceptor(
             return response
         }
         val generation = snapshots.generation
-        val key = snapshots.key(request.url.scheme + "://" + request.url.host + ":" + request.url.port, request.header("Authorization"), request.url.toString())
+        val key = responseSnapshotKey(snapshots, request)
         val cached = snapshots.read(key)
         fun restored(stale: Boolean): Response {
             if (stale) onFallback()
@@ -37,7 +38,8 @@ class OfflineReadInterceptor(
                 .message("Saved response").header("X-Trudomix-Cache", if (stale) "offline" else "startup")
                 .header("Content-Type", cached.mediaType).body(cached.body.toResponseBody(cached.mediaType.toMediaTypeOrNull())).build()
         }
-        if (cached != null && (snapshots.takeWarm(key, consume = !warming()) || warming() && offlineStartup())) return restored(offlineStartup())
+        val forceRefresh=path=="/api/recommendations" && request.url.queryParameter("refresh")=="true"
+        if (!forceRefresh && cached != null && (snapshots.takeWarm(key, consume = !warming()) || warming() && offlineStartup())) return restored(offlineStartup())
         val response = try {
             chain.withConnectTimeout(5, TimeUnit.SECONDS).withReadTimeout(8, TimeUnit.SECONDS).proceed(request)
         } catch (failure: IOException) {
@@ -51,4 +53,9 @@ class OfflineReadInterceptor(
         }
         return response
     }
+}
+
+internal fun responseSnapshotKey(snapshots:ResponseSnapshots,request:Request):String {
+    val url=if(request.url.encodedPath=="/api/recommendations")request.url.newBuilder().removeAllQueryParameters("refresh").build()else request.url
+    return snapshots.key(url.scheme+"://"+url.host+":"+url.port,request.header("Authorization"),url.toString())
 }

@@ -5,6 +5,9 @@ import retrofit2.Response
 import retrofit2.http.*
 
 interface TrudomixApi {
+    @GET("api/recommendations") suspend fun recommendations(@Query("refresh") refresh:Boolean=false):Response<RecommendationsResponse>
+    @PUT("api/recommendations/{id}/hidden") suspend fun dismissRecommendation(@Path("id") id:Int):Response<Unit>
+    @DELETE("api/recommendations/hidden") suspend fun restoreRecommendations():Response<Unit>
     @GET("api/account/phone") suspend fun accountPhone():Response<AccountPhone>
     @PUT("api/account/phone") suspend fun linkPhone(@Body request:PhoneLoginRequest):Response<AccountPhone>
     @GET("api/phone-verification/config") suspend fun phoneOtpConfig():Response<PhoneOtpConfig>

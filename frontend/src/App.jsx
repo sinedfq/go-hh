@@ -351,7 +351,12 @@ function App() {
                             {/* ====== РЕКОМЕНДАЦИИ ====== */}
                             {app.mode === 'recommendations' && app.user && (
                                 <RecommendationsPage
+                                    key={app.user.id}
                                     recommendations={app.recommendations}
+                                    hiddenCount={app.recommendationsHidden}
+                                    error={app.recommendationsError}
+                                    onDismiss={app.dismissRecommendation}
+                                    onRestore={app.restoreRecommendations}
                                     selectedVacancy={app.selectedRecommendedVacancy}
                                     onSelectVacancy={app.setSelectedRecommendedVacancy}
                                     loading={app.recommendationsLoading}

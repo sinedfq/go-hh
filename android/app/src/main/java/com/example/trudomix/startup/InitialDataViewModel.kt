@@ -47,11 +47,12 @@ class InitialDataViewModel : ViewModel() {
             feed.posts.forEach { image(it.author_photo); if (it.media_type != "video") image(it.media_url) }
         }
         task { api.timedStories().bodyOrThrow().forEach { image(it.company_logo); if (it.media_type != "video") image(it.media_url) } }
-        task { api.getConversations().bodyOrThrow() }
+        task { api.getConversations().bodyOrThrow().forEach{image(it.company_logo);image(it.candidate_photo)} }
         task { api.getSavedSearches().bodyOrThrow() }
         task { api.getSkills().bodyOrThrow(); api.getPositions().bodyOrThrow() }
         task { jobs(api.searchVacancies(limit = 4).bodyOrThrow().vacancies) }
         if (candidate) {
+            task { jobs(api.recommendations().bodyOrThrow().recommendations.map{it.vacancy}) }
             task {
                 val items = mutableListOf<Vacancy>()
                 var page = api.searchVacancies().bodyOrThrow()

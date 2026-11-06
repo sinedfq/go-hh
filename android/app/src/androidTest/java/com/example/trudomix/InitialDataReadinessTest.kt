@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit
 class InitialDataReadinessTest {
     @Test fun loaderWaitsForCatalogPagesAndAnImageOutsideTheViewport() {
         val server = MockWebServer()
+        val imagePath = "/uploads/readiness-${java.util.UUID.randomUUID()}.png"
         val imageRequested = CountDownLatch(1)
         val releaseImage = CountDownLatch(1)
         server.dispatcher = object : Dispatcher() {
@@ -31,13 +32,14 @@ class InitialDataReadinessTest {
                     "/api/vacancies/search" -> {
                         val offset = url.queryParameter("offset")?.toInt() ?: 0
                         val limit = url.queryParameter("limit")?.toInt() ?: 20
-                        val jobs = (offset + 1..minOf(offset + limit, 40)).joinToString(",") { "{\"id\":$it,\"title\":\"Job $it\",\"company_logo\":\"/uploads/readiness.png\"}" }
+                        val jobs = (offset + 1..minOf(offset + limit, 40)).joinToString(",") { "{\"id\":$it,\"title\":\"Job $it\",\"company_logo\":\"$imagePath\"}" }
                         json("{\"vacancies\":[$jobs],\"total_count\":40,\"limit\":$limit,\"offset\":$offset}")
                     }
                     "/api/feed" -> json("{\"posts\":[]}")
+                    "/api/recommendations" -> json("{\"recommendations\":[],\"hidden_count\":0}")
                     "/api/my-resume" -> json("{}").setResponseCode(404)
                     "/api/my-resume/stats" -> json("{\"total_views\":0}")
-                    "/uploads/readiness.png" -> {
+                    imagePath -> {
                         imageRequested.countDown()
                         releaseImage.await(15, TimeUnit.SECONDS)
                         val png = android.util.Base64.decode("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aMh8AAAAASUVORK5CYII=", 0)
@@ -58,6 +60,9 @@ class InitialDataReadinessTest {
         try {
             runBlocking { ApiClient.setServer(server.url("/").toString()); manager.saveToken("readiness-test") }
             SessionIdentity.user.value = null
+            // This isolated ViewModel fixture never mounts the session navigator.
+            // Stop its unrelated app-wide splash watchdog left by earlier UI tests.
+            com.example.trudomix.startup.StartupReadiness.dismiss()
             com.example.trudomix.startup.StartupReadiness.usingCachedData.value = false
             instrumentation.runOnMainSync { model = ViewModelProvider(store, ViewModelProvider.NewInstanceFactory())[InitialDataViewModel::class.java] }
             assertTrue("Offscreen image must be requested during preload", imageRequested.await(15, TimeUnit.SECONDS))
