@@ -24,7 +24,6 @@ const ResumeViewModal=lazyScreen(()=>import('./components/resume/ResumeViewModal
 const MyApplicationsPage=lazyScreen(()=>import('./pages/candidate/MyApplicationsPage'))
 const EmployerStatsPage=lazyScreen(()=>import('./pages/employer/EmployerStatsPage'))
 const ChatApp=lazyScreen(()=>import('./components/chat/ChatApp'))
-import ChatButton from './components/chat/ChatButton'
 import axios from 'axios'
 import PageLoader from './components/common/PageLoader'
 import BrandPicker from './components/common/BrandPicker'
@@ -104,6 +103,9 @@ function App() {
                 user={app.user}
                 onLogout={handleLogout}
                 onLogin={() => app.setShowLoginModal(true)}
+                onOpenChat={app.openChatApp}
+                onCloseChat={app.closeChatApp}
+                isChatOpen={app.showChatApp}
             />
 
             <div className="main-area">
@@ -463,18 +465,6 @@ function App() {
             </div>
 
 
-
-            {/* ====== ПЛАВАЮЩАЯ КНОПКА ЧАТА ====== */}
-            {app.user && (
-                <div className="chat-fab-container">
-                    <ChatButton
-                        currentUser={app.user}
-                        onOpenChatApp={app.openChatApp}
-                        onCloseChatApp={app.closeChatApp}   // ← ДОБАВЬ ЭТУ СТРОКУ
-                        isChatOpen={app.showChatApp}
-                    />
-                </div>
-            )}
 
             {/* ====== ПРИЛОЖЕНИЕ ЧАТА (двухпанельное) ====== */}
             {app.showChatApp && app.user && (
