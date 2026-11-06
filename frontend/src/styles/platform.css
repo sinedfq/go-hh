@@ -1,6 +1,5 @@
 ﻿/* Shared Android design language: restrained surfaces, pill navigation and accent. */
 .app{background:var(--bg)}
-.sidebar button.nav-item{appearance:none;border:0;background:transparent;color:inherit;font:inherit;text-align:inherit}
 .app .main-area{background:transparent}
 .app .top-header{background:transparent;border-bottom:0;min-height:104px;padding:24px 32px}
 .app .page-title{font-size:clamp(1.65rem,2.5vw,2.25rem);letter-spacing:-.04em;line-height:1.2}
@@ -15,33 +14,41 @@
 .app :is(.theme-toggle,.notification-bell){border-radius:50%;border:1px solid var(--border);background:var(--surface);color:var(--text-secondary)}
 .app :is(input,textarea,select){accent-color:var(--accent)}
 @media(min-width:769px){
- .app{padding-left:108px;background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--accent) 8%,transparent),transparent 55%),var(--bg)}
- .app>.sidebar{position:fixed;left:16px;top:16px;bottom:16px;width:76px;height:calc(100dvh - 32px);margin:0;border:1px solid color-mix(in srgb,var(--text-primary) 13%,transparent);border-radius:28px;background:color-mix(in srgb,var(--surface) 67%,transparent);backdrop-filter:blur(18px) saturate(145%);box-shadow:inset 0 1px 0 #ffffff30,0 12px 36px #00000012;transition:width .24s cubic-bezier(.2,.8,.2,1);z-index:80;overflow:hidden}
- .app>.sidebar:is(:hover,:has(:focus-visible)){width:244px}
- .app .sidebar .sidebar-logo{display:flex;align-items:center;gap:0;padding:18px;border:0;white-space:nowrap}
- .app .sidebar .sidebar-logo img{width:38px;height:38px;min-width:38px;object-fit:contain;border-radius:0}
- .app .sidebar .sidebar-logo h1{display:block;opacity:0;width:0;overflow:hidden;transition:opacity .18s,width .24s,margin .24s;margin:0;color:var(--text-primary)}
- .app .sidebar:is(:hover,:has(:focus-visible)) .sidebar-logo h1{opacity:1;width:150px;margin-left:12px}
- .app .sidebar-nav{padding:8px;gap:5px;scrollbar-width:thin}
- .app .sidebar .nav-item{display:flex;justify-content:flex-start;align-items:center;width:100%;min-height:50px;border:1px solid transparent;border-radius:18px;padding:12px 17px;gap:12px;flex-shrink:0;background:transparent;color:var(--text-secondary);font:inherit;text-align:left;cursor:pointer;overflow:hidden}
- .app .sidebar :is(.nav-label,.user-profile-label,.login-text){display:flex;opacity:0;max-width:0;overflow:hidden;white-space:nowrap;transform:translateX(-6px);transition:opacity .18s,max-width .24s,transform .24s}
- .app .sidebar:is(:hover,:has(:focus-visible)) :is(.nav-label,.user-profile-label,.login-text){opacity:1;max-width:164px;transform:none}
- .app .sidebar .mobile-more-btn{display:none}
- .app .sidebar .nav-subtitle{display:none}.app .sidebar .nav-title{font-size:.84rem;color:inherit}
- .app .sidebar .nav-icon{color:inherit;flex:0 0 22px;line-height:0}
- .app .sidebar .nav-item.active{color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:color-mix(in srgb,var(--accent) 24%,transparent);box-shadow:inset 0 1px 0 #ffffff24}
- .app .sidebar .nav-item:hover{background:color-mix(in srgb,var(--accent) 10%,transparent)}
- .app .sidebar-footer{padding:12px 8px;border-color:color-mix(in srgb,var(--border) 60%,transparent);align-items:stretch;gap:8px}
- .app .sidebar .user-profile-btn{display:flex;justify-content:flex-start;gap:12px;padding:8px 10px;width:100%;border-radius:16px}
- .app .sidebar .user-avatar{flex:0 0 36px;width:36px;height:36px}
- .app .sidebar .login-btn{display:flex;justify-content:flex-start;gap:16px;width:100%;height:44px;min-height:44px;padding:10px 18px;border:1px solid transparent;border-radius:16px;background:transparent;color:var(--accent)}
- .app .sidebar .login-icon{flex:0 0 18px}
- .app .sidebar .logout-btn{min-height:40px;font-size:0;border:1px solid transparent;background:transparent;color:var(--danger);border-radius:14px}
- .app .sidebar .logout-btn::before{content:"⎋";font-size:20px}
- .app .sidebar:is(:hover,:has(:focus-visible)) .logout-btn{font-size:13px}
- .app .sidebar:is(:hover,:has(:focus-visible)) .logout-btn::before{content:none}
+ .app{padding-left:0;background:radial-gradient(ellipse at 0 0,color-mix(in srgb,var(--accent) 8%,transparent),transparent 55%),var(--bg)}
  .app :is(.home-hero,.home-resume,.home-job,.social-composer,.social-post,.profile-section,.search-result-card,.company-card,.favorite-card,.workspace-metric){background:color-mix(in srgb,var(--surface) 90%,transparent);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--text-primary) 5%,transparent);border-color:color-mix(in srgb,var(--text-primary) 12%,transparent)}
 }
-@media(max-width:768px){.app .top-header{min-height:88px;padding:18px 20px}.app>.sidebar{background:color-mix(in srgb,var(--surface) 78%,transparent);backdrop-filter:blur(12px) saturate(130%);border-color:var(--border)}.app .content{padding-top:6px}}
-@supports not (backdrop-filter:blur(1px)){.app>.sidebar{background:var(--surface)}}
-@media(prefers-reduced-transparency:reduce){.app>.sidebar{background:var(--surface);backdrop-filter:none}}
+/* The same floating five-tab capsule as Android, on desktop and phone. */
+.app .main-area{height:100dvh;margin-left:0;padding-bottom:0}
+.app .content{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px));scroll-padding-bottom:112px}
+.bottom-navigation{position:fixed;z-index:90;left:50%;bottom:calc(14px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:10px;width:min(610px,calc(100% - 24px));pointer-events:none}
+.glass-nav,.glass-more{pointer-events:auto;border:1px solid color-mix(in srgb,var(--text-primary) 16%,transparent);background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:inset 0 1px 0 #ffffff40,0 3px 12px #00000018;backdrop-filter:blur(12px) saturate(130%)}
+.glass-nav{display:flex;align-items:center;flex:1;min-width:0;height:76px;border-radius:48px;padding:5px 8px}
+.glass-tab,.glass-more{appearance:none;font:inherit;color:var(--text-secondary);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.glass-tab{position:relative;display:flex;flex:1;min-width:0;height:64px;align-items:center;justify-content:center;flex-direction:column;gap:4px;border:0;border-radius:32px;background:transparent;transition:color .18s,background .18s}
+.glass-tab-icon{display:grid;place-items:center;width:28px;height:28px}
+.glass-tab-label{font-size:11px;font-weight:600;line-height:1.2;white-space:nowrap}
+.glass-tab[aria-current=page],.glass-tab[aria-pressed=true]{color:var(--accent)}
+.glass-tab:hover{background:var(--accent-light);color:var(--accent)}
+.glass-tab-primary{flex:1.15}
+.glass-tab-primary .glass-tab-icon{width:56px;height:56px;border:1px solid #60baff;border-radius:50%;color:#7ac8ff;background:radial-gradient(circle,#60baff38 1px,transparent 1.5px) 0 0/7px 7px,#10294a;box-shadow:inset 0 1px 0 #ffffff18}
+.glass-tab-primary .glass-tab-icon svg{width:29px;height:29px;background:#10294a;border-radius:50%;padding:2px}
+.glass-tab-primary[aria-current=page] .glass-tab-icon{border-color:#a4deff}
+.glass-more{flex:0 0 48px;height:48px;border-radius:50%;display:grid;place-items:center}
+.glass-more[aria-expanded=true],.glass-more:hover{color:var(--accent);background:var(--surface-secondary)}
+.glass-chat-badge{position:absolute;top:3px;left:55%;font-size:10px;line-height:18px;min-width:18px;padding:0 4px;border-radius:12px;color:var(--on-accent);background:var(--accent)}
+.glass-tab:focus-visible,.glass-more:focus-visible,.navigation-dialog button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.navigation-dialog{position:fixed;inset:auto 0 calc(108px + env(safe-area-inset-bottom,0px));margin:0 auto;width:min(480px,calc(100% - 24px));max-height:calc(100dvh - 150px);overflow:auto;padding:20px;border:1px solid var(--border);border-radius:28px;background:var(--surface);color:var(--text-primary);box-shadow:0 16px 48px #00000030}
+.navigation-dialog::backdrop{background:#08081666}
+.navigation-dialog header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px}
+.navigation-dialog h2{font-size:20px}
+.navigation-close{display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;border-radius:50%;background:var(--surface-secondary);color:var(--text-primary);font-size:26px;line-height:1;cursor:pointer}
+.navigation-links{display:grid;gap:6px}
+.navigation-links button{min-height:46px;padding:12px 16px;border:1px solid transparent;border-radius:16px;text-align:left;background:transparent;color:var(--text-primary);font:inherit;cursor:pointer;overflow-wrap:anywhere}
+.navigation-links button:hover,.navigation-links button[aria-current=page]{background:var(--accent-light);color:var(--accent)}
+.navigation-links .navigation-logout{color:var(--danger)}
+@media(max-width:768px){.app .top-header{min-height:88px;padding:18px 20px}.app .content{padding-top:6px}}
+@media(max-width:380px){.bottom-navigation{gap:6px;width:calc(100% - 16px)}.glass-nav{padding:5px 4px}.glass-tab-label{font-size:9px}.glass-more{flex-basis:44px;height:44px}.glass-tab-primary .glass-tab-icon{width:50px;height:50px}}
+@media(max-height:480px){.glass-nav{height:60px}.glass-tab{height:50px}.glass-tab-label{display:none}.glass-tab-primary .glass-tab-icon{width:44px;height:44px}.bottom-navigation{bottom:6px}.navigation-dialog{bottom:78px;max-height:calc(100dvh - 94px)}}
+@supports not (backdrop-filter:blur(1px)){.glass-nav,.glass-more{background:var(--surface)}}
+@media(prefers-reduced-transparency:reduce){.glass-nav,.glass-more{background:var(--surface);backdrop-filter:none}}
+@media(prefers-reduced-motion:reduce){.glass-tab{transition:none}}

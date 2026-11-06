@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './Chat.css'
 
-function ChatButton({ currentUser, onOpenChatApp, onCloseChatApp, isChatOpen }) {
+function ChatButton({ currentUser, onOpenChatApp, onCloseChatApp, isChatOpen, navigation = false }) {
     const [unreadTotal, setUnreadTotal] = useState(0)
     const [isMobile, setIsMobile] = useState(false)
 
@@ -33,7 +33,7 @@ function ChatButton({ currentUser, onOpenChatApp, onCloseChatApp, isChatOpen }) 
     if (!currentUser) return null
 
     // На мобильном скрываем FAB когда чат открыт
-    if (isMobile && isChatOpen) return null
+    if (!navigation && isMobile && isChatOpen) return null
 
     // ====== КЛИК: закрываем если открыт, открываем если закрыт ======
     const handleClick = () => {
@@ -46,7 +46,10 @@ function ChatButton({ currentUser, onOpenChatApp, onCloseChatApp, isChatOpen }) 
 
     return (
         <button
-            className={`chat-fab ${isChatOpen ? 'active' : ''} ${unreadTotal > 0 && !isChatOpen ? 'has-unread' : ''}`}
+            type="button"
+            className={navigation ? 'glass-tab glass-chat-tab' : `chat-fab ${isChatOpen ? 'active' : ''} ${unreadTotal > 0 && !isChatOpen ? 'has-unread' : ''}`}
+            aria-pressed={isChatOpen}
+            aria-label={isChatOpen ? 'Закрыть чаты' : 'Открыть чаты'}
             onClick={handleClick}
             title={isChatOpen ? 'Закрыть чаты' : 'Открыть чаты'}
         >
@@ -61,8 +64,9 @@ function ChatButton({ currentUser, onOpenChatApp, onCloseChatApp, isChatOpen }) 
                 </svg>
             )}
             {unreadTotal > 0 && !isChatOpen && (
-                <span className="chat-fab-badge">{unreadTotal > 99 ? '99+' : unreadTotal}</span>
+                <span className={navigation ? 'glass-chat-badge' : 'chat-fab-badge'}>{unreadTotal > 99 ? '99+' : unreadTotal}</span>
             )}
+            {navigation && <span className="glass-tab-label">Чаты</span>}
         </button>
     )
 }
